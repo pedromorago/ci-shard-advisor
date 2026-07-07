@@ -56,3 +56,12 @@ Playwright JSON
 - El orden de la cola importa (el mismo multiconjunto en distinto orden da distinto makespan). El orden lo decide el normalizer; el simulador solo lo respeta.
 - `simulateRun` orquesta un run completo: simula cada shard y el tiempo de pared del run es el del shard más lento (los shards corren en paralelo en máquinas distintas).
 - Se testea con invariantes físicos (conservación del trabajo, cotas de tiempo) y con dos comprobaciones cruzadas: el simulador **nunca bate** el óptimo del Branch & Bound, y con 1 worker por shard el run reproduce **exactamente** el makespan del scheduler.
+
+## Decisiones de diseño del recommender
+
+- La frontera (`buildFrontier`) evalúa cada `shardCount` de 1 a `maxShards` y produce un punto `(tiempo de feedback, coste)`. Cada punto usa el reparto del Branch & Bound y los tiempos del simulador, así que la recomendación hereda su rigor.
+- Modelo de coste, explícito y parametrizable (nada mágico): coste facturado **por máquina** = Σ por shard de (`startupOverheadMs` + tiempo del shard). El tiempo de feedback = tiempo del shard más lento + `startupOverheadMs`. `workersPerShard` y `startupOverheadMs` son parámetros con defaults neutros (1 y 0).
+- La tensión: más shards bajan el tiempo (rendimientos decrecientes) pero suben el coste (cada máquina extra cuesta su arranque). Con 1 worker y overhead > 0 el coste es exactamente `trabajo_total + shards × overhead`.
+- El codo (`findElbow`) es el punto de máxima curvatura: se normalizan ambos ejes a [0,1] (para que ninguna magnitud domine) y se elige el más alejado de la cuerda entre los extremos. En empates o curvas planas gana el menor `shardCount` (más barato).
+- `recommend` orquesta todo y, dada la config actual del equipo (`currentShardCount`), cuantifica el ahorro (tiempo ganado y delta de coste) frente a la recomendación. La comparación es honesta: si el equipo ya ha pasado el codo, la recomendación sale más lenta pero más barata.
+- QA destacable del recommender: el codo se valida con fixtures geométricos de resultado conocido y con una propiedad **metamórfica** (reescalar un eje no mueve el codo); la frontera con invariantes de monotonía; y el ahorro con aritmética comprobada a mano.
