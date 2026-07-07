@@ -106,8 +106,14 @@ pnpm --filter @ci-shard-advisor/api start &
 cd apps/api/rest-assured && mvn test
 ```
 
+## Cobertura
+
+El core mide cobertura con `@vitest/coverage-v8` y **falla si baja de los
+umbrales** (95% statements/lines, 90% branches, 95% functions). Los módulos de
+solo-tipos se excluyen (no tienen runtime que cubrir). Se ejecuta en CI.
+→ `pnpm --filter @ci-shard-advisor/core test:coverage`
+
 ## Ideas para mejorar (pendiente)
 - **Regresión visual**: screenshots con `toHaveScreenshot` (baseline por plataforma).
-- **Cobertura**: `vitest --coverage` con umbrales por paquete.
 - **Mutation testing** (Stryker) sobre el core, para medir la calidad de los tests.
 - **Contract testing** del esquema de respuesta de la API (JSON Schema).
