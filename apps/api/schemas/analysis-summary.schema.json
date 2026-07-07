@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AnalysisSummary",
+  "description": "Response contract for POST /analyze",
+  "type": "object",
+  "required": ["totalTests", "totalDurationMs", "blocks", "recommended", "frontier"],
+  "additionalProperties": false,
+  "properties": {
+    "totalTests": { "type": "integer", "minimum": 0 },
+    "totalDurationMs": { "type": "number", "minimum": 0 },
+    "blocks": { "type": "array", "items": { "$ref": "#/definitions/block" } },
+    "recommended": { "$ref": "#/definitions/configPoint" },
+    "current": { "$ref": "#/definitions/configPoint" },
+    "savings": {
+      "type": "object",
+      "required": ["timeSavedMs", "costDeltaMs"],
+      "additionalProperties": false,
+      "properties": {
+        "timeSavedMs": { "type": "number" },
+        "costDeltaMs": { "type": "number" }
+      }
+    },
+    "frontier": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/configPoint" }
+    }
+  },
+  "definitions": {
+    "block": {
+      "type": "object",
+      "required": ["block", "tests", "durationMs"],
+      "additionalProperties": false,
+      "properties": {
+        "block": { "type": "string" },
+        "tests": { "type": "integer", "minimum": 0 },
+        "durationMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "configPoint": {
+      "type": "object",
+      "required": ["shardCount", "workersPerShard", "runTimeMs", "feedbackTimeMs", "costMs", "optimal"],
+      "additionalProperties": false,
+      "properties": {
+        "shardCount": { "type": "integer", "minimum": 1 },
+        "workersPerShard": { "type": "integer", "minimum": 1 },
+        "runTimeMs": { "type": "number", "minimum": 0 },
+        "feedbackTimeMs": { "type": "number", "minimum": 0 },
+        "costMs": { "type": "number", "minimum": 0 },
+        "optimal": { "type": "boolean" }
+      }
+    }
+  }
+}
