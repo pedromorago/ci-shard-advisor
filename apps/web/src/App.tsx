@@ -1,19 +1,37 @@
-import { useMemo } from 'react';
-import { analyze, summarize, formatDuration } from '@ci-shard-advisor/core';
-import type { AnalyzeOptions } from '@ci-shard-advisor/core';
-import demoReport from './demo-report.json';
-
-/** Options for the preloaded demo analysis (ADR-005). */
-const DEMO_OPTIONS: AnalyzeOptions = {
-  maxShards: 8,
-  startupOverheadMs: 30000,
-  currentShardCount: 6,
-};
+import { useMemo, useState } from 'react';
+import { summarize, formatDuration } from '@ci-shard-advisor/core';
+import type { AnalysisResult } from '@ci-shard-advisor/core';
+import { analyzeText, demoAnalysis } from './analysis';
+import { ReportInput } from './ReportInput';
 
 export function App() {
-  // The whole analysis runs in the browser — the report never leaves the tab.
-  const summary = useMemo(() => summarize(analyze(demoReport, DEMO_OPTIONS)), []);
+  const [analysis, setAnalysis] = useState<AnalysisResult>(() => demoAnalysis());
+  const [source, setSource] = useState('demo report');
+  const [error, setError] = useState<string | null>(null);
+
+  const summary = useMemo(() => summarize(analysis), [analysis]);
   const { recommended, current, savings } = summary;
+
+  function handleSelect(jsonText: string, fileName: string) {
+    try {
+      const result = analyzeText(jsonText);
+      if (result.tasks.length === 0) {
+        setError('That report has no tests to analyze.');
+        return;
+      }
+      setAnalysis(result);
+      setSource(fileName);
+      setError(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not read that report.');
+    }
+  }
+
+  function handleLoadDemo() {
+    setAnalysis(demoAnalysis());
+    setSource('demo report');
+    setError(null);
+  }
 
   return (
     <main className="app">
@@ -24,8 +42,16 @@ export function App() {
         </p>
       </header>
 
+      <ReportInput onSelect={handleSelect} onLoadDemo={handleLoadDemo} />
+
+      {error ? (
+        <p className="app__error" role="alert">
+          {error}
+        </p>
+      ) : null}
+
       <p className="app__meta">
-        Analyzed <strong>{summary.totalTests} tests</strong> ·{' '}
+        Showing <strong>{source}</strong> · {summary.totalTests} tests ·{' '}
         {formatDuration(summary.totalDurationMs)} total
       </p>
 
