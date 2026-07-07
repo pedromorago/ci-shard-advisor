@@ -43,8 +43,11 @@ function relativeGap(makespan: number, bound: number): number {
  * The search assigns tasks one at a time, biggest first, trying each shard.
  * LPT provides the initial incumbent (upper bound); a branch is pruned as soon
  * as a placement would reach a load that cannot strictly beat that incumbent.
- * Because the whole tree is explored, the returned makespan is certified
- * optimal (a later step adds a time budget that can cut the search short).
+ * Shards are identical, so placing a task on two shards that currently hold the
+ * same load yields equivalent subtrees — we expand only the first of each
+ * distinct load and skip the symmetric duplicates. Because the rest of the tree
+ * is still fully explored, the returned makespan stays certified optimal (a
+ * later step adds a time budget that can cut the search short).
  */
 export function branchAndBound(
   durations: readonly number[],
@@ -89,7 +92,12 @@ export function branchAndBound(
       }
       return;
     }
+    const seenLoads = new Set<number>();
     for (let shard = 0; shard < shardCount; shard++) {
+      // Symmetry breaking: identical shards holding the same load are
+      // interchangeable, so only the first of each distinct load is expanded.
+      if (seenLoads.has(loads[shard])) continue;
+      seenLoads.add(loads[shard]);
       const newLoad = loads[shard] + sorted[position];
       // Prune: this shard alone would already match/exceed the best known
       // makespan, so no completion down this branch can strictly improve it.

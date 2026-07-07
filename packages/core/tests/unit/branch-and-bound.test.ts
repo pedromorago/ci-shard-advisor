@@ -76,6 +76,23 @@ describe('branchAndBound', () => {
     });
   });
 
+  describe('symmetry breaking prunes the search space', () => {
+    it('explores far fewer nodes than the naive assignment tree', () => {
+      const durations = [17, 13, 11, 9, 8, 7, 6, 5, 4, 3];
+      const shardCount = 4;
+      const result = branchAndBound(durations, shardCount);
+
+      // Still the true optimum (no regression from the optimization)...
+      expect(result.makespan).toBe(bruteForceMakespan(durations, shardCount));
+      expect(result.optimal).toBe(true);
+
+      // ...but reached exploring a tiny fraction of shardCount^n placements.
+      const naiveSpace = shardCount ** durations.length; // 4^10 ≈ 1.05M
+      expect(result.nodesExplored).toBeLessThan(naiveSpace / 1000);
+      expect(result.nodesExplored).toBeLessThan(1000);
+    });
+  });
+
   describe('invariants that must always hold', () => {
     it('never does worse than LPT and never beats the lower bound', () => {
       const random = mulberry32(123);
