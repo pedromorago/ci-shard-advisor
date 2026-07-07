@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { simulateShard } from '../../src/scheduler/workers';
+import { branchAndBound } from '../../src/scheduler/branch-and-bound';
 import { mulberry32, randomInt } from '../helpers/random';
 
 describe('simulateShard', () => {
@@ -42,6 +43,31 @@ describe('simulateShard', () => {
       const result = simulateShard([1, 1, 1, 3], 2);
       expect(result.loads).toEqual([2, 4]);
       expect(result.makespan).toBe(4);
+    });
+  });
+
+  describe('is a faithful (never optimistic) model', () => {
+    it('the same tasks in a different order can take longer', () => {
+      // Big-first happens to be optimal here; the unsorted queue is not.
+      expect(simulateShard([3, 1, 1, 1], 2).makespan).toBe(3);
+      expect(simulateShard([1, 1, 1, 3], 2).makespan).toBe(4);
+    });
+
+    it('never beats the theoretical optimum computed by branch-and-bound', () => {
+      const random = mulberry32(53);
+      for (let i = 0; i < 200; i++) {
+        const taskCount = randomInt(random, 1, 12);
+        const workerCount = randomInt(random, 1, 5);
+        const durations = Array.from({ length: taskCount }, () =>
+          randomInt(random, 1, 200),
+        );
+        // Workers within a shard are identical machines: the best any schedule
+        // could do is exactly the branch-and-bound optimum. The real queue can
+        // only match or exceed it, never beat it.
+        const simulated = simulateShard(durations, workerCount).makespan;
+        const optimum = branchAndBound(durations, workerCount).makespan;
+        expect(simulated).toBeGreaterThanOrEqual(optimum);
+      }
     });
   });
 
