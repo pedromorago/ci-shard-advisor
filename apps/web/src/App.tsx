@@ -3,6 +3,7 @@ import { summarize, formatDuration } from '@ci-shard-advisor/core';
 import type { AnalysisResult } from '@ci-shard-advisor/core';
 import { analyzeText, demoAnalysis } from './analysis';
 import { ReportInput } from './ReportInput';
+import { FrontierChart } from './FrontierChart';
 
 export function App() {
   const [analysis, setAnalysis] = useState<AnalysisResult>(() => demoAnalysis());
@@ -81,6 +82,15 @@ export function App() {
             {savings.costDeltaMs <= 0 ? 'cheaper' : 'more expensive'}.
           </p>
         ) : null}
+      </section>
+
+      <section className="card" aria-labelledby="frontier-heading">
+        <h2 id="frontier-heading">Cost / time frontier</h2>
+        <FrontierChart
+          frontier={summary.frontier}
+          recommended={recommended}
+          current={current}
+        />
       </section>
 
       <section className="card" aria-labelledby="blocks-heading">
