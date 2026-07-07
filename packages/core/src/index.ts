@@ -18,3 +18,8 @@ export { classify } from './report/classifier';
 export type { ClassifyRule, ClassifyOptions } from './report/classifier';
 export { analyze } from './report/analyze';
 export type { AnalyzeOptions, AnalysisResult } from './report/analyze';
+export { summarize, formatDuration } from './exporters/summary';
+export type { AnalysisSummary, BlockSummary } from './exporters/summary';
+export { toJson, toSummaryObject } from './exporters/json';
+export { toText } from './exporters/text';
+export { toMarkdown } from './exporters/markdown';

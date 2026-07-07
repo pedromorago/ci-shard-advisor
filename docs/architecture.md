@@ -73,3 +73,10 @@ Playwright JSON
 - **Classifier** (`classify`): asigna un `block` por reglas ordenadas (tags o patrón sobre título/fichero, gana la primera) con bloque por defecto. Es puro (no muta la entrada). Las tags viajan del report al `AtomicTask` para que el split por defecto sanity/regression funcione sin configurar nada.
 - **`analyze`**: el pipeline entero en una llamada (parse → normalize → classify → recommend). Es el único punto de entrada sobre el que construirán la web, la CLI y la API.
 - QA destacable: el parser se prueba con una batería de reports **malformados** (JSON inválido, tipos incorrectos, campos ausentes) verificando la ruta del error; el resto del pipeline con un **fixture realista** (suites anidadas, multi-proyecto, un flaky con reintentos, un skipped, tags) y un test **end-to-end** que va del JSON a la recomendación.
+
+## Decisiones de diseño de los exporters
+
+- Los tres formatos (JSON, texto CLI, Markdown) renderizan desde un único modelo intermedio `summarize()` (totales, desglose por bloque, recomendación, frontera), así se mantienen **consistentes** entre sí.
+- `toJson` es la salida máquina (para API o artefacto): objeto estable con tiempos en ms crudos, sin formatear. `toText` y `toMarkdown` son para humanos y usan `formatDuration`.
+- Formato **determinista** a propósito: `formatDuration` no usa reloj ni locale (`toLocaleString` haría los snapshots *flaky*). Esto habilita **snapshot testing**: la salida formateada se congela y cualquier cambio salta como diff.
+- QA destacable: los exporters de texto y Markdown se fijan con **inline snapshots** sobre el fixture demo; el de JSON con aserciones estructurales + comprobación de que la salida es **byte-idéntica** entre llamadas (determinismo).
