@@ -82,7 +82,12 @@ destacadas:
 - **TypeScript:** la API Fastify se prueba en proceso con `inject()` (sin servidor
   real): happy path y todos los `400`.
 - **Java:** una suite **JUnit 5 + REST Assured** ejerce el servicio por HTTP real.
+- **Contract testing:** la respuesta de `/analyze` se valida contra un **JSON
+  Schema** publicado ([`schemas/analysis-summary.schema.json`](../apps/api/schemas/analysis-summary.schema.json)),
+  tanto en TS (ajv) como en Java (`matchesJsonSchemaInClasspath`), usando el mismo
+  esquema. Un cambio accidental de la forma del contrato rompe ambos.
 → [`apps/api/tests/api.test.ts`](../apps/api/tests/api.test.ts),
+[`apps/api/tests/contract.test.ts`](../apps/api/tests/contract.test.ts),
 [`apps/api/rest-assured/`](../apps/api/rest-assured/)
 
 ### 11. Quality gate en CI
@@ -141,4 +146,3 @@ No se ejecuta en el CI de cada push (es lento, ~1 min); es un comando local/peri
 - **Regresión visual**: screenshots con `toHaveScreenshot` (baseline por plataforma).
 - **Subir el mutation score**: matar sobrevivientes accionables en `elbow.ts`,
   `parser.ts` y `recommend.ts` con fixtures más discriminantes.
-- **Contract testing** del esquema de respuesta de la API (JSON Schema).
