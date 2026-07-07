@@ -1,0 +1,21 @@
+{
+  "name": "@ci-shard-advisor/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "ci-shard-advisor": "./src/bin.ts" },
+  "scripts": {
+    "start": "tsx src/bin.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ci-shard-advisor/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0"
+  }
+}
