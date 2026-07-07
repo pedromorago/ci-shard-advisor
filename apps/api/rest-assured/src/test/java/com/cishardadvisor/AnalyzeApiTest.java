@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -62,6 +63,19 @@ class AnalyzeApiTest {
             .body("totalTests", equalTo(3))
             .body("recommended.shardCount", greaterThanOrEqualTo(1))
             .body("frontier", not(empty()));
+    }
+
+    @Test
+    @DisplayName("analyze response matches the published JSON Schema (contract)")
+    void analyzeMatchesSchema() {
+        given()
+            .contentType(ContentType.JSON)
+            .body(REPORT)
+        .when()
+            .post("/analyze")
+        .then()
+            .statusCode(200)
+            .body(matchesJsonSchemaInClasspath("analysis-summary.schema.json"));
     }
 
     @Test

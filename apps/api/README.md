@@ -28,7 +28,9 @@ curl -X POST 'http://127.0.0.1:3001/analyze?shards=6&overheadMs=30000' \
 
 ## Tests
 
-TypeScript integration tests drive the app in-process with Fastify's `inject`:
+TypeScript integration tests drive the app in-process with Fastify's `inject`,
+including a **contract test** that validates the `/analyze` response against the
+published JSON Schema ([`schemas/`](schemas)) with ajv:
 
 ```bash
 pnpm --filter @ci-shard-advisor/api test
