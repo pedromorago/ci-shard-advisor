@@ -1,0 +1,75 @@
+import { describe, expect, it } from 'vitest';
+import { simulateShard } from '../../src/scheduler/workers';
+import { mulberry32, randomInt } from '../helpers/random';
+
+describe('simulateShard', () => {
+  describe('input validation', () => {
+    it('rejects invalid worker counts', () => {
+      expect(() => simulateShard([1], 0)).toThrow(RangeError);
+      expect(() => simulateShard([1], -1)).toThrow(RangeError);
+      expect(() => simulateShard([1], 1.5)).toThrow(RangeError);
+    });
+
+    it('rejects negative or non-finite durations', () => {
+      expect(() => simulateShard([-5], 2)).toThrow(RangeError);
+      expect(() => simulateShard([Number.NaN], 2)).toThrow(RangeError);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('runs everything sequentially on a single worker', () => {
+      const result = simulateShard([10, 20, 5], 1);
+      expect(result.makespan).toBe(35);
+      expect(result.assignment[0]).toHaveLength(3);
+    });
+
+    it('drops to the longest task when workers outnumber tasks', () => {
+      expect(simulateShard([10, 20, 5], 5).makespan).toBe(20);
+    });
+
+    it('handles an empty task list', () => {
+      const result = simulateShard([], 3);
+      expect(result.makespan).toBe(0);
+      expect(result.assignment).toEqual([[], [], []]);
+    });
+  });
+
+  describe('models the real queue in input order (no reordering)', () => {
+    it('assigns each task to the worker that frees up first', () => {
+      // [1,1,1,3] over 2 workers, IN ORDER (ties keep the lower-index worker):
+      // t0->w0[1], t1->w1[1], t2->w0[2], t3->w1[1+3=4] -> makespan 4.
+      // An optimizer would reach 3 ({3} vs {1,1,1}); the real queue does not.
+      const result = simulateShard([1, 1, 1, 3], 2);
+      expect(result.loads).toEqual([2, 4]);
+      expect(result.makespan).toBe(4);
+    });
+  });
+
+  describe('physical invariants (property test)', () => {
+    it('conserves work and respects the basic time bounds', () => {
+      const random = mulberry32(31);
+      for (let i = 0; i < 200; i++) {
+        const taskCount = randomInt(random, 0, 20);
+        const workerCount = randomInt(random, 1, 6);
+        const durations = Array.from({ length: taskCount }, () =>
+          randomInt(random, 1, 400),
+        );
+        const { assignment, loads, makespan } = simulateShard(durations, workerCount);
+
+        const total = durations.reduce((acc, d) => acc + d, 0);
+        const longest = durations.length ? Math.max(...durations) : 0;
+
+        // Work is conserved: no time is created or lost.
+        expect(loads.reduce((acc, l) => acc + l, 0)).toBe(total);
+        // Wall time sits between "perfect split" and "everything on one worker".
+        expect(makespan).toBeGreaterThanOrEqual(total / workerCount);
+        expect(makespan).toBeGreaterThanOrEqual(longest);
+        expect(makespan).toBeLessThanOrEqual(total);
+        // Every task runs exactly once.
+        expect(assignment.flat().sort((a, b) => a - b)).toEqual(
+          Array.from({ length: taskCount }, (_, k) => k),
+        );
+      }
+    });
+  });
+});
