@@ -48,3 +48,11 @@ Playwright JSON
 - Ruptura de simetrías: como los shards son idénticos, dos con la misma carga son intercambiables; solo se expande el primero de cada carga distinta. Esto elimina el grueso del árbol simétrico (y hace que la primera tarea vaya siempre al shard 0).
 - Presupuesto doble: `timeBudgetMs` (reloj, para uso real) y `maxNodes` (determinista, pensado para poder testear el camino de "presupuesto agotado" sin tests flaky).
 - El solver es exacto pero se valida contra un oracle de fuerza bruta en los tests (property testing sobre instancias pequeñas): la implementación lista se comprueba contra otra trivialmente correcta.
+
+## Decisiones de diseño del simulador de workers
+
+- El scheduler reparte tareas entre *shards* (máquinas de CI separadas) tratando cada shard como secuencial. Pero dentro de un shard Playwright usa varios *workers* en paralelo, así que el tiempo real del shard **no es la suma** de sus tareas. El simulador (`simulateShard`) modela esa cola interna.
+- El simulador es un **modelo fiel del tool real, no un optimizador**: recorre las tareas en el orden dado y asigna cada una al worker que antes queda libre, **sin reordenar**. Puede dar tiempos peores que el óptimo, y eso es deseable: refleja lo que Playwright haría de verdad.
+- El orden de la cola importa (el mismo multiconjunto en distinto orden da distinto makespan). El orden lo decide el normalizer; el simulador solo lo respeta.
+- `simulateRun` orquesta un run completo: simula cada shard y el tiempo de pared del run es el del shard más lento (los shards corren en paralelo en máquinas distintas).
+- Se testea con invariantes físicos (conservación del trabajo, cotas de tiempo) y con dos comprobaciones cruzadas: el simulador **nunca bate** el óptimo del Branch & Bound, y con 1 worker por shard el run reproduce **exactamente** el makespan del scheduler.

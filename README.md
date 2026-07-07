@@ -37,7 +37,7 @@ pnpm typecheck   # strict TypeScript checks
 ## Roadmap
 
 - [x] Monorepo setup
-- [ ] Phase 1 — Scheduling core (LPT ✔, bounds ✔, branch and bound ✔, worker simulator, frontier)
+- [ ] Phase 1 — Scheduling core (LPT ✔, bounds ✔, branch and bound ✔, worker simulator ✔, frontier)
 - [ ] Phase 2 — Web demo with preloaded analysis
 - [ ] Phase 3 — Full testing strategy (integration, privacy, visual, a11y)
 - [ ] Phase 4 — CLI with quality-gate mode
