@@ -4,3 +4,5 @@ export type { ScheduleResult } from './scheduler/lpt';
 export { avgBound, pmaxBound, lowerBound } from './scheduler/bounds';
 export { branchAndBound } from './scheduler/branch-and-bound';
 export type { SolveResult, SolveOptions } from './scheduler/branch-and-bound';
+export { simulateShard, simulateRun } from './scheduler/workers';
+export type { SimulationResult, RunSimulation } from './scheduler/workers';
