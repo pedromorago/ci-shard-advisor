@@ -40,6 +40,6 @@ pnpm typecheck   # strict TypeScript checks
 - [x] Phase 1 — Scheduling core (LPT ✔, bounds ✔, branch and bound ✔, worker simulator ✔, frontier ✔)
 - [x] Phase 2 — Web demo with preloaded analysis (upload, frontier chart, client-side)
 - [ ] Phase 3 — Full testing strategy (unit ✔, integration ✔, privacy ✔, a11y ✔, visual)
-- [ ] Phase 4 — CLI with quality-gate mode
+- [x] Phase 4 — CLI with quality-gate mode
 - [ ] Phase 5 — Local API + Java REST Assured test suite
 - [ ] Phase 6 — Portfolio polish (docs, GIF, badges)
