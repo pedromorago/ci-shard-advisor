@@ -43,3 +43,8 @@ Playwright JSON
 - LPT no es la estrella: es el incumbente inicial (cota superior) del Branch & Bound y el respaldo cuando se agota el presupuesto de tiempo.
 - `avgBound` se mantiene continuo (sin `ceil`). Con duraciones estrictamente enteras, `ceil(total/N)` sería una cota válida algo más ajustada, pero con duraciones fraccionarias dejaría de ser una cota válida (ejemplo: [1.5, 1.5] con N=2 tiene óptimo 1.5, y ceil(3/2)=2 lo superaría). Preferimos correcto y general.
 - El motor nunca miente: si no certifica el óptimo dentro del presupuesto, devuelve `optimal: false` junto con la mejor solución, la cota inferior y el gap.
+- El Branch & Bound ramifica asignando tareas de mayor a menor duración (una por nivel del árbol, decidiendo su shard). Colocar primero las grandes ajusta las cargas pronto y hace que la poda por incumbente corte mucho antes.
+- Poda por cota: una colocación se descarta en cuanto su shard alcanzaría una carga `>=` al mejor makespan conocido, porque esa rama ya no puede mejorarlo.
+- Ruptura de simetrías: como los shards son idénticos, dos con la misma carga son intercambiables; solo se expande el primero de cada carga distinta. Esto elimina el grueso del árbol simétrico (y hace que la primera tarea vaya siempre al shard 0).
+- Presupuesto doble: `timeBudgetMs` (reloj, para uso real) y `maxNodes` (determinista, pensado para poder testear el camino de "presupuesto agotado" sin tests flaky).
+- El solver es exacto pero se valida contra un oracle de fuerza bruta en los tests (property testing sobre instancias pequeñas): la implementación lista se comprueba contra otra trivialmente correcta.
