@@ -6,3 +6,8 @@ export { branchAndBound } from './scheduler/branch-and-bound';
 export type { SolveResult, SolveOptions } from './scheduler/branch-and-bound';
 export { simulateShard, simulateRun } from './scheduler/workers';
 export type { SimulationResult, RunSimulation } from './scheduler/workers';
+export { buildFrontier, evaluateConfig } from './recommender/frontier';
+export type { ConfigPoint, FrontierOptions } from './recommender/frontier';
+export { findElbow } from './recommender/elbow';
+export { recommend } from './recommender/recommend';
+export type { RecommendOptions, RecommendationResult, Savings } from './recommender/recommend';
