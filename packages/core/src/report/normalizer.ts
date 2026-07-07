@@ -38,6 +38,7 @@ function normalizeSpec(spec: ReportSpec, suiteFile: string | undefined): AtomicT
       retries,
     };
     if (project !== undefined) task.project = project;
+    if (spec.tags && spec.tags.length > 0) task.tags = spec.tags;
     return task;
   });
 }
