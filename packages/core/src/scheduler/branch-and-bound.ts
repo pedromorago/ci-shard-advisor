@@ -40,11 +40,11 @@ function relativeGap(makespan: number, bound: number): number {
  * Branch & Bound solver for minimum makespan on identical machines: split n
  * tasks across N shards so the busiest shard finishes as early as possible.
  *
- * Step 1: trivial cases only. When shardCount is 1, or there are at least as
- * many shards as tasks, or the list is empty, LPT is already optimal and we
- * certify it. Otherwise we return LPT's schedule for now (the actual search
- * arrives in the next step) and only claim optimality if it happens to hit the
- * lower bound.
+ * The search assigns tasks one at a time, biggest first, trying each shard.
+ * LPT provides the initial incumbent (upper bound); a branch is pruned as soon
+ * as a placement would reach a load that cannot strictly beat that incumbent.
+ * Because the whole tree is explored, the returned makespan is certified
+ * optimal (a later step adds a time budget that can cut the search short).
  */
 export function branchAndBound(
   durations: readonly number[],
@@ -60,14 +60,72 @@ export function branchAndBound(
   // Cases where LPT provably returns the optimum: nothing to search.
   const trivial =
     durations.length === 0 || shardCount === 1 || shardCount >= durations.length;
+  if (trivial) {
+    return { ...incumbent, optimal: true, lowerBound: bound, gap: 0, nodesExplored: 0 };
+  }
 
-  const optimal = trivial || incumbent.makespan === bound;
+  // Assign the longest tasks first: placing big jobs early tightens loads
+  // quickly and lets the incumbent bound prune far more of the tree.
+  const order = durations
+    .map((duration, index) => ({ duration, index }))
+    .sort((a, b) => b.duration - a.duration);
+  const sorted = order.map((o) => o.duration);
+  const originalIndex = order.map((o) => o.index);
+  const taskCount = sorted.length;
 
-  return {
-    ...incumbent,
-    optimal,
-    lowerBound: bound,
-    gap: optimal ? 0 : relativeGap(incumbent.makespan, bound),
-    nodesExplored: 0,
+  const loads = new Array<number>(shardCount).fill(0);
+  const currentShardOfTask = new Array<number>(taskCount).fill(0);
+
+  let bestMakespan = incumbent.makespan;
+  let bestShardOfTask: number[] | null = null;
+  let nodesExplored = 0;
+
+  const search = (position: number): void => {
+    if (position === taskCount) {
+      const makespan = Math.max(...loads);
+      if (makespan < bestMakespan) {
+        bestMakespan = makespan;
+        bestShardOfTask = currentShardOfTask.slice();
+      }
+      return;
+    }
+    for (let shard = 0; shard < shardCount; shard++) {
+      const newLoad = loads[shard] + sorted[position];
+      // Prune: this shard alone would already match/exceed the best known
+      // makespan, so no completion down this branch can strictly improve it.
+      if (newLoad >= bestMakespan) continue;
+      nodesExplored++;
+      loads[shard] = newLoad;
+      currentShardOfTask[position] = shard;
+      search(position + 1);
+      loads[shard] = newLoad - sorted[position];
+    }
   };
+
+  search(0);
+
+  // No improvement over LPT means LPT was already optimal.
+  const schedule =
+    bestShardOfTask === null
+      ? incumbent
+      : buildSchedule(bestShardOfTask, sorted, originalIndex, shardCount);
+
+  return { ...schedule, optimal: true, lowerBound: bound, gap: 0, nodesExplored };
+}
+
+/** Rebuild an index-based schedule from a shard-per-(sorted)-task decision. */
+function buildSchedule(
+  shardOfTask: readonly number[],
+  sorted: readonly number[],
+  originalIndex: readonly number[],
+  shardCount: number,
+): ScheduleResult {
+  const assignment: number[][] = Array.from({ length: shardCount }, () => []);
+  const loads = new Array<number>(shardCount).fill(0);
+  for (let position = 0; position < shardOfTask.length; position++) {
+    const shard = shardOfTask[position];
+    assignment[shard].push(originalIndex[position]);
+    loads[shard] += sorted[position];
+  }
+  return { assignment, loads, makespan: Math.max(...loads) };
 }

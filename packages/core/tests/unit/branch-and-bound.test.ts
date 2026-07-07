@@ -3,6 +3,7 @@ import { branchAndBound } from '../../src/scheduler/branch-and-bound';
 import { lpt } from '../../src/scheduler/lpt';
 import { lowerBound } from '../../src/scheduler/bounds';
 import { mulberry32, randomInt } from '../helpers/random';
+import { bruteForceMakespan } from '../helpers/brute-force';
 
 describe('branchAndBound', () => {
   describe('input validation', () => {
@@ -37,6 +38,41 @@ describe('branchAndBound', () => {
       expect(result.makespan).toBe(20);
       expect(result.optimal).toBe(true);
       expect(result.gap).toBe(0);
+    });
+  });
+
+  describe('finds the optimum on known instances', () => {
+    it('solves the classic [10, 10, 5] with 2 shards', () => {
+      const result = branchAndBound([10, 10, 5], 2);
+      expect(result.makespan).toBe(15);
+      expect(result.optimal).toBe(true);
+    });
+
+    it('beats LPT when the greedy choice is suboptimal', () => {
+      // LPT on [5,4,3,3,3] with 2 shards is greedy; the true optimum is 9
+      // ({5,4} and {3,3,3}). The oracle confirms it.
+      const durations = [5, 4, 3, 3, 3];
+      const result = branchAndBound(durations, 2);
+      expect(result.makespan).toBe(bruteForceMakespan(durations, 2));
+      expect(result.optimal).toBe(true);
+    });
+  });
+
+  describe('matches the brute-force oracle (property test)', () => {
+    it('finds the exact optimum on 200 random small instances', () => {
+      const random = mulberry32(2024);
+      for (let i = 0; i < 200; i++) {
+        // Keep instances tiny: the oracle is exponential (shardCount^n).
+        const taskCount = randomInt(random, 1, 8);
+        const shardCount = randomInt(random, 1, 4);
+        const durations = Array.from({ length: taskCount }, () =>
+          randomInt(random, 1, 50),
+        );
+        const result = branchAndBound(durations, shardCount);
+        expect(result.makespan).toBe(bruteForceMakespan(durations, shardCount));
+        expect(result.optimal).toBe(true);
+        expect(result.gap).toBe(0);
+      }
     });
   });
 
