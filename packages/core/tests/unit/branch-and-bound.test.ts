@@ -93,6 +93,57 @@ describe('branchAndBound', () => {
     });
   });
 
+  describe('budget and honest gap reporting', () => {
+    it('certifies gap 0 when it completes the search', () => {
+      const result = branchAndBound([5, 4, 3, 3, 3], 2);
+      expect(result.optimal).toBe(true);
+      expect(result.gap).toBe(0);
+    });
+
+    it('gives up honestly when the node budget is too small', () => {
+      const durations = [5, 4, 3, 3, 3];
+      const result = branchAndBound(durations, 2, { maxNodes: 1 });
+      expect(result.optimal).toBe(false);
+      expect(result.gap).toBeGreaterThan(0);
+      // The fallback schedule is still valid and no worse than LPT.
+      expect(result.makespan).toBeLessThanOrEqual(lpt(durations, 2).makespan);
+      expect(result.makespan).toBeGreaterThanOrEqual(result.lowerBound);
+      expect(result.assignment.flat().sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4]);
+    });
+
+    it('reports a gap consistent with the makespan and lower bound', () => {
+      const result = branchAndBound([5, 4, 3, 3, 3], 2, { maxNodes: 1 });
+      const expectedGap = (result.makespan - result.lowerBound) / result.lowerBound;
+      expect(result.gap).toBeCloseTo(expectedGap, 10);
+    });
+  });
+
+  describe('the engine never lies (property test)', () => {
+    it('a claimed optimum always equals the true optimum, even under a tight budget', () => {
+      const random = mulberry32(99);
+      for (let i = 0; i < 200; i++) {
+        const taskCount = randomInt(random, 1, 8);
+        const shardCount = randomInt(random, 1, 4);
+        const durations = Array.from({ length: taskCount }, () =>
+          randomInt(random, 1, 50),
+        );
+        // A tight budget forces many runs to bail out with optimal:false.
+        const result = branchAndBound(durations, shardCount, { maxNodes: 3 });
+        const trueOptimum = bruteForceMakespan(durations, shardCount);
+
+        if (result.optimal) {
+          expect(result.makespan).toBe(trueOptimum); // never claim a false optimum
+          expect(result.gap).toBe(0);
+        } else {
+          // Not proven optimal, but always a valid schedule within the gap.
+          expect(result.makespan).toBeGreaterThanOrEqual(trueOptimum);
+          expect(result.makespan).toBeGreaterThanOrEqual(result.lowerBound);
+          expect(result.gap).toBeGreaterThan(0);
+        }
+      }
+    });
+  });
+
   describe('invariants that must always hold', () => {
     it('never does worse than LPT and never beats the lower bound', () => {
       const random = mulberry32(123);

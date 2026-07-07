@@ -45,14 +45,19 @@ function relativeGap(makespan: number, bound: number): number {
  * as a placement would reach a load that cannot strictly beat that incumbent.
  * Shards are identical, so placing a task on two shards that currently hold the
  * same load yields equivalent subtrees — we expand only the first of each
- * distinct load and skip the symmetric duplicates. Because the rest of the tree
- * is still fully explored, the returned makespan stays certified optimal (a
- * later step adds a time budget that can cut the search short).
+ * distinct load and skip the symmetric duplicates.
+ *
+ * A budget (wall-clock `timeBudgetMs` and/or deterministic `maxNodes`) can stop
+ * the search early. The engine never lies: when it cannot certify the optimum
+ * within the budget it returns the best schedule found so far with
+ * `optimal: false` and a `gap` measuring the worst-case distance to the lower
+ * bound. When the incumbent reaches that bound the optimum is proven and the
+ * search stops immediately.
  */
 export function branchAndBound(
   durations: readonly number[],
   shardCount: number,
-  _options: SolveOptions = {},
+  options: SolveOptions = {},
 ): SolveResult {
   assertValidShardCount(shardCount);
   assertValidDurations(durations);
@@ -66,6 +71,11 @@ export function branchAndBound(
   if (trivial) {
     return { ...incumbent, optimal: true, lowerBound: bound, gap: 0, nodesExplored: 0 };
   }
+
+  const maxNodes = options.maxNodes ?? Number.POSITIVE_INFINITY;
+  const deadline =
+    options.timeBudgetMs != null ? Date.now() + options.timeBudgetMs : Number.POSITIVE_INFINITY;
+  let budgetExhausted = false;
 
   // Assign the longest tasks first: placing big jobs early tightens loads
   // quickly and lets the incumbent bound prune far more of the tree.
@@ -84,6 +94,8 @@ export function branchAndBound(
   let nodesExplored = 0;
 
   const search = (position: number): void => {
+    // Optimum proven: the incumbent already matches the lower bound.
+    if (bestMakespan <= bound) return;
     if (position === taskCount) {
       const makespan = Math.max(...loads);
       if (makespan < bestMakespan) {
@@ -94,6 +106,7 @@ export function branchAndBound(
     }
     const seenLoads = new Set<number>();
     for (let shard = 0; shard < shardCount; shard++) {
+      if (budgetExhausted) return;
       // Symmetry breaking: identical shards holding the same load are
       // interchangeable, so only the first of each distinct load is expanded.
       if (seenLoads.has(loads[shard])) continue;
@@ -103,6 +116,10 @@ export function branchAndBound(
       // makespan, so no completion down this branch can strictly improve it.
       if (newLoad >= bestMakespan) continue;
       nodesExplored++;
+      if (nodesExplored >= maxNodes || Date.now() >= deadline) {
+        budgetExhausted = true;
+        return;
+      }
       loads[shard] = newLoad;
       currentShardOfTask[position] = shard;
       search(position + 1);
@@ -118,7 +135,15 @@ export function branchAndBound(
       ? incumbent
       : buildSchedule(bestShardOfTask, sorted, originalIndex, shardCount);
 
-  return { ...schedule, optimal: true, lowerBound: bound, gap: 0, nodesExplored };
+  // Optimal unless the budget cut the search short before proving it.
+  const optimal = !budgetExhausted || schedule.makespan <= bound;
+  return {
+    ...schedule,
+    optimal,
+    lowerBound: bound,
+    gap: optimal ? 0 : relativeGap(schedule.makespan, bound),
+    nodesExplored,
+  };
 }
 
 /** Rebuild an index-based schedule from a shard-per-(sorted)-task decision. */
