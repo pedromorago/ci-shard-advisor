@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { simulateShard } from '../../src/scheduler/workers';
+import { simulateShard, simulateRun } from '../../src/scheduler/workers';
 import { branchAndBound } from '../../src/scheduler/branch-and-bound';
+import { lpt } from '../../src/scheduler/lpt';
 import { mulberry32, randomInt } from '../helpers/random';
 
 describe('simulateShard', () => {
@@ -67,6 +68,54 @@ describe('simulateShard', () => {
         const simulated = simulateShard(durations, workerCount).makespan;
         const optimum = branchAndBound(durations, workerCount).makespan;
         expect(simulated).toBeGreaterThanOrEqual(optimum);
+      }
+    });
+  });
+
+  describe('simulateRun (whole sharded run)', () => {
+    it('handles an empty run', () => {
+      expect(simulateRun([], [], 2)).toEqual({ shards: [], makespan: 0 });
+    });
+
+    it('the run finishes with its slowest shard', () => {
+      const durations = [10, 4, 6, 2, 8];
+      const assignment = branchAndBound(durations, 3).assignment;
+      const run = simulateRun(durations, assignment, 2);
+      const slowest = Math.max(...run.shards.map((s) => s.makespan));
+      expect(run.makespan).toBe(slowest);
+    });
+
+    it('equals the scheduler makespan when each shard has a single worker', () => {
+      // With one worker a shard runs sequentially, so its wall time is its
+      // total load — exactly what the scheduler assumed.
+      const random = mulberry32(88);
+      for (let i = 0; i < 100; i++) {
+        const taskCount = randomInt(random, 0, 15);
+        const shardCount = randomInt(random, 1, 5);
+        const durations = Array.from({ length: taskCount }, () =>
+          randomInt(random, 1, 100),
+        );
+        const scheduled = lpt(durations, shardCount);
+        const run = simulateRun(durations, scheduled.assignment, 1);
+        expect(run.makespan).toBe(scheduled.makespan);
+      }
+    });
+
+    it('extra workers never make a run slower (and never beat the scheduler)', () => {
+      const random = mulberry32(64);
+      for (let i = 0; i < 100; i++) {
+        const taskCount = randomInt(random, 1, 15);
+        const shardCount = randomInt(random, 1, 5);
+        const durations = Array.from({ length: taskCount }, () =>
+          randomInt(random, 1, 100),
+        );
+        const scheduled = lpt(durations, shardCount);
+        const oneWorker = simulateRun(durations, scheduled.assignment, 1).makespan;
+        const manyWorkers = simulateRun(durations, scheduled.assignment, 4).makespan;
+        // More parallelism inside a shard can only help.
+        expect(manyWorkers).toBeLessThanOrEqual(oneWorker);
+        // ...and a single worker reproduces the scheduler's sequential makespan.
+        expect(oneWorker).toBe(scheduled.makespan);
       }
     });
   });

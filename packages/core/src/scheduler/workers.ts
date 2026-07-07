@@ -54,3 +54,45 @@ export function simulateShard(
 
   return { assignment, loads, makespan: Math.max(0, ...loads) };
 }
+
+/**
+ * Whole-run simulation: each shard runs on its own machine (so they run in
+ * parallel), and inside each shard `workerCount` workers process its tasks.
+ */
+export interface RunSimulation {
+  /**
+   * Per-shard simulation, aligned with the input assignment. Note the task
+   * indices inside each shard's `assignment` are local to that shard's task
+   * list, not global durations indices.
+   */
+  shards: SimulationResult[];
+  /** Whole-run wall-clock time: the slowest shard gates the run. */
+  makespan: number;
+}
+
+/**
+ * Simulate a full sharded run. Takes the scheduler's per-shard assignment
+ * (each entry is the list of global task indices placed on that shard) and
+ * runs the worker-queue simulation for every shard. Since shards run on
+ * separate machines in parallel, the run finishes when its slowest shard does.
+ */
+export function simulateRun(
+  durations: readonly number[],
+  assignment: readonly (readonly number[])[],
+  workerCount: number,
+): RunSimulation {
+  assertValidWorkerCount(workerCount);
+  assertValidDurations(durations);
+
+  const shards = assignment.map((taskIndices) =>
+    simulateShard(
+      taskIndices.map((index) => durations[index]),
+      workerCount,
+    ),
+  );
+
+  return {
+    shards,
+    makespan: shards.reduce((slowest, shard) => Math.max(slowest, shard.makespan), 0),
+  };
+}
