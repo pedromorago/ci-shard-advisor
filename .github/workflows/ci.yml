@@ -19,6 +19,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm --filter @ci-shard-advisor/core test:coverage
       - run: pnpm --filter @ci-shard-advisor/web build
 
   e2e:
