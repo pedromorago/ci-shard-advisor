@@ -2,7 +2,7 @@
 
 Analyze Playwright JSON reports and find the best CI sharding strategy based on execution time, workers and cost.
 
-> **Status: early development (phase 1 of 6).** The scheduling core is being built and tested first. Web UI, CLI and local API will follow.
+> **Status: early development.** Phase 1 is complete — the scheduling core (scheduler, worker simulator and cost/time recommender) is built and tested. Web UI, CLI and local API will follow.
 
 ## Why
 
@@ -37,7 +37,7 @@ pnpm typecheck   # strict TypeScript checks
 ## Roadmap
 
 - [x] Monorepo setup
-- [ ] Phase 1 — Scheduling core (LPT ✔, bounds ✔, branch and bound ✔, worker simulator ✔, frontier)
+- [x] Phase 1 — Scheduling core (LPT ✔, bounds ✔, branch and bound ✔, worker simulator ✔, frontier ✔)
 - [ ] Phase 2 — Web demo with preloaded analysis
 - [ ] Phase 3 — Full testing strategy (integration, privacy, visual, a11y)
 - [ ] Phase 4 — CLI with quality-gate mode
