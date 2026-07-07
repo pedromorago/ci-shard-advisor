@@ -146,6 +146,76 @@ body {
   color: var(--muted);
 }
 
+.chart {
+  margin: 0;
+}
+
+.chart figcaption {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.chart__svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart__tick,
+.chart__axis-label {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.chart__axis-label {
+  font-size: 13px;
+}
+
+.chart__line {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.chart__point {
+  fill: var(--accent);
+}
+
+.chart__point--recommended {
+  fill: var(--accent);
+  stroke: var(--card);
+  stroke-width: 3;
+}
+
+.chart__point--current {
+  fill: var(--card);
+  stroke: var(--muted);
+  stroke-width: 3;
+}
+
+.chart__marker-label {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .blocks {
   width: 100%;
   border-collapse: collapse;
