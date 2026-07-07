@@ -41,5 +41,5 @@ pnpm typecheck   # strict TypeScript checks
 - [x] Phase 2 — Web demo with preloaded analysis (upload, frontier chart, client-side)
 - [ ] Phase 3 — Full testing strategy (unit ✔, integration ✔, privacy ✔, a11y ✔, visual)
 - [x] Phase 4 — CLI with quality-gate mode
-- [ ] Phase 5 — Local API + Java REST Assured test suite
+- [x] Phase 5 — Local API + Java REST Assured test suite
 - [ ] Phase 6 — Portfolio polish (docs, GIF, badges)
