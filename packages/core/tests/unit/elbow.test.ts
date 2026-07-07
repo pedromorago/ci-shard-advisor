@@ -10,8 +10,9 @@ function point(shardCount: number, feedbackTimeMs: number, costMs: number): Conf
 
 describe('findElbow', () => {
   describe('degenerate frontiers', () => {
-    it('throws on an empty frontier', () => {
+    it('throws a descriptive error on an empty frontier', () => {
       expect(() => findElbow([])).toThrow(RangeError);
+      expect(() => findElbow([])).toThrow(/must not be empty/);
     });
 
     it('returns the only point when there is one', () => {

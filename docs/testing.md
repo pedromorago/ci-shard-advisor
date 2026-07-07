@@ -113,7 +113,32 @@ umbrales** (95% statements/lines, 90% branches, 95% functions). Los módulos de
 solo-tipos se excluyen (no tienen runtime que cubrir). Se ejecuta en CI.
 → `pnpm --filter @ci-shard-advisor/core test:coverage`
 
+## Mutation testing
+
+La cobertura dice qué código *se ejecuta*; el mutation testing dice si los tests
+de verdad **detectarían un bug**. Stryker introduce mutaciones en el código fuente
+(cambia `<` por `<=`, `min` por `max`, borra líneas…) y ejecuta la suite: si algún
+test falla, el mutante muere; si todos pasan, **sobrevive** (un cambio que tus
+tests no notarían).
+
+Score actual del core: **~78%** (`test:mutation`). El informe revela dónde
+reforzar (p.ej. la aritmética de normalización de `elbow.ts`). Dos lecciones que
+deja:
+
+- **Sobrevivientes accionables:** el mensaje de `RangeError` sobrevivía porque un
+  test solo comprobaba el *tipo* de error, no el texto → se añadió la aserción del
+  mensaje y el mutante murió.
+- **Mutantes equivalentes:** algunos son imposibles de matar porque **no cambian el
+  comportamiento** (p.ej. `frontier.length <= 2` → `< 2`: con 2 puntos el algoritmo
+  completo también devuelve el primero). Por eso un score del 100% no es el
+  objetivo realista; lo valioso es distinguir sobrevivientes accionables de los
+  equivalentes.
+
+No se ejecuta en el CI de cada push (es lento, ~1 min); es un comando local/periódico.
+→ `pnpm --filter @ci-shard-advisor/core test:mutation`
+
 ## Ideas para mejorar (pendiente)
 - **Regresión visual**: screenshots con `toHaveScreenshot` (baseline por plataforma).
-- **Mutation testing** (Stryker) sobre el core, para medir la calidad de los tests.
+- **Subir el mutation score**: matar sobrevivientes accionables en `elbow.ts`,
+  `parser.ts` y `recommend.ts` con fixtures más discriminantes.
 - **Contract testing** del esquema de respuesta de la API (JSON Schema).
