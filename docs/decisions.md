@@ -43,3 +43,10 @@ Formato corto: contexto, decisión, consecuencias. Un ADR no se borra; si cambia
 - **Contexto:** el proyecto debe leerse como herramienta QA/SDET profesional.
 - **Decisión:** el README y la narrativa pública presentan el rigor del motor como criterio de ingeniería, sin referencias académicas personales.
 - **Consecuencias:** mensaje centrado en el problema de CI y en la estrategia de testing.
+
+## ADR-007 — Stack de la web: Vite + React + TypeScript
+
+- **Estado:** aceptada
+- **Contexto:** la Fase 2 necesita una web estática (ADR-002) que consuma el core sin duplicar lógica y que sea fácil de testear con las herramientas del ecosistema QA.
+- **Decisión:** `apps/web` con Vite + React + TypeScript, consumiendo `@ci-shard-advisor/core` como dependencia de workspace (`workspace:*`). Testing con Vitest + Testing Library para componentes y Playwright para E2E (privacidad, a11y). Estilos con CSS plano, sin frameworks pesados.
+- **Consecuencias:** el core (TS puro) se empaqueta en el bundle de cliente, confirmando ADR-001/002 (todo el análisis corre en el navegador). El adaptador web queda fino: solo renderiza e invoca al core. Se abre con el análisis demo precargado (ADR-005) usando un fixture propio.
