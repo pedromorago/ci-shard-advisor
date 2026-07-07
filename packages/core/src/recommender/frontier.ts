@@ -42,20 +42,46 @@ function assertNonNegativeFinite(value: number, name: string): void {
 }
 
 /**
- * Build the cost/time frontier: for every shard count from 1 to maxShards,
- * split the tasks with the branch-and-bound solver, simulate the run, and
- * record its wall-clock time and billed cost. Adding shards trades money for
- * speed — this is the curve the recommender searches for the sweet spot.
+ * Evaluate a single configuration: split the tasks across `shardCount` shards
+ * with the branch-and-bound solver, simulate the run, and measure its
+ * wall-clock time and billed cost. This is the atom both the frontier and the
+ * "current config" comparison are built from.
  */
-export function buildFrontier(
+export function evaluateConfig(
   durations: readonly number[],
+  shardCount: number,
   options: FrontierOptions = {},
-): ConfigPoint[] {
+): ConfigPoint {
   assertValidDurations(durations);
   const workersPerShard = options.workersPerShard ?? 1;
   const startupOverheadMs = options.startupOverheadMs ?? 0;
   assertNonNegativeFinite(startupOverheadMs, 'startupOverheadMs');
 
+  const plan = branchAndBound(durations, shardCount, options.solve);
+  const run = simulateRun(durations, plan.assignment, workersPerShard);
+  const costMs = run.shards.reduce(
+    (sum, shard) => sum + shard.makespan + startupOverheadMs,
+    0,
+  );
+  return {
+    shardCount,
+    workersPerShard,
+    runTimeMs: run.makespan,
+    feedbackTimeMs: run.makespan + startupOverheadMs,
+    costMs,
+    optimal: plan.optimal,
+  };
+}
+
+/**
+ * Build the cost/time frontier: for every shard count from 1 to maxShards,
+ * evaluate the configuration. Adding shards trades money for speed — this is
+ * the curve the recommender searches for the sweet spot.
+ */
+export function buildFrontier(
+  durations: readonly number[],
+  options: FrontierOptions = {},
+): ConfigPoint[] {
   const maxShards = options.maxShards ?? Math.max(1, durations.length);
   if (!Number.isInteger(maxShards) || maxShards < 1) {
     throw new RangeError(`maxShards must be an integer >= 1, got ${maxShards}`);
@@ -63,20 +89,7 @@ export function buildFrontier(
 
   const points: ConfigPoint[] = [];
   for (let shardCount = 1; shardCount <= maxShards; shardCount++) {
-    const plan = branchAndBound(durations, shardCount, options.solve);
-    const run = simulateRun(durations, plan.assignment, workersPerShard);
-    const costMs = run.shards.reduce(
-      (sum, shard) => sum + shard.makespan + startupOverheadMs,
-      0,
-    );
-    points.push({
-      shardCount,
-      workersPerShard,
-      runTimeMs: run.makespan,
-      feedbackTimeMs: run.makespan + startupOverheadMs,
-      costMs,
-      optimal: plan.optimal,
-    });
+    points.push(evaluateConfig(durations, shardCount, options));
   }
   return points;
 }
