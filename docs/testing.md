@@ -92,7 +92,14 @@ demostrar las dos): la demo carga, la subida funciona, y dos pruebas destacadas:
 [`apps/api/tests/contract.test.ts`](../apps/api/tests/contract.test.ts),
 [`apps/api/rest-assured/`](../apps/api/rest-assured/)
 
-### 11. Quality gate en CI
+### 11. Performance testing (k6 y JMeter)
+La API local es el objetivo de carga. Dos herramientas equivalentes contra
+`POST /analyze`: **k6** (JS, con *stages* de VUs y **thresholds** de p95/error rate
+que hacen que el run falle si se incumplen — un gate, no solo un informe) y un plan
+**JMeter** (`.jmx`) con thread group y assertions de respuesta/duración.
+→ [`apps/api/perf/`](../apps/api/perf/)
+
+### 12. Quality gate en CI
 La CLI puede fallar el build (exit ≠ 0) si el mejor tiempo de feedback supera un
 presupuesto o si la config actual desperdicia demasiado coste — testeado con I/O
 inyectada.
