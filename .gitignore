@@ -8,3 +8,9 @@ playwright-report/
 *.tsbuildinfo
 .DS_Store
 /example-report.json
+
+# Cypress / reporter artifacts
+apps/web/mochawesome-report/
+apps/web/cypress/screenshots/
+apps/web/cypress/videos/
+mochawesome-report/
