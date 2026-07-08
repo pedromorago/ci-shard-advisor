@@ -1,10 +1,12 @@
 import { formatDuration } from '@ci-shard-advisor/core';
 import type { ConfigPoint } from '@ci-shard-advisor/core';
+import { formatMoney } from './analysis';
 
 interface FrontierChartProps {
   frontier: ConfigPoint[];
   recommended: ConfigPoint;
   current?: ConfigPoint;
+  ratePerMin: number;
 }
 
 const WIDTH = 640;
@@ -25,10 +27,11 @@ function ticks(min: number, max: number, count = 4): number[] {
  * the recommended knee and the current config are marked directly. Lower-left
  * (cheap and fast) is best.
  */
-export function FrontierChart({ frontier, recommended, current }: FrontierChartProps) {
-  // X axis = billed cost, Y axis = feedback time.
+export function FrontierChart({ frontier, recommended, current, ratePerMin }: FrontierChartProps) {
+  // X axis = billed cost (in money), Y axis = feedback time.
   const xOf = (p: ConfigPoint) => p.costMs;
   const yOf = (p: ConfigPoint) => p.feedbackTimeMs;
+  const money = (costMs: number) => formatMoney(costMs, ratePerMin);
 
   const xs = frontier.map(xOf);
   const ys = frontier.map(yOf);
@@ -71,14 +74,14 @@ export function FrontierChart({ frontier, recommended, current }: FrontierChartP
             </text>
           </g>
         ))}
-        {/* X axis ticks (billed cost) */}
+        {/* X axis ticks (billed cost, in money) */}
         {ticks(xMin, xMax).map((v) => (
           <text key={`x${v}`} className="chart__tick" x={sx(v)} y={HEIGHT - MARGIN.bottom + 20} textAnchor="middle">
-            {formatDuration(v)}
+            {money(v)}
           </text>
         ))}
         <text className="chart__axis-label" x={MARGIN.left + PLOT_W / 2} y={HEIGHT - 8} textAnchor="middle">
-          Billed cost
+          Cost per run
         </text>
         <text
           className="chart__axis-label"
@@ -94,7 +97,7 @@ export function FrontierChart({ frontier, recommended, current }: FrontierChartP
 
         {frontier.map((p) => (
           <circle key={p.shardCount} className="chart__point" cx={sx(xOf(p))} cy={sy(yOf(p))} r={4}>
-            <title>{`${p.shardCount} shards · ${formatDuration(p.feedbackTimeMs)} · ${formatDuration(p.costMs)}`}</title>
+            <title>{`${p.shardCount} shards · ${formatDuration(p.feedbackTimeMs)} · ${money(p.costMs)}`}</title>
           </circle>
         ))}
 
@@ -122,7 +125,7 @@ export function FrontierChart({ frontier, recommended, current }: FrontierChartP
           <tr>
             <th scope="col">Shards</th>
             <th scope="col">Feedback time</th>
-            <th scope="col">Billed cost</th>
+            <th scope="col">Cost per run</th>
           </tr>
         </thead>
         <tbody>
@@ -130,7 +133,7 @@ export function FrontierChart({ frontier, recommended, current }: FrontierChartP
             <tr key={p.shardCount}>
               <td>{p.shardCount}</td>
               <td>{formatDuration(p.feedbackTimeMs)}</td>
-              <td>{formatDuration(p.costMs)}</td>
+              <td>{money(p.costMs)}</td>
             </tr>
           ))}
         </tbody>

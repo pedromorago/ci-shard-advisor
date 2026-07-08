@@ -23,6 +23,20 @@ describe('recommend', () => {
     expect(result.savings).toEqual({ timeSavedMs: 20, costDeltaMs: 5 });
   });
 
+  it('models the current pipeline with an even (by-count) split that the optimal beats', () => {
+    // Round-robin puts both slow tests on the same shard; duration-balancing
+    // fixes it at the same shard count — a real "rebalance for free" saving.
+    const durations = [10, 1, 10, 1];
+    const result = recommend(durations, {
+      maxShards: 2,
+      currentShardCount: 2,
+      startupOverheadMs: 0,
+    });
+    const optimalAtCurrent = result.frontier[1]; // 2-shard optimal split
+    expect(result.current?.feedbackTimeMs).toBe(20); // even: [10,10] and [1,1]
+    expect(optimalAtCurrent.feedbackTimeMs).toBe(11); // optimal: [10,1] and [10,1]
+  });
+
   it('reports zero savings when already on the recommended config', () => {
     const result = recommend([10, 10, 10, 10], {
       maxShards: 4,

@@ -85,8 +85,12 @@ export function recommend(
     );
   }
 
-  // Evaluate the current config directly so it works even beyond maxShards.
-  const current = evaluateConfig(durations, options.currentShardCount, options);
+  // The current pipeline is modeled with a default even split (by test count),
+  // so the recommendations (duration-optimal) can show a real improvement.
+  const current = evaluateConfig(durations, options.currentShardCount, {
+    ...options,
+    split: 'even',
+  });
   const savings: Savings = {
     timeSavedMs: current.feedbackTimeMs - recommended.feedbackTimeMs,
     costDeltaMs: recommended.costMs - current.costMs,

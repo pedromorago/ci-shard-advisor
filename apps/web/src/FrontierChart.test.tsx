@@ -15,7 +15,7 @@ const frontier = [
 
 describe('FrontierChart', () => {
   it('renders an accessible chart describing the recommendation', () => {
-    render(<FrontierChart frontier={frontier} recommended={frontier[2]} current={frontier[3]} />);
+    render(<FrontierChart frontier={frontier} recommended={frontier[2]} current={frontier[3]} ratePerMin={0.01} />);
 
     const chart = screen.getByRole('img', { name: /feedback time versus billed cost/i });
     expect(chart).toBeInTheDocument();
@@ -23,7 +23,7 @@ describe('FrontierChart', () => {
   });
 
   it('exposes the frontier data as a table for assistive tech', () => {
-    render(<FrontierChart frontier={frontier} recommended={frontier[2]} />);
+    render(<FrontierChart frontier={frontier} recommended={frontier[2]} ratePerMin={0.01} />);
 
     const table = screen.getByRole('table', { name: /cost\/time frontier/i });
     // One row per shard configuration (plus the header row).
@@ -31,7 +31,7 @@ describe('FrontierChart', () => {
   });
 
   it('marks both the recommended and current configurations', () => {
-    render(<FrontierChart frontier={frontier} recommended={frontier[2]} current={frontier[3]} />);
+    render(<FrontierChart frontier={frontier} recommended={frontier[2]} current={frontier[3]} ratePerMin={0.01} />);
 
     expect(screen.getByText(/recommended \(3\)/)).toBeInTheDocument();
     expect(screen.getByText(/current \(4\)/)).toBeInTheDocument();

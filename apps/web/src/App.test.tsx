@@ -32,7 +32,7 @@ describe('App', () => {
 
     const recommendation = screen.getByRole('region', { name: /recommendation/i });
     expect(within(recommendation).getByText(/^\d+ shards$/, { selector: 'strong' })).toBeInTheDocument();
-    expect(within(recommendation).getByText(/Feedback time/i)).toBeInTheDocument();
+    expect(within(recommendation).getByText(/Validation time/i)).toBeInTheDocument();
   });
 
   it('lists the sanity and regression blocks', () => {
@@ -48,30 +48,31 @@ describe('App', () => {
     expect(screen.getByText(/never uploaded/i)).toBeInTheDocument();
   });
 
-  it('re-runs the analysis when the current shard count changes', () => {
+  it('shows the current pipeline and re-runs when the shard count changes', () => {
     render(<App />);
-    expect(screen.getByText(/vs your current 6 shards/i)).toBeInTheDocument();
+    const current = screen.getByRole('region', { name: /your pipeline today/i });
+    expect(within(current).getByText(/6 shards/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/your current shards/i), { target: { value: '3' } });
-    expect(screen.getByText(/vs your current 3 shards/i)).toBeInTheDocument();
+    expect(within(current).getByText(/3 shards/i)).toBeInTheDocument();
   });
 
-  it('exposes settings for overhead and workers (not in the report)', () => {
+  it('exposes settings for overhead, workers and cost rate (not in the report)', () => {
     render(<App />);
     expect(screen.getByLabelText(/startup overhead/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/workers per shard/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/cost per minute/i)).toBeInTheDocument();
   });
 
-  it('lets the user optimize for the fastest feedback instead of the knee', () => {
+  it('shows costs as money and switches recommendation mode', () => {
     render(<App />);
     const recommendation = screen.getByRole('region', { name: /recommendation/i });
-    const kneeShards = within(recommendation).getByText(/^\d+ shards$/, { selector: 'strong' }).textContent;
+    // Cost is shown in dollars, not minutes.
+    expect(within(recommendation).getByText(/^\$\d/)).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'fastest' } });
-
-    // Fastest feedback uses the maximum useful shard count (>= the knee's).
-    const fastestShards = within(recommendation).getByText(/^\d+ shards$/, { selector: 'strong' }).textContent;
-    expect(parseInt(fastestShards!, 10)).toBeGreaterThanOrEqual(parseInt(kneeShards!, 10));
+    const balance = within(recommendation).getByRole('button', { name: /best balance/i });
+    fireEvent.click(balance);
+    expect(balance).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('analyzes an uploaded report and shows its source', async () => {

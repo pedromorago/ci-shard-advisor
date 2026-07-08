@@ -28,7 +28,7 @@ describe('toMarkdown', () => {
 
       **3 shards × 1 worker** — 1m 53s feedback, 5m 34s cost (optimal split).
 
-      Compared to the current **6 shards**: feedback +22.8s, cost -1m 30s.
+      Compared to the current **6 shards**: feedback -3.0s, cost -1m 30s.
 
       ### Blocks
 
