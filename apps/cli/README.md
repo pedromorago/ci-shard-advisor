@@ -14,7 +14,7 @@ Options:
 | Option | Description |
 | --- | --- |
 | `--format <text\|json\|markdown>` | Output format (default: `text`) |
-| `--input-format <auto\|playwright\|cypress>` | Report format (default: `auto`-detect) |
+| `--input-format <auto\|playwright\|cypress\|junit>` | Report format (default: `auto`-detect) |
 | `--shards <n>` | Your current shard count (enables the comparison) |
 | `--workers <n>` | Workers per shard (default: 1) |
 | `--overhead <duration>` | Per-shard startup overhead, e.g. `30s` |

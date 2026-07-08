@@ -34,10 +34,11 @@ interface AnalyzeQuery {
 /** Validate the optional report-format query param. */
 function reportFormat(raw: string | undefined): ReportFormat | 'auto' | undefined {
   if (raw === undefined) return undefined;
-  if (raw !== 'auto' && raw !== 'playwright' && raw !== 'cypress') {
-    throw new Error(`format must be 'auto', 'playwright' or 'cypress'`);
+  const allowed = ['auto', 'playwright', 'cypress', 'junit'] as const;
+  if (!(allowed as readonly string[]).includes(raw)) {
+    throw new Error(`format must be one of: ${allowed.join(', ')}`);
   }
-  return raw;
+  return raw as ReportFormat | 'auto';
 }
 
 /**
