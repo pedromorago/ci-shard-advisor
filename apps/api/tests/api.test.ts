@@ -32,30 +32,55 @@ describe('API', () => {
     expect(response.json()).toEqual({ status: 'ok' });
   });
 
-  it('analyzes a posted report', async () => {
-    const response = await app.inject({ method: 'POST', url: '/analyze', payload: report });
+  it('advises over a merged report (modeled current)', async () => {
+    const response = await app.inject({ method: 'POST', url: '/advise', payload: report });
     expect(response.statusCode).toBe(200);
 
     const body = response.json();
     expect(body.totalTests).toBe(3);
-    expect(body.recommended.shardCount).toBeGreaterThanOrEqual(1);
+    expect(body.current.measured).toBe(false);
+    expect(body.scenarios).toHaveLength(4);
     expect(Array.isArray(body.frontier)).toBe(true);
   });
 
-  it('includes the current-config comparison when shards is given', async () => {
+  it('measures the current setup from per-shard reports', async () => {
+    const shardA = { suites: [{ specs: [{ title: 'a', tests: [{ status: 'expected', results: [{ duration: 50000 }] }] }] }] };
+    const shardB = { suites: [{ specs: [{ title: 'b', tests: [{ status: 'expected', results: [{ duration: 10000 }] }] }] }] };
     const response = await app.inject({
       method: 'POST',
-      url: '/analyze?shards=3&overheadMs=30000',
-      payload: report,
+      url: '/advise',
+      payload: { reports: [shardA, shardB] },
     });
     expect(response.statusCode).toBe(200);
 
     const body = response.json();
-    expect(body.current.shardCount).toBe(3);
-    expect(body.savings).toBeDefined();
+    expect(body.current.measured).toBe(true);
+    expect(body.current.shardCount).toBe(2);
+    // shard A (50s) is slower than shard B (10s) → measured imbalance.
+    expect(body.current.imbalanceMs).toBeGreaterThan(0);
   });
 
-  it('analyzes a Cypress report with ?format=cypress', async () => {
+  it('models the current shard count for a merged report with ?shards', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/advise?shards=3&setupMs=30000',
+      payload: report,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().current.shardCount).toBe(3);
+  });
+
+  it('shows euro prices when ?pricePerMinute is set', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/advise?pricePerMinute=0.02',
+      payload: report,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().current.price).toMatch(/^€\d+\.\d\d$/);
+  });
+
+  it('advises over a Cypress report (auto-detected)', async () => {
     const cypress = {
       runs: [
         {
@@ -64,21 +89,21 @@ describe('API', () => {
         },
       ],
     };
-    const response = await app.inject({ method: 'POST', url: '/analyze?format=cypress', payload: cypress });
+    const response = await app.inject({ method: 'POST', url: '/advise', payload: cypress });
     expect(response.statusCode).toBe(200);
     expect(response.json().totalTests).toBe(1);
   });
 
-  it('rejects an unknown format with 400', async () => {
-    const response = await app.inject({ method: 'POST', url: '/analyze?format=jest', payload: report });
+  it('rejects an unknown objective with 400', async () => {
+    const response = await app.inject({ method: 'POST', url: '/advise?objective=cheapish', payload: report });
     expect(response.statusCode).toBe(400);
-    expect(response.json().error).toMatch(/format/);
+    expect(response.json().error).toMatch(/objective/);
   });
 
   it('rejects a structurally invalid report with 400', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/analyze',
+      url: '/advise',
       payload: { suites: 'not-an-array' },
     });
     expect(response.statusCode).toBe(400);
@@ -88,7 +113,7 @@ describe('API', () => {
   it('rejects an invalid query parameter with 400', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/analyze?workers=lots',
+      url: '/advise?workers=lots',
       payload: report,
     });
     expect(response.statusCode).toBe(400);
@@ -98,7 +123,7 @@ describe('API', () => {
   it('rejects a non-JSON body with 400', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/analyze',
+      url: '/advise',
       headers: { 'content-type': 'application/json' },
       payload: '{ not json',
     });

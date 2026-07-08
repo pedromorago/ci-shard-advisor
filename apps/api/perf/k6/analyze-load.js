@@ -36,13 +36,13 @@ export const options = {
 };
 
 export default function () {
-  const res = http.post(`${BASE_URL}/analyze?shards=6&overheadMs=30000`, REPORT, {
+  const res = http.post(`${BASE_URL}/advise?shards=6&setupMs=30000`, REPORT, {
     headers: { 'Content-Type': 'application/json' },
   });
 
   check(res, {
     'status is 200': (r) => r.status === 200,
-    'body has a recommendation': (r) => r.json('recommended.shardCount') >= 1,
+    'body has moves': (r) => Array.isArray(r.json('scenarios')) && r.json('scenarios').length >= 1,
     'body has a frontier': (r) => Array.isArray(r.json('frontier')),
   });
 

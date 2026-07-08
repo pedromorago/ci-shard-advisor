@@ -27,7 +27,7 @@ Thresholds (in [`k6/analyze-load.js`](k6/analyze-load.js)):
 
 ## JMeter
 
-An equivalent plan: a thread group of 20 users over 60s against `POST /analyze`,
+An equivalent plan: a thread group of 20 users over 60s against `POST /advise`,
 with a response-code assertion (200) and a duration assertion (< 500ms).
 
 ```bash

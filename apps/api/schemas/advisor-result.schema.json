@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AdvisorResult",
+  "description": "Response contract for POST /advise",
+  "type": "object",
+  "required": ["totalTests", "testTimeMs", "current", "scenarios", "findings", "frontier"],
+  "additionalProperties": false,
+  "properties": {
+    "totalTests": { "type": "integer", "minimum": 0 },
+    "testTimeMs": { "type": "number", "minimum": 0 },
+    "current": { "$ref": "#/definitions/current" },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/scenario" }
+    },
+    "findings": { "$ref": "#/definitions/findings" },
+    "frontier": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/configPoint" }
+    }
+  },
+  "definitions": {
+    "current": {
+      "type": "object",
+      "required": ["shardCount", "shardTimesMs", "feedbackTimeMs", "costMs", "imbalanceMs", "measured"],
+      "additionalProperties": false,
+      "properties": {
+        "shardCount": { "type": "integer", "minimum": 1 },
+        "shardTimesMs": { "type": "array", "items": { "type": "number", "minimum": 0 } },
+        "feedbackTimeMs": { "type": "number", "minimum": 0 },
+        "costMs": { "type": "number", "minimum": 0 },
+        "imbalanceMs": { "type": "number", "minimum": 0 },
+        "measured": { "type": "boolean" },
+        "price": { "type": "string" }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["id", "shardCount", "feedbackTimeMs", "costMs", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "enum": ["rebalance", "same-feedback-cheaper", "same-cost-faster", "objective"] },
+        "shardCount": { "type": "integer", "minimum": 1 },
+        "feedbackTimeMs": { "type": "number", "minimum": 0 },
+        "costMs": { "type": "number", "minimum": 0 },
+        "price": { "type": "string" },
+        "reason": { "type": "string" },
+        "shardWeights": { "type": "string" },
+        "sameAs": { "enum": ["rebalance", "same-feedback-cheaper", "same-cost-faster", "objective"] },
+        "unavailable": { "type": "boolean" },
+        "vsCurrent": {
+          "type": "object",
+          "required": ["feedbackDeltaMs", "costDeltaMs"],
+          "additionalProperties": false,
+          "properties": {
+            "feedbackDeltaMs": { "type": "number" },
+            "costDeltaMs": { "type": "number" }
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "object",
+      "required": ["warnings", "flaky"],
+      "additionalProperties": false,
+      "properties": {
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "flaky": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "title", "retries", "wastedMs"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "retries": { "type": "integer", "minimum": 0 },
+              "wastedMs": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "configPoint": {
+      "type": "object",
+      "required": ["shardCount", "workersPerShard", "runTimeMs", "feedbackTimeMs", "costMs", "optimal"],
+      "additionalProperties": false,
+      "properties": {
+        "shardCount": { "type": "integer", "minimum": 1 },
+        "workersPerShard": { "type": "integer", "minimum": 1 },
+        "runTimeMs": { "type": "number", "minimum": 0 },
+        "feedbackTimeMs": { "type": "number", "minimum": 0 },
+        "costMs": { "type": "number", "minimum": 0 },
+        "optimal": { "type": "boolean" },
+        "price": { "type": "string" }
+      }
+    }
+  }
+}
