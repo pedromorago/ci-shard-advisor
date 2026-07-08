@@ -99,7 +99,13 @@ que hacen que el run falle si se incumplen — un gate, no solo un informe) y un
 **JMeter** (`.jmx`) con thread group y assertions de respuesta/duración.
 → [`apps/api/perf/`](../apps/api/perf/)
 
-### 12. Quality gate en CI
+### 12. Gestión de pruebas con Xray (Jira)
+Todas las suites emiten **JUnit XML** (`pnpm test:junit`, Playwright, Cypress y
+Surefire), el formato que **Xray** importa para crear *Test Executions* en Jira y
+dar trazabilidad test↔issue. El flujo completo (import, vincular por clave
+`CSA-123` en el título) está en [xray.md](xray.md).
+
+### 13. Quality gate en CI
 La CLI puede fallar el build (exit ≠ 0) si el mejor tiempo de feedback supera un
 presupuesto o si la config actual desperdicia demasiado coste — testeado con I/O
 inyectada.

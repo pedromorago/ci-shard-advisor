@@ -10,6 +10,7 @@
   },
   "scripts": {
     "test": "pnpm --recursive test",
-    "typecheck": "pnpm --recursive typecheck"
+    "typecheck": "pnpm --recursive typecheck",
+    "test:junit": "pnpm --recursive test:junit"
   }
 }
