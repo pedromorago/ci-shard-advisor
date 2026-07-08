@@ -12,7 +12,7 @@ test.describe('demo analysis', () => {
     await expect(recommendation.getByText(/^\d+ shards$/)).toBeVisible();
 
     // The frontier chart renders with its accessible description.
-    await expect(page.getByRole('img', { name: /cost versus feedback time/i })).toBeVisible();
+    await expect(page.getByRole('img', { name: /feedback time versus billed cost/i })).toBeVisible();
   });
 
   test('has no serious or critical accessibility violations', async ({ page }) => {
