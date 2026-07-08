@@ -1,0 +1,69 @@
+{
+  "config": { "version": "1.44.0" },
+  "stats": { "expected": 8, "unexpected": 0, "flaky": 0, "skipped": 0, "duration": 300000 },
+  "suites": [
+    {
+      "title": "e2e/smoke.spec.ts",
+      "file": "e2e/smoke.spec.ts",
+      "specs": [
+        {
+          "title": "the full purchase journey end to end",
+          "file": "e2e/smoke.spec.ts",
+          "tags": ["@smoke"],
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 180000 }] }
+          ]
+        },
+        {
+          "title": "loads the home page",
+          "file": "e2e/smoke.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 4000 }] }
+          ]
+        },
+        {
+          "title": "opens the product page",
+          "file": "e2e/smoke.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 6000 }] }
+          ]
+        },
+        {
+          "title": "adds to cart",
+          "file": "e2e/smoke.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 7000 }] }
+          ]
+        },
+        {
+          "title": "opens the checkout",
+          "file": "e2e/smoke.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 5000 }] }
+          ]
+        },
+        {
+          "title": "applies a coupon",
+          "file": "e2e/smoke.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 8000 }] }
+          ]
+        },
+        {
+          "title": "pays with a card",
+          "file": "e2e/smoke.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 9000 }] }
+          ]
+        },
+        {
+          "title": "shows the confirmation",
+          "file": "e2e/smoke.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 3000 }] }
+          ]
+        }
+      ]
+    }
+  ]
+}
