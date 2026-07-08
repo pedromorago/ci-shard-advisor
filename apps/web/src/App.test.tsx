@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from './App';
 
@@ -46,6 +46,20 @@ describe('App', () => {
   it('states that the report is processed in the browser', () => {
     render(<App />);
     expect(screen.getByText(/never uploaded/i)).toBeInTheDocument();
+  });
+
+  it('re-runs the analysis when the current shard count changes', () => {
+    render(<App />);
+    expect(screen.getByText(/vs your current 6 shards/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/your current shards/i), { target: { value: '3' } });
+    expect(screen.getByText(/vs your current 3 shards/i)).toBeInTheDocument();
+  });
+
+  it('exposes settings for overhead and workers (not in the report)', () => {
+    render(<App />);
+    expect(screen.getByLabelText(/startup overhead/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/workers per shard/i)).toBeInTheDocument();
   });
 
   it('analyzes an uploaded report and shows its source', async () => {

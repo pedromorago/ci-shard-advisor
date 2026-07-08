@@ -8,7 +8,7 @@ describe('demo analysis', () => {
     cy.contains(/demo report/i).should('be.visible');
     cy.contains(/\d+ shards/).should('be.visible');
     // The frontier chart renders with its accessible description.
-    cy.get('svg[role="img"]').should('have.attr', 'aria-label').and('match', /cost versus feedback time/i);
+    cy.get('svg[role="img"]').should('have.attr', 'aria-label').and('match', /feedback time versus billed cost/i);
   });
 
   it('has no serious or critical accessibility violations', () => {

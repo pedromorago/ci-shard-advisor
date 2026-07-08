@@ -1,26 +1,30 @@
 import { useMemo, useState } from 'react';
 import { summarize, formatDuration } from '@ci-shard-advisor/core';
-import type { AnalysisResult } from '@ci-shard-advisor/core';
-import { analyzeText, demoAnalysis } from './analysis';
-import { ReportInput } from './ReportInput';
+import { analyzeReport, DEFAULT_SETTINGS, DEMO_REPORT } from './analysis';
+import type { AnalysisSettings, ReportInput } from './analysis';
+import { ReportInput as ReportInputControl } from './ReportInput';
+import { Controls } from './Controls';
 import { FrontierChart } from './FrontierChart';
 
 export function App() {
-  const [analysis, setAnalysis] = useState<AnalysisResult>(() => demoAnalysis());
+  const [report, setReport] = useState<ReportInput>(DEMO_REPORT);
   const [source, setSource] = useState('demo report');
+  const [settings, setSettings] = useState<AnalysisSettings>(DEFAULT_SETTINGS);
   const [error, setError] = useState<string | null>(null);
 
-  const summary = useMemo(() => summarize(analysis), [analysis]);
+  // Re-runs whenever the report or any setting changes. The report never leaves
+  // the browser.
+  const summary = useMemo(() => summarize(analyzeReport(report, settings)), [report, settings]);
   const { recommended, current, savings } = summary;
 
   function handleSelect(jsonText: string, fileName: string) {
     try {
-      const result = analyzeText(jsonText);
+      const result = analyzeReport(jsonText, settings);
       if (result.tasks.length === 0) {
         setError('That report has no tests to analyze.');
         return;
       }
-      setAnalysis(result);
+      setReport(jsonText);
       setSource(fileName);
       setError(null);
     } catch (cause) {
@@ -29,7 +33,7 @@ export function App() {
   }
 
   function handleLoadDemo() {
-    setAnalysis(demoAnalysis());
+    setReport(DEMO_REPORT);
     setSource('demo report');
     setError(null);
   }
@@ -43,7 +47,7 @@ export function App() {
         </p>
       </header>
 
-      <ReportInput onSelect={handleSelect} onLoadDemo={handleLoadDemo} />
+      <ReportInputControl onSelect={handleSelect} onLoadDemo={handleLoadDemo} />
 
       {error ? (
         <p className="app__error" role="alert">
@@ -55,6 +59,8 @@ export function App() {
         Showing <strong>{source}</strong> · {summary.totalTests} tests ·{' '}
         {formatDuration(summary.totalDurationMs)} total
       </p>
+
+      <Controls settings={settings} onChange={setSettings} />
 
       <section className="card" aria-labelledby="recommendation-heading">
         <h2 id="recommendation-heading">Recommendation</h2>
