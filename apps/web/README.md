@@ -31,3 +31,13 @@ pnpm e2e
 
 `--with-deps` installs the system libraries Chromium needs (`libnspr4`,
 `libnss3`, …); on headless CI without root, use a Playwright base image instead.
+
+The same journeys are also covered with **Cypress** (`cypress/e2e/`) — demo,
+upload, the privacy assertion and an accessibility scan via `cypress-axe`. The
+Cypress binary is installed on demand:
+
+```bash
+npx cypress install     # one-time, downloads the Cypress binary
+pnpm e2e:cypress        # builds, serves the preview and runs cypress run
+# or: pnpm cypress:open
+```

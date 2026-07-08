@@ -70,13 +70,15 @@ usuario (subir un fichero con `user-event`) y el camino de error.
 → [`apps/web/src/App.test.tsx`](../apps/web/src/App.test.tsx),
 [`FrontierChart.test.tsx`](../apps/web/src/FrontierChart.test.tsx)
 
-### 9. End-to-end (Playwright)
-Sobre el build de producción: la demo carga, la subida funciona, y dos pruebas
-destacadas:
+### 9. End-to-end (Playwright y Cypress)
+Sobre el build de producción, con **ambas** herramientas (misma cobertura, para
+demostrar las dos): la demo carga, la subida funciona, y dos pruebas destacadas:
 - **Privacidad:** se interceptan las peticiones de red y se verifica que el report
   (con un *canary* único) nunca sale de la página ni a un origen externo.
-- **Accesibilidad:** un escaneo con axe sin violaciones serias/críticas.
-→ [`apps/web/e2e/`](../apps/web/e2e/)
+- **Accesibilidad:** un escaneo con axe (`@axe-core/playwright` / `cypress-axe`)
+  sin violaciones serias/críticas.
+→ [`apps/web/e2e/`](../apps/web/e2e/) (Playwright),
+[`apps/web/cypress/e2e/`](../apps/web/cypress/e2e/) (Cypress)
 
 ### 10. API testing (dos lenguajes)
 - **TypeScript:** la API Fastify se prueba en proceso con `inject()` (sin servidor
