@@ -62,6 +62,18 @@ describe('App', () => {
     expect(screen.getByLabelText(/workers per shard/i)).toBeInTheDocument();
   });
 
+  it('lets the user optimize for the fastest feedback instead of the knee', () => {
+    render(<App />);
+    const recommendation = screen.getByRole('region', { name: /recommendation/i });
+    const kneeShards = within(recommendation).getByText(/^\d+ shards$/, { selector: 'strong' }).textContent;
+
+    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'fastest' } });
+
+    // Fastest feedback uses the maximum useful shard count (>= the knee's).
+    const fastestShards = within(recommendation).getByText(/^\d+ shards$/, { selector: 'strong' }).textContent;
+    expect(parseInt(fastestShards!, 10)).toBeGreaterThanOrEqual(parseInt(kneeShards!, 10));
+  });
+
   it('analyzes an uploaded report and shows its source', async () => {
     const user = userEvent.setup();
     render(<App />);

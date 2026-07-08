@@ -108,8 +108,9 @@ body {
   color: var(--muted);
 }
 
-.control input {
-  width: 7rem;
+.control input,
+.control select {
+  width: 11rem;
   padding: 0.4rem 0.5rem;
   font: inherit;
   color: var(--text);
@@ -118,7 +119,12 @@ body {
   border-radius: 8px;
 }
 
-.control input:focus {
+.control input {
+  width: 7rem;
+}
+
+.control input:focus,
+.control select:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
