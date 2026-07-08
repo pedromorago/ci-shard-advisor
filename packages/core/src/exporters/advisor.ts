@@ -35,12 +35,35 @@ function indexOfMin(values: number[]): number {
   return idx;
 }
 
-const MOVE_LABEL: Record<Scenario['id'], (s: Scenario, currentShards: number) => string> = {
-  rebalance: (_s, n) => `Rebalance your ${n} shards`,
-  'same-feedback-cheaper': (s) => `Same wait, cheaper: ${s.config.shardCount} shards`,
-  'same-cost-faster': (s) => `Same cost, faster: ${s.config.shardCount} shards`,
-  objective: (s) => `By objective: ${s.config.shardCount} shards`,
-};
+/** The label of the chosen move, from the objective that produced it. */
+function objectiveLabel(scenario: Scenario): string {
+  switch (scenario.objective?.kind) {
+    case 'fastest':
+      return 'Fastest';
+    case 'max-feedback':
+      return 'Within your wait';
+    case 'budget':
+      return 'Within your budget';
+    case 'cheapest':
+      return 'Cheapest';
+    case 'weight':
+      return 'Your weighting';
+    default:
+      return 'Recommended';
+  }
+}
+
+/** The two scenarios the presentation shows: the free rebalance + the chosen move. */
+function presentedMoves(scenarios: Scenario[]): { rebalance: Scenario; chosen: Scenario } {
+  const rebalance = scenarios.find((s) => s.id === 'rebalance')!;
+  const chosen = scenarios.find((s) => s.id === 'objective')!;
+  return { rebalance, chosen };
+}
+
+/** True when the chosen move lands on the same config as the rebalance. */
+function coincides(chosen: Scenario, rebalance: Scenario): boolean {
+  return !chosen.unavailable && chosen.config.shardCount === rebalance.config.shardCount;
+}
 
 /** Render an AdvisorResult as a plain-text report (spec §7.1). Deterministic. */
 export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
@@ -66,29 +89,32 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
   lines.push('');
 
   lines.push('Your moves');
-  scenarios.forEach((scenario, i) => {
-    const label = MOVE_LABEL[scenario.id](scenario, current.shardCount);
-    if (scenario.unavailable) {
-      lines.push(`  ${i + 1}) ${label} — not available: ${scenario.reason}`);
-      return;
-    }
-    if (scenario.sameAs) {
-      const other = scenarios.findIndex((s) => s.id === scenario.sameAs) + 1;
-      lines.push(`  ${i + 1}) ${label} — same as move #${other}.`);
-      return;
-    }
+  const { rebalance, chosen } = presentedMoves(scenarios);
+  const pushMove = (tag: string, scenario: Scenario, title: string) => {
     const feedback = formatDuration(scenario.config.feedbackTimeMs);
     const df = scenario.vsCurrent ? ` (${signedDuration(scenario.vsCurrent.feedbackDeltaMs)})` : '';
     const c = money(scenario.config.costMs, cost) ?? formatDuration(scenario.config.costMs);
     const dc = scenario.vsCurrent
       ? ` (${signedMoney(scenario.vsCurrent.costDeltaMs, cost) ?? signedDuration(scenario.vsCurrent.costDeltaMs)})`
       : '';
-    lines.push(`  ${i + 1}) ${label}   feedback ${feedback}${df}   cost ${c}${dc}`);
+    lines.push(`  ${tag}) ${title}   feedback ${feedback}${df}   cost ${c}${dc}`);
     lines.push(`     ${scenario.reason}`);
     if (scenario.plan?.shardWeights) {
       lines.push(`     Apply: npx playwright test --shard-weights=${scenario.plan.shardWeights}`);
     }
-  });
+  };
+
+  if (coincides(chosen, rebalance)) {
+    // One entry: the chosen move IS the rebalance of your current shards.
+    pushMove(objectiveLabel(chosen), chosen, `Rebalance your ${current.shardCount} shards — your best move is free`);
+  } else {
+    pushMove('Free', rebalance, `Rebalance your ${current.shardCount} shards`);
+    if (chosen.unavailable) {
+      lines.push(`  ${objectiveLabel(chosen)}) not available: ${chosen.reason}`);
+    } else {
+      pushMove(objectiveLabel(chosen), chosen, `${chosen.config.shardCount} shards`);
+    }
+  }
   lines.push('');
 
   if (findings.warnings.length > 0) {
@@ -130,6 +156,7 @@ export function toAdvisorObject(result: AdvisorResult, cost: CostModel) {
       shardWeights: s.plan?.shardWeights,
       sameAs: s.sameAs,
       unavailable: s.unavailable,
+      objective: s.objective,
     })),
     findings: result.findings,
     frontier: result.frontier.map((p) => ({ ...p, price: withMoney(p.costMs) })),
@@ -158,15 +185,20 @@ export function toAdvisorMarkdown(result: AdvisorResult, cost: CostModel): strin
   }
   md.push('', '### Your moves', '');
   md.push('| Move | Shards | Feedback | Cost |', '| --- | ---: | ---: | ---: |');
-  for (const s of scenarios) {
-    const label = MOVE_LABEL[s.id](s, current.shardCount);
-    if (s.unavailable) {
-      md.push(`| ${label} | — | not available | |`);
-      continue;
-    }
-    const note = s.sameAs ? ` (same as ${s.sameAs})` : '';
+  const { rebalance, chosen } = presentedMoves(scenarios);
+  const row = (label: string, s: Scenario) => {
     const c = money(s.config.costMs, cost) ?? formatDuration(s.config.costMs);
-    md.push(`| ${label}${note} | ${s.config.shardCount} | ${formatDuration(s.config.feedbackTimeMs)} | ${c} |`);
+    md.push(`| ${label} | ${s.config.shardCount} | ${formatDuration(s.config.feedbackTimeMs)} | ${c} |`);
+  };
+  if (coincides(chosen, rebalance)) {
+    row(`${objectiveLabel(chosen)} — rebalance your ${current.shardCount} shards (free)`, chosen);
+  } else {
+    row(`Rebalance your ${current.shardCount} shards (free)`, rebalance);
+    if (chosen.unavailable) {
+      md.push(`| ${objectiveLabel(chosen)} | — | not available | |`);
+    } else {
+      row(objectiveLabel(chosen), chosen);
+    }
   }
 
   if (findings.warnings.length > 0) {

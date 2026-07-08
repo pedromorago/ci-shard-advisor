@@ -50,6 +50,17 @@
         "shardWeights": { "type": "string" },
         "sameAs": { "enum": ["rebalance", "same-feedback-cheaper", "same-cost-faster", "objective"] },
         "unavailable": { "type": "boolean" },
+        "objective": {
+          "type": "object",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["balanced", "fastest", "cheapest", "max-feedback", "budget", "weight"] },
+            "feedbackMs": { "type": "number", "minimum": 0 },
+            "costMs": { "type": "number", "minimum": 0 },
+            "costPerFeedbackMinute": { "type": "number", "minimum": 0 }
+          }
+        },
         "vsCurrent": {
           "type": "object",
           "required": ["feedbackDeltaMs", "costDeltaMs"],

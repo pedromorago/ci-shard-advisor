@@ -22,7 +22,17 @@ export function App() {
     () => result.tasks.reduce((sum, task) => sum + task.durationMs, 0),
     [result],
   );
-  const objective = result.scenarios.find((s) => s.id === 'objective') ?? result.scenarios[0];
+  // The presentation (spec §5.2): the free rebalance + the chosen move.
+  const rebalance = result.scenarios.find((s) => s.id === 'rebalance')!;
+  const chosen = result.scenarios.find((s) => s.id === 'objective')!;
+  const merged = !chosen.unavailable && chosen.config.shardCount === rebalance.config.shardCount;
+  const OBJECTIVE_LABEL: Record<AnalysisSettings['objective']['kind'], string> = {
+    recommended: 'Recommended',
+    fastest: 'Fastest',
+    'max-wait': 'Within your wait',
+    budget: 'Within your budget',
+  };
+  const chosenLabel = OBJECTIVE_LABEL[settings.objective.kind];
 
   function handleSelect(uploaded: ReportFile[]) {
     try {
@@ -68,7 +78,7 @@ export function App() {
         {formatDuration(testTimeMs)} of test time
       </p>
 
-      <Controls settings={settings} onChange={setSettings} />
+      <Controls settings={settings} current={result.current} onChange={setSettings} />
 
       <CurrentCard
         current={result.current}
@@ -79,14 +89,29 @@ export function App() {
       <section className="card" aria-labelledby="moves-heading">
         <h2 id="moves-heading">Your moves</h2>
         <ol className="moves-list">
-          {result.scenarios.map((scenario, i) => (
+          {merged ? (
             <MoveCard
-              key={scenario.id}
-              scenario={scenario}
-              moveNumber={i + 1}
+              tag={chosenLabel}
+              title={`Rebalance your ${result.current.shardCount} shards — your best move is free`}
+              scenario={chosen}
               pricePerMinute={settings.pricePerMinute}
             />
-          ))}
+          ) : (
+            <>
+              <MoveCard
+                tag="Free"
+                title={`Rebalance your ${result.current.shardCount} shards`}
+                scenario={rebalance}
+                pricePerMinute={settings.pricePerMinute}
+              />
+              <MoveCard
+                tag={chosenLabel}
+                title={`${chosen.config.shardCount} shards`}
+                scenario={chosen}
+                pricePerMinute={settings.pricePerMinute}
+              />
+            </>
+          )}
         </ol>
       </section>
 
@@ -97,7 +122,7 @@ export function App() {
         <div className="details__body">
           <FrontierChart
             frontier={result.frontier}
-            recommended={objective.config}
+            recommended={chosen.config}
             current={result.current}
             ratePerMin={settings.pricePerMinute}
           />

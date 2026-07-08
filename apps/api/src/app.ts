@@ -23,11 +23,20 @@ function nonNegative(raw: string | undefined, name: string): number | undefined 
   return value;
 }
 
-/** Validate the optional objective query param. */
-function objectiveParam(raw: string | undefined): Objective | undefined {
-  if (raw === undefined) return undefined;
-  if (raw === 'balanced' || raw === 'fastest' || raw === 'cheapest') return { kind: raw };
-  throw new Error('objective must be one of: balanced, fastest, cheapest');
+/**
+ * Build the objective from the query. `maxFeedbackMs`/`budgetMs` are
+ * parameterized objectives and take precedence; otherwise `objective` picks
+ * recommended (the knee — the core's 'balanced') or fastest.
+ */
+function objectiveParam(query: AdviseQuery): Objective | undefined {
+  const maxFeedbackMs = nonNegative(query.maxFeedbackMs, 'maxFeedbackMs');
+  if (maxFeedbackMs !== undefined) return { kind: 'max-feedback', feedbackMs: maxFeedbackMs };
+  const budgetMs = nonNegative(query.budgetMs, 'budgetMs');
+  if (budgetMs !== undefined) return { kind: 'budget', costMs: budgetMs };
+  if (query.objective === undefined) return undefined;
+  if (query.objective === 'recommended') return { kind: 'balanced' };
+  if (query.objective === 'fastest') return { kind: 'fastest' };
+  throw new Error('objective must be recommended or fastest');
 }
 
 interface AdviseQuery {
@@ -38,6 +47,8 @@ interface AdviseQuery {
   pricePerMinute?: string;
   currency?: string;
   objective?: string;
+  maxFeedbackMs?: string;
+  budgetMs?: string;
 }
 
 /** Default per-shard startup overhead when the caller does not set one. */
@@ -81,7 +92,7 @@ export function buildApp(): FastifyInstance {
       shards = positiveInt(query.shards, 'shards');
       const setupMs = nonNegative(query.setupMs, 'setupMs') ?? DEFAULT_SETUP_MS;
       const pricePerMinute = nonNegative(query.pricePerMinute, 'pricePerMinute');
-      const objective = objectiveParam(query.objective);
+      const objective = objectiveParam(query);
 
       cost = { startupOverheadMs: setupMs };
       if (pricePerMinute !== undefined) cost.pricePerMinute = pricePerMinute;

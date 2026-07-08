@@ -35,13 +35,38 @@ describe('App', () => {
     expect(within(current).getByText(/€\d+\.\d\d/)).toBeInTheDocument();
   });
 
-  it('lists the four moves including a rebalance apply command', () => {
+  it('shows the free rebalance and the chosen move (merged when they coincide)', () => {
     render(<App />);
     const moves = screen.getByRole('region', { name: /your moves/i });
-    // The rebalance move is present (its label may also appear in "same as" notes).
-    expect(within(moves).getAllByText(/Rebalance/).length).toBeGreaterThanOrEqual(1);
+    // With the real demo the recommended knee IS the rebalance point → one card.
+    expect(within(moves).getByText(/rebalance your 4 shards/i)).toBeInTheDocument();
     expect(within(moves).getAllByText(/--shard-weights=/).length).toBeGreaterThanOrEqual(1);
-    expect(within(moves).getAllByRole('listitem')).toHaveLength(4);
+    expect(within(moves).getAllByRole('listitem').length).toBeLessThanOrEqual(2);
+  });
+
+  it('splits into two cards when the chosen move differs from rebalance', () => {
+    render(<App />);
+    // "Fastest" on the demo picks more shards than the current 4 → two cards.
+    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'fastest' } });
+    const moves = screen.getByRole('region', { name: /your moves/i });
+    expect(within(moves).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(moves).getByText('Free')).toBeInTheDocument();
+    expect(within(moves).getByText('Fastest')).toBeInTheDocument();
+  });
+
+  it('prefills the wait limit with the measured current wait', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'max-wait' } });
+    const input = screen.getByLabelText(/wait limit/i) as HTMLInputElement;
+    // Demo current feedback ≈ 50s → prefilled with your situation, not a magic number.
+    expect(Number(input.value)).toBeGreaterThan(0);
+  });
+
+  it('prefills the budget with the measured current cost', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'budget' } });
+    const input = screen.getByLabelText(/budget per run/i) as HTMLInputElement;
+    expect(Number(input.value)).toBeGreaterThan(0);
   });
 
   it('surfaces findings for the bottlenecked demo', () => {

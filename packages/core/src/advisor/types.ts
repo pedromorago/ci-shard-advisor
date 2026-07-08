@@ -75,6 +75,8 @@ export interface Scenario {
   sameAs?: Scenario['id'];
   /** Set when the scenario has no answer (e.g. nothing cheaper meets the wait). */
   unavailable?: boolean;
+  /** Only on id 'objective': the objective that produced it (for labelling). */
+  objective?: Objective;
 }
 
 /** The advisor's voice: written findings + the flaky breakdown. */
