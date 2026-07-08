@@ -3,6 +3,9 @@ packages:
   - "apps/*"
 
 allowBuilds:
+  # Cypress binary is installed on demand (`npx cypress install`), not during
+  # `pnpm install`, so CI and headless environments don't pull it.
+  cypress: false
   esbuild: true
 
 onlyBuiltDependencies:
