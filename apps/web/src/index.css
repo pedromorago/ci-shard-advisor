@@ -204,6 +204,10 @@ body {
   color: var(--muted);
 }
 
+.objective-picker {
+  margin-bottom: 1rem;
+}
+
 .moves-list {
   list-style: none;
   margin: 0;

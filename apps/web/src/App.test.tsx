@@ -49,9 +49,10 @@ describe('App', () => {
     // "Fastest" on the demo picks more shards than the current 4 → two cards.
     fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'fastest' } });
     const moves = screen.getByRole('region', { name: /your moves/i });
-    expect(within(moves).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(moves).getByText('Free')).toBeInTheDocument();
-    expect(within(moves).getByText('Fastest')).toBeInTheDocument();
+    const cards = within(moves).getAllByRole('listitem');
+    expect(cards).toHaveLength(2);
+    expect(cards[0]).toHaveTextContent('Free');
+    expect(cards[1]).toHaveTextContent('Fastest');
   });
 
   it('prefills the wait limit with the measured current wait', () => {
