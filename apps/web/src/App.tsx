@@ -6,6 +6,7 @@ import type { AnalysisSettings } from './analysis';
 import { ReportInput } from './ReportInput';
 import { ReportHelp } from './ReportHelp';
 import { Controls } from './Controls';
+import { ObjectivePicker } from './ObjectivePicker';
 import { CurrentCard } from './CurrentCard';
 import { MoveCard } from './MoveCard';
 import { FindingsCard } from './FindingsCard';
@@ -78,7 +79,7 @@ export function App() {
         {formatDuration(testTimeMs)} of test time
       </p>
 
-      <Controls settings={settings} current={result.current} onChange={setSettings} />
+      <Controls settings={settings} onChange={setSettings} />
 
       <CurrentCard
         current={result.current}
@@ -88,6 +89,12 @@ export function App() {
 
       <section className="card" aria-labelledby="moves-heading">
         <h2 id="moves-heading">Your moves</h2>
+        <ObjectivePicker
+          objective={settings.objective}
+          current={result.current}
+          pricePerMinute={settings.pricePerMinute}
+          onChange={(objective) => setSettings({ ...settings, objective })}
+        />
         <ol className="moves-list">
           {merged ? (
             <MoveCard
