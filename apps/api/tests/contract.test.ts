@@ -3,7 +3,7 @@ import Ajv from 'ajv';
 import type { ValidateFunction } from 'ajv';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app';
-import schema from '../schemas/analysis-summary.schema.json';
+import schema from '../schemas/advisor-result.schema.json';
 
 const report = {
   suites: [
@@ -17,11 +17,11 @@ const report = {
 };
 
 /**
- * Contract tests: the POST /analyze response must always match the published
+ * Contract tests: the POST /advise response must always match the published
  * JSON Schema, so an accidental change to its shape is caught here (and in the
  * REST Assured suite, which validates the same schema over real HTTP).
  */
-describe('POST /analyze contract', () => {
+describe('POST /advise contract', () => {
   let app: FastifyInstance;
   let validate: ValidateFunction;
 
@@ -35,25 +35,25 @@ describe('POST /analyze contract', () => {
     await app.close();
   });
 
-  it('conforms to the schema without a current config', async () => {
-    const response = await app.inject({ method: 'POST', url: '/analyze', payload: report });
+  it('conforms to the schema for a merged report', async () => {
+    const response = await app.inject({ method: 'POST', url: '/advise', payload: report });
     const valid = validate(response.json());
     expect(validate.errors ?? []).toEqual([]);
     expect(valid).toBe(true);
   });
 
-  it('conforms to the schema with the current-config comparison', async () => {
+  it('conforms to the schema for a priced per-shard setup', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/analyze?shards=2&overheadMs=30000',
-      payload: report,
+      url: '/advise?pricePerMinute=0.01&setupMs=30000',
+      payload: { reports: [report, report] },
     });
     const body = response.json();
     const valid = validate(body);
     expect(validate.errors ?? []).toEqual([]);
     expect(valid).toBe(true);
-    // The optional contract fields are present in this mode.
-    expect(body.current).toBeDefined();
-    expect(body.savings).toBeDefined();
+    // A measured per-shard setup carries a euro price and per-move prices.
+    expect(body.current.measured).toBe(true);
+    expect(body.current.price).toMatch(/^€/);
   });
 });

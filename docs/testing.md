@@ -84,8 +84,8 @@ demostrar las dos): la demo carga, la subida funciona, y dos pruebas destacadas:
 - **TypeScript:** la API Fastify se prueba en proceso con `inject()` (sin servidor
   real): happy path y todos los `400`.
 - **Java:** una suite **JUnit 5 + REST Assured** ejerce el servicio por HTTP real.
-- **Contract testing:** la respuesta de `/analyze` se valida contra un **JSON
-  Schema** publicado ([`schemas/analysis-summary.schema.json`](../apps/api/schemas/analysis-summary.schema.json)),
+- **Contract testing:** la respuesta de `/advise` se valida contra un **JSON
+  Schema** publicado ([`schemas/advisor-result.schema.json`](../apps/api/schemas/advisor-result.schema.json)),
   tanto en TS (ajv) como en Java (`matchesJsonSchemaInClasspath`), usando el mismo
   esquema. Un cambio accidental de la forma del contrato rompe ambos.
 → [`apps/api/tests/api.test.ts`](../apps/api/tests/api.test.ts),
@@ -94,7 +94,7 @@ demostrar las dos): la demo carga, la subida funciona, y dos pruebas destacadas:
 
 ### 11. Performance testing (k6 y JMeter)
 La API local es el objetivo de carga. Dos herramientas equivalentes contra
-`POST /analyze`: **k6** (JS, con *stages* de VUs y **thresholds** de p95/error rate
+`POST /advise`: **k6** (JS, con *stages* de VUs y **thresholds** de p95/error rate
 que hacen que el run falle si se incumplen — un gate, no solo un informe) y un plan
 **JMeter** (`.jmx`) con thread group y assertions de respuesta/duración.
 → [`apps/api/perf/`](../apps/api/perf/)
