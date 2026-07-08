@@ -2,10 +2,13 @@ import { formatDuration } from '@ci-shard-advisor/core';
 import type { ConfigPoint } from '@ci-shard-advisor/core';
 import { formatMoney } from './analysis';
 
+/** The chart only needs a point's cost, feedback and shard count. */
+type ChartPoint = { costMs: number; feedbackTimeMs: number; shardCount: number };
+
 interface FrontierChartProps {
   frontier: ConfigPoint[];
-  recommended: ConfigPoint;
-  current?: ConfigPoint;
+  recommended: ChartPoint;
+  current?: ChartPoint;
   ratePerMin: number;
 }
 
@@ -28,10 +31,10 @@ function ticks(min: number, max: number, count = 4): number[] {
  * (cheap and fast) is best.
  */
 export function FrontierChart({ frontier, recommended, current, ratePerMin }: FrontierChartProps) {
-  // X axis = billed cost (in money), Y axis = feedback time.
-  const xOf = (p: ConfigPoint) => p.costMs;
-  const yOf = (p: ConfigPoint) => p.feedbackTimeMs;
-  const money = (costMs: number) => formatMoney(costMs, ratePerMin);
+  // X axis = billed cost (money if priced, else machine time), Y = feedback time.
+  const xOf = (p: ChartPoint) => p.costMs;
+  const yOf = (p: ChartPoint) => p.feedbackTimeMs;
+  const money = (costMs: number) => formatMoney(costMs, ratePerMin) ?? formatDuration(costMs);
 
   const xs = frontier.map(xOf);
   const ys = frontier.map(yOf);
