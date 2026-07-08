@@ -47,3 +47,9 @@ export { toJson, toSummaryObject } from './exporters/json';
 export { toText } from './exporters/text';
 export { toMarkdown } from './exporters/markdown';
 export { toGitHubActions, toBitbucketPipelines } from './exporters/ci';
+export {
+  toAdvisorText,
+  toAdvisorJson,
+  toAdvisorObject,
+  toAdvisorMarkdown,
+} from './exporters/advisor';
