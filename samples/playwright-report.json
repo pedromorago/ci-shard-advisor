@@ -1,0 +1,136 @@
+{
+  "config": { "version": "1.44.0" },
+  "stats": { "expected": 16, "unexpected": 1, "flaky": 1, "skipped": 1, "duration": 412000 },
+  "suites": [
+    {
+      "title": "auth/login.spec.ts",
+      "file": "auth/login.spec.ts",
+      "specs": [
+        {
+          "title": "logs in with valid credentials",
+          "file": "auth/login.spec.ts",
+          "tags": ["@sanity"],
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 8200, "retry": 0 }] },
+            { "projectName": "firefox", "status": "expected", "results": [{ "duration": 9600, "retry": 0 }] }
+          ]
+        },
+        {
+          "title": "rejects an invalid password",
+          "file": "auth/login.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 6400, "retry": 0 }] },
+            { "projectName": "firefox", "status": "expected", "results": [{ "duration": 6900, "retry": 0 }] }
+          ]
+        },
+        {
+          "title": "locks the account after 5 failures",
+          "file": "auth/login.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 24000, "retry": 0 }] }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "checkout/cart.spec.ts",
+      "file": "checkout/cart.spec.ts",
+      "specs": [
+        {
+          "title": "adds an item to the cart",
+          "file": "checkout/cart.spec.ts",
+          "tags": ["@smoke"],
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 15300, "retry": 0 }] }
+          ]
+        }
+      ],
+      "suites": [
+        {
+          "title": "with a discount code",
+          "file": "checkout/cart.spec.ts",
+          "specs": [
+            {
+              "title": "applies a percentage discount",
+              "file": "checkout/cart.spec.ts",
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "status": "flaky",
+                  "results": [
+                    { "duration": 21000, "retry": 0 },
+                    { "duration": 19800, "retry": 1 }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "rejects an expired code",
+              "file": "checkout/cart.spec.ts",
+              "tests": [
+                {
+                  "projectName": "chromium",
+                  "status": "unexpected",
+                  "results": [
+                    { "duration": 30000, "retry": 0 },
+                    { "duration": 30000, "retry": 1 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "search/search.spec.ts",
+      "file": "search/search.spec.ts",
+      "specs": [
+        {
+          "title": "returns results for a query",
+          "file": "search/search.spec.ts",
+          "tags": ["@sanity"],
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 5100 }] },
+            { "projectName": "firefox", "status": "expected", "results": [{ "duration": 5600 }] }
+          ]
+        },
+        {
+          "title": "paginates long result sets",
+          "file": "search/search.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "skipped", "results": [{ "duration": 0 }] }
+          ]
+        },
+        {
+          "title": "filters by category",
+          "file": "search/search.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 42000 }] },
+            { "projectName": "firefox", "status": "expected", "results": [{ "duration": 45000 }] }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "reports/export.spec.ts",
+      "file": "reports/export.spec.ts",
+      "specs": [
+        {
+          "title": "exports a PDF report",
+          "file": "reports/export.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 61000 }] }
+          ]
+        },
+        {
+          "title": "exports a CSV report",
+          "file": "reports/export.spec.ts",
+          "tests": [
+            { "projectName": "chromium", "status": "expected", "results": [{ "duration": 12500 }] }
+          ]
+        }
+      ]
+    }
+  ]
+}
