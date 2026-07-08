@@ -80,9 +80,9 @@ Dos niveles de paralelismo distintos: los **shards** deciden qué tests van a ca
 
 Shards, tiempo por shard, feedback, coste (ms y €), y **desequilibrio**: cuánto antes termina el shard más rápido respecto al más lento ("estás pagando máquinas paradas").
 
-### 5.2 Los cuatro escenarios (las "cards")
+### 5.2 Escenarios: qué calcula el motor y qué se muestra
 
-Todos se calculan sobre la frontera de repartos óptimos ya existente; son consultas + presentación:
+El **motor** sigue calculando los cuatro escenarios como consultas sobre la frontera de repartos óptimos (y el JSON los lleva todos):
 
 | # | Escenario | Definición exacta |
 |---|-----------|-------------------|
@@ -91,7 +91,13 @@ Todos se calculan sobre la frontera de repartos óptimos ya existente; son consu
 | 3 | **Mismo coste, menor espera** | `argmin feedback` sujeto a `coste ≤ coste_actual`. Empates → menos shards. |
 | 4 | **Por objetivo** | Según sección 5.4. |
 
-Si un escenario no existe (p. ej. nada es más barato cumpliendo la espera), se dice explícitamente, nunca se inventa. Si dos escenarios coinciden, se indica ("igual que el nº 3").
+La **presentación** (web y salida de texto/markdown) muestra:
+
+1. La situación actual (5.1).
+2. **Reequilibrar**, siempre visible: es el único movimiento gratis (mismas máquinas, Δcoste = 0) y aplica se elija el objetivo que se elija.
+3. **Un único movimiento elegido**, controlado por el selector de objetivo (5.4). Los escenarios 2 y 3 no desaparecen: son los *valores por defecto* de los objetivos parametrizados (`max-feedback` prellenado con la espera actual ≡ escenario 2; `budget` prellenado con el coste actual ≡ escenario 3).
+
+Si el movimiento elegido no existe (p. ej. nada cumple el presupuesto), se dice explícitamente, nunca se inventa. Si coincide con el reequilibrio, se muestra una sola tarjeta que lo indica.
 
 ### 5.3 Plan aplicable (cerrar el hueco modelo-realidad)
 
@@ -102,7 +108,14 @@ El tiempo prometido por un reparto óptimo **no** se consigue con `--shard=i/N` 
 
 ### 5.4 Objetivos
 
-`balanced` (codo, default) · `fastest` · `cheapest` · `max-feedback <T>` (el más barato con feedback ≤ T) · `budget <X>` (el más rápido con coste ≤ X) · peso numérico coste/tiempo (avanzado).
+Los que se exponen en la UI/CLI:
+
+- **`recommended`** (default) — el codo de la frontera: el punto de máxima curvatura, donde el siguiente shard deja de pagar lo que cuesta. Es el criterio de recomendación y se presenta con ese nombre (internamente es el kind `balanced` del core).
+- **`fastest`** — mínima espera, cueste lo que cueste.
+- **`max-feedback <T>`** — el más barato con feedback ≤ T. En la web, el campo viene **prellenado con la espera actual medida** (≡ "misma espera, más barato").
+- **`budget <X>`** — el más rápido con coste ≤ X. En la web, prellenado con el **coste actual medido** (≡ "mismo coste, más rápido").
+
+Solo en el core (sin UI): `cheapest` (degenerado: con setup > 0 siempre es 1 shard; equivale a `max-feedback ∞`) y el peso numérico coste/tiempo (avanzado, para consumidores de la librería).
 
 ### 5.5 Findings (la voz del consejero)
 
@@ -196,7 +209,7 @@ ci-shard-advisor <reports...> [options]
   --price <num>            €/minuto de máquina                [opcional, activa €]
   --workers <n>            workers por shard (default 1)
   --shards <n>             solo en modo fusionado (degradado)
-  --objective <balanced|fastest|cheapest>
+  --objective <recommended|fastest>   (default: recommended, el codo)
   --max-feedback <dur>     objetivo: el más barato dentro del SLA
   --budget <€|dur>         objetivo: el más rápido dentro del presupuesto
   --max-shards <n>
@@ -228,17 +241,16 @@ Your current setup (measured)
     You are paying for idle machines.
 
 Your moves
-  1) Rebalance your 4 shards      feedback 10m 25s (−3m 50s)   cost €3.30 (±0)
+  Free) Rebalance your 4 shards     feedback 10m 25s (−3m 50s)   cost €3.30 (±0)
      Same machines, tests redistributed by duration. Rebalancing is free.
      Apply: npx playwright test --shard-weights=31,27,22,20
 
-  2) Same wait, cheaper: 3 shards   feedback 13m 29s (−46s)    cost €3.24 (−€0.06, −2%)
-     One fewer machine still beats your current wait.
+  Recommended) 5 shards             feedback 9m 02s (−5m 13s)   cost €3.28 (−€0.02)
+     The knee of the cost/time frontier — past it, shards stop paying off.
+     Apply: npx playwright test --shard-weights=25,22,20,18,17
 
-  3) Same cost, faster: 5 shards    feedback 9m 02s (−5m 13s)  cost €3.28 (−€0.02)
-     Your current budget buys a 37% faster pipeline.
-
-  4) Balanced sweet spot: 5 shards  — same as move #3 for this suite.
+(el segundo bloque cambia con --objective/--max-feedback/--budget; si el
+movimiento elegido coincide con el rebalance, se emite una sola entrada)
 
 Warnings
   • Past 6 shards feedback stops improving: 'checkout.spec.ts' (8m 51s)
@@ -254,7 +266,9 @@ Frontier (shards · feedback · billed · price)
 
 ## 8. Web
 
-- Demo precargada al abrir (se mantiene), ahora mostrando: card de situación actual + las 4 cards de movimientos + findings + gráfica de frontera con € en tooltip.
+- Demo precargada al abrir (se mantiene), mostrando: card de situación actual + card de **rebalance** (siempre visible) + **una card del movimiento elegido** + findings + gráfica de frontera con € en tooltip.
+- Selector de objetivo (5.4): `Recommended` (default) · `Fastest` · `Espera máxima` (campo prellenado con la espera actual) · `Presupuesto` (campo prellenado con el coste actual). Cambiar el selector cambia la card del movimiento y el marcador *recommended* de la gráfica.
+- Si el movimiento elegido coincide con el rebalance, se muestra una sola card que lo indica.
 - Upload **múltiple** (N ficheros a la vez) además de único.
 - Inputs: setup, precio/min, workers, objetivo.
 - Todo en cliente (privacidad intacta).
