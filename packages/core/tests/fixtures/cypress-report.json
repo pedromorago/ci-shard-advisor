@@ -1,0 +1,47 @@
+{
+  "runs": [
+    {
+      "spec": { "name": "login.cy.ts", "relative": "cypress/e2e/login.cy.ts" },
+      "tests": [
+        {
+          "title": ["Login", "logs in with valid credentials @sanity"],
+          "state": "passed",
+          "duration": 8200,
+          "attempts": [{ "state": "passed", "duration": 8200 }]
+        },
+        {
+          "title": ["Login", "rejects an invalid password"],
+          "state": "passed",
+          "duration": 6400,
+          "attempts": [{ "state": "passed", "duration": 6400 }]
+        }
+      ]
+    },
+    {
+      "spec": { "name": "checkout.cy.ts", "relative": "cypress/e2e/checkout.cy.ts" },
+      "tests": [
+        {
+          "title": ["Checkout", "applies a discount code"],
+          "state": "passed",
+          "attempts": [
+            { "state": "failed", "duration": 21000 },
+            { "state": "passed", "duration": 19800 }
+          ]
+        },
+        {
+          "title": ["Checkout", "rejects an expired code"],
+          "state": "failed",
+          "duration": 30000,
+          "attempts": [
+            { "state": "failed", "duration": 15000 },
+            { "state": "failed", "duration": 15000 }
+          ]
+        },
+        {
+          "title": ["Checkout", "skips gift wrapping"],
+          "state": "pending"
+        }
+      ]
+    }
+  ]
+}

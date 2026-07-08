@@ -5,9 +5,9 @@
 ![Node](https://img.shields.io/badge/node-%3E%3D22-3c873a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 
-Analyze a Playwright JSON report and find the CI sharding strategy that balances
-**feedback time** against **cost** — with an exact scheduler, a faithful worker
-simulator, and an honest cost/time frontier.
+Analyze a **Playwright or Cypress** test report and find the CI sharding
+strategy that balances **feedback time** against **cost** — with an exact
+scheduler, a faithful worker simulator, and an honest cost/time frontier.
 
 ## Why
 
@@ -71,8 +71,11 @@ See [docs/architecture.md](docs/architecture.md) and the
   across shards to minimize makespan, with symmetry breaking, bound-based
   pruning and a time budget. It never lies: if it can't certify the optimum in
   time, it says so and reports the gap.
-- **Faithful simulation.** The worker simulator models Playwright's real queue
+- **Faithful simulation.** The worker simulator models the runner's real queue
   (greedy, no reordering), so estimates reflect the tool, not an ideal.
+- **Framework-agnostic engine.** Only the input reader is tool-specific: a
+  Playwright and a Cypress reader both feed the same pure scheduler. Adding a new
+  format (JUnit XML, Jest, …) is one more reader, nothing else changes.
 - **Privacy by construction.** The web processes reports in the browser and
   never uploads them — proven by a dedicated E2E test.
 

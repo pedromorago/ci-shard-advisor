@@ -49,6 +49,29 @@ describe('cli', () => {
       const { out } = invoke([FILE, '--format', 'markdown']);
       expect(out).toContain('## CI Shard Advisor');
     });
+
+    it('analyzes a Cypress report with --input-format cypress', () => {
+      const cypress = JSON.stringify({
+        runs: [
+          {
+            spec: { relative: 'a.cy.ts' },
+            tests: [
+              { title: ['A', 't1'], state: 'passed', duration: 10000 },
+              { title: ['A', 't2'], state: 'passed', duration: 20000 },
+            ],
+          },
+        ],
+      });
+      const { code, out } = invoke([FILE, '--input-format', 'cypress'], () => cypress);
+      expect(code).toBe(0);
+      expect(out).toContain('2 tests');
+    });
+
+    it('errors on an unknown input format', () => {
+      const { code, err } = invoke([FILE, '--input-format', 'jest']);
+      expect(code).toBe(2);
+      expect(err).toMatch(/unknown input format/);
+    });
   });
 
   describe('usage and input errors (exit 2)', () => {

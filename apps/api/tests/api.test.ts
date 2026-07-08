@@ -55,6 +55,26 @@ describe('API', () => {
     expect(body.savings).toBeDefined();
   });
 
+  it('analyzes a Cypress report with ?format=cypress', async () => {
+    const cypress = {
+      runs: [
+        {
+          spec: { relative: 'a.cy.ts' },
+          tests: [{ title: ['A', 't1'], state: 'passed', duration: 10000 }],
+        },
+      ],
+    };
+    const response = await app.inject({ method: 'POST', url: '/analyze?format=cypress', payload: cypress });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().totalTests).toBe(1);
+  });
+
+  it('rejects an unknown format with 400', async () => {
+    const response = await app.inject({ method: 'POST', url: '/analyze?format=jest', payload: report });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toMatch(/format/);
+  });
+
   it('rejects a structurally invalid report with 400', async () => {
     const response = await app.inject({
       method: 'POST',

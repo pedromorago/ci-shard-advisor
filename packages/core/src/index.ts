@@ -14,10 +14,12 @@ export type { RecommendOptions, RecommendationResult, Savings } from './recommen
 export { parseReport, ReportParseError } from './report/parser';
 export type { PlaywrightReport } from './report/playwright-report';
 export { normalize, durationsOf } from './report/normalizer';
+export { parseCypressReport, normalizeCypress } from './report/cypress';
+export type { CypressReport } from './report/cypress-report';
 export { classify } from './report/classifier';
 export type { ClassifyRule, ClassifyOptions } from './report/classifier';
 export { analyze } from './report/analyze';
-export type { AnalyzeOptions, AnalysisResult } from './report/analyze';
+export type { AnalyzeOptions, AnalysisResult, ReportFormat } from './report/analyze';
 export { summarize, formatDuration } from './exporters/summary';
 export type { AnalysisSummary, BlockSummary } from './exporters/summary';
 export { toJson, toSummaryObject } from './exporters/json';
