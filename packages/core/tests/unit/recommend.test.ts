@@ -56,4 +56,33 @@ describe('recommend', () => {
     expect(() => recommend([1, 2, 3], { currentShardCount: 0 })).toThrow(RangeError);
     expect(() => recommend([1, 2, 3], { currentShardCount: 1.5 })).toThrow(RangeError);
   });
+
+  describe('priority', () => {
+    const durations = [10, 10, 10, 10];
+    const opts = { maxShards: 4, startupOverheadMs: 5 };
+
+    it('defaults to the balanced knee', () => {
+      expect(recommend(durations, opts).recommended.shardCount).toBe(2);
+    });
+
+    it("'fastest' minimizes feedback time (most shards here)", () => {
+      const r = recommend(durations, { ...opts, priority: 'fastest' });
+      expect(r.recommended.shardCount).toBe(4);
+      expect(r.recommended.feedbackTimeMs).toBe(15);
+    });
+
+    it("'cheapest' minimizes billed cost (fewest shards here)", () => {
+      const r = recommend(durations, { ...opts, priority: 'cheapest' });
+      expect(r.recommended.shardCount).toBe(1);
+    });
+
+    it('a high time value favors speed, a zero value favors cost', () => {
+      expect(recommend(durations, { ...opts, priority: 100 }).recommended.shardCount).toBe(4);
+      expect(recommend(durations, { ...opts, priority: 0 }).recommended.shardCount).toBe(1);
+    });
+
+    it('rejects a negative weight', () => {
+      expect(() => recommend(durations, { ...opts, priority: -1 })).toThrow(RangeError);
+    });
+  });
 });

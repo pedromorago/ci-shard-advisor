@@ -115,6 +115,14 @@ describe('cli', () => {
       expect(err).toMatch(/--workers must be a positive integer/);
     });
 
+    it('accepts a priority preset and rejects an invalid one', () => {
+      expect(invoke([FILE, '--priority', 'fastest']).code).toBe(0);
+      expect(invoke([FILE, '--priority', '5']).code).toBe(0);
+      const bad = invoke([FILE, '--priority', 'nope']);
+      expect(bad.code).toBe(2);
+      expect(bad.err).toMatch(/--priority must be/);
+    });
+
     it('prints help and exits 0', () => {
       const { code, out } = invoke(['--help']);
       expect(code).toBe(0);

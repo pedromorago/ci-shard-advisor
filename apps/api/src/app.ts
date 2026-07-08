@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { analyze, toSummaryObject } from '@ci-shard-advisor/core';
-import type { AnalyzeOptions, ReportFormat } from '@ci-shard-advisor/core';
+import type { AnalyzeOptions, ReportFormat, Priority } from '@ci-shard-advisor/core';
 
 /** Parse an optional positive-integer query param. */
 function positiveInt(raw: string | undefined, name: string): number | undefined {
@@ -29,6 +29,18 @@ interface AnalyzeQuery {
   overheadMs?: string;
   maxShards?: string;
   format?: string;
+  priority?: string;
+}
+
+/** Validate the optional priority query param (a preset or numeric value). */
+function priorityParam(raw: string | undefined): Priority | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === 'knee' || raw === 'fastest' || raw === 'cheapest') return raw;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error('priority must be knee, fastest, cheapest or a number >= 0');
+  }
+  return value;
 }
 
 /** Validate the optional report-format query param. */
@@ -61,11 +73,13 @@ export function buildApp(): FastifyInstance {
       const shards = positiveInt(query.shards, 'shards');
       const overheadMs = nonNegative(query.overheadMs, 'overheadMs');
       const format = reportFormat(query.format);
+      const priority = priorityParam(query.priority);
       if (workers !== undefined) options.workersPerShard = workers;
       if (maxShards !== undefined) options.maxShards = maxShards;
       if (shards !== undefined) options.currentShardCount = shards;
       if (overheadMs !== undefined) options.startupOverheadMs = overheadMs;
       if (format !== undefined) options.format = format;
+      if (priority !== undefined) options.priority = priority;
     } catch (error) {
       return reply.code(400).send({ error: (error as Error).message });
     }

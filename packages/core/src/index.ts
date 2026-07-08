@@ -10,7 +10,7 @@ export { buildFrontier, evaluateConfig } from './recommender/frontier';
 export type { ConfigPoint, FrontierOptions } from './recommender/frontier';
 export { findElbow } from './recommender/elbow';
 export { recommend } from './recommender/recommend';
-export type { RecommendOptions, RecommendationResult, Savings } from './recommender/recommend';
+export type { RecommendOptions, RecommendationResult, Savings, Priority } from './recommender/recommend';
 export { parseReport, ReportParseError } from './report/parser';
 export type { PlaywrightReport } from './report/playwright-report';
 export { normalize, durationsOf } from './report/normalizer';

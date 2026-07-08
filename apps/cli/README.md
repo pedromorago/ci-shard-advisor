@@ -19,6 +19,7 @@ Options:
 | `--workers <n>` | Workers per shard (default: 1) |
 | `--overhead <duration>` | Per-shard startup overhead, e.g. `30s` |
 | `--max-shards <n>` | Largest shard count to evaluate |
+| `--priority <knee\|fastest\|cheapest\|N>` | How to choose (default: `knee`; `N` = cost per minute of feedback) |
 | `--max-feedback <duration>` | **Gate:** fail if the best feedback time exceeds this |
 | `--max-cost-waste <pct>` | **Gate:** fail if your config wastes more than `pct`% cost |
 

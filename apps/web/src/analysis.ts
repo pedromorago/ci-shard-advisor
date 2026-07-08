@@ -1,5 +1,5 @@
 import { analyze } from '@ci-shard-advisor/core';
-import type { AnalyzeOptions, AnalysisResult } from '@ci-shard-advisor/core';
+import type { AnalyzeOptions, AnalysisResult, Priority } from '@ci-shard-advisor/core';
 import demoReport from './demo-report.json';
 
 /** The knobs the user controls — none of these come from the report itself. */
@@ -10,12 +10,15 @@ export interface AnalysisSettings {
   workersPerShard: number;
   /** The team's current shard count, for the comparison. */
   currentShardCount: number;
+  /** How to pick the recommendation (defaults to the balanced knee). */
+  priority: Priority;
 }
 
 export const DEFAULT_SETTINGS: AnalysisSettings = {
   startupOverheadSec: 30,
   workersPerShard: 1,
   currentShardCount: 6,
+  priority: 'knee',
 };
 
 function toOptions(settings: AnalysisSettings): AnalyzeOptions {
@@ -24,6 +27,7 @@ function toOptions(settings: AnalysisSettings): AnalyzeOptions {
     startupOverheadMs: settings.startupOverheadSec * 1000,
     workersPerShard: settings.workersPerShard,
     currentShardCount: settings.currentShardCount,
+    priority: settings.priority,
     // Cap the solver so a large real report never hangs the tab.
     solve: { timeBudgetMs: 100 },
   };

@@ -10,9 +10,47 @@ export interface Savings {
   costDeltaMs: number;
 }
 
+/**
+ * How to pick the recommended configuration:
+ * - `'knee'` (default): the balanced sweet spot — no price needed.
+ * - `'fastest'`: minimize feedback time.
+ * - `'cheapest'`: minimize billed cost.
+ * - a number: minimize `cost + value × feedbackTime`, where `value` is how many
+ *   units of billed cost one unit of feedback time is worth to you (0 = cost
+ *   only, higher = speed matters more). For when you do know your trade-off.
+ */
+export type Priority = 'knee' | 'fastest' | 'cheapest' | number;
+
 export interface RecommendOptions extends FrontierOptions {
   /** The team's current shard count, to compare the recommendation against. */
   currentShardCount?: number;
+  /** Recommendation criterion. Defaults to the balanced knee. */
+  priority?: Priority;
+}
+
+/** Pick the recommended point from the frontier according to `priority`. */
+function chooseRecommendation(frontier: ConfigPoint[], priority: Priority = 'knee'): ConfigPoint {
+  if (priority === 'knee') return findElbow(frontier);
+
+  let score: (point: ConfigPoint) => number;
+  if (priority === 'fastest') {
+    score = (point) => point.feedbackTimeMs;
+  } else if (priority === 'cheapest') {
+    score = (point) => point.costMs;
+  } else {
+    if (!Number.isFinite(priority) || priority < 0) {
+      throw new RangeError(`priority weight must be a finite number >= 0, got ${priority}`);
+    }
+    score = (point) => point.costMs + priority * point.feedbackTimeMs;
+  }
+
+  // The frontier is ordered by ascending shard count, so a strict `<` keeps the
+  // fewest shards on ties.
+  let best = frontier[0];
+  for (const point of frontier) {
+    if (score(point) < score(best)) best = point;
+  }
+  return best;
 }
 
 export interface RecommendationResult {
@@ -36,7 +74,7 @@ export function recommend(
   options: RecommendOptions = {},
 ): RecommendationResult {
   const frontier = buildFrontier(durations, options);
-  const recommended = findElbow(frontier);
+  const recommended = chooseRecommendation(frontier, options.priority);
 
   if (options.currentShardCount == null) {
     return { frontier, recommended };
