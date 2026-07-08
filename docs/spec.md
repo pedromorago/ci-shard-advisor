@@ -52,12 +52,27 @@ Un único report + `N` declarado por el usuario. La configuración actual se **m
 Para una configuración de `N` shards con tiempos de test `t_1..t_N` y setup `s`:
 
 ```text
-feedback  = max(t_i) + s                  // lo que espera el humano
-billedMs  = Σ t_i + N·s                   // lo que factura la nube
-€         = billedMs → minutos × precio   // solo si hay precio
+wall_i    = cola simulada del shard i con W workers   // W=1 → wall_i = Σ t del shard
+feedback  = max(wall_i) + s                           // lo que espera el humano
+billedMs  = Σ wall_i + N·s                            // lo que factura la nube
+€         = billedMs → minutos × precio               // solo si hay precio
 ```
 
-Consecuencia útil (debe aparecer como mensaje): **reequilibrar con el mismo N no cambia el coste** (mismo trabajo total, mismos setups); solo reduce la espera. Es gratis.
+Consecuencias útiles (deben aparecer como mensajes cuando apliquen):
+
+- **Reequilibrar con el mismo N y los mismos workers no cambia el coste** (mismo trabajo, mismos setups); solo reduce la espera. Es gratis.
+- **Los workers son gratis en la factura**: misma máquina, menos tiempo de pared, menos minutos facturados. Los shards, en cambio, añaden setup. "Más workers antes que más máquinas" es un consejo válido, con la letra pequeña de 4.1.
+
+### 4.1 Modelo de workers (Playwright)
+
+Dos niveles de paralelismo distintos: los **shards** deciden qué tests van a cada máquina; los **workers** deciden cómo se consumen dentro de ella.
+
+1. **Simulación fiel, no óptima:** la cola de un shard se recorre en orden y cada tarea va al worker que antes queda libre, sin reordenar (así funciona Playwright). El flag `optimal` del B&B certifica la partición por trabajo; el feedback reportado sale siempre de la simulación.
+2. **Default de CI:** Playwright usa `workers: 1` en CI salvo configuración explícita. Secuencial es el caso más común, no una suposición del modelo.
+3. **Acoplamiento con la granularidad:** sin `fullyParallel`, la unidad real de reparto entre workers es el *fichero* (los tests de un spec van al mismo worker, en serie). Regla: con `workers > 1`, granularidad fichero por defecto; granularidad test solo si `fullyParallel: true` está confirmado.
+4. **Escalado optimista:** el simulador asume que W workers escalan perfecto. En runners pequeños, dos navegadores se estorban (escalado sublineal, más riesgo de flaky). Toda recomendación de subir workers incluye la advertencia de validarlo con una ejecución real.
+5. **Lectura automática:** el report JSON de Playwright incluye su config resuelta con `workers`; en modo por-shard, la situación actual lo lee de ahí (fallback: flag manual).
+6. **Cypress no tiene workers:** un navegador por contenedor, tests en serie. Con reports de Cypress, `workers` se fuerza a 1 y los findings de workers no aplican.
 
 ## 5. Salida
 
@@ -95,6 +110,7 @@ Frases, no solo números. Obligatorias cuando aplican:
 
 - **Sobrefragmentación:** "Usas 10 shards, pero a partir de 6 solo pagas más: +31 % de coste por −35 s."
 - **Infrafragmentación:** "Con 5 shards reducirías la espera un 42 % por +€0.12 por ejecución."
+- **Workers antes que máquinas** (solo Playwright): "Con 2 workers por shard tu espera bajaría a 8m 40s sin coste extra — misma factura, mismas máquinas. Valídalo con una ejecución: en runners pequeños el escalado no es perfecto."
 - **Suelo / cuello de botella (FR-10 clásico):** "A partir de N=3 la espera no baja: 'checkout.spec.ts' (8m 51s) marca el suelo. Considera trocearlo (granularidad / fullyParallel)."
 - **Desequilibrio actual** (solo modo por-shard): ver 5.1.
 - **Flaky:** tests con retries y su coste ("3 tests flaky quemaron 1m 54s de máquina en esta ejecución").
@@ -249,7 +265,7 @@ Frontier (shards · feedback · billed · price)
 - **FR-1 Entrada por shard:** acepta ≥2 reports PW o Cypress/mochawesome; deduce N y tiempos por shard; mezcla de formatos → error claro.
 - **FR-2 Modo degradado:** 1 report + `--shards N`; la salida marca la config actual como *modelada*.
 - **FR-3 Coste:** con `--price`, todos los outputs muestran €; sin él, tiempo de máquina. Fórmulas de la sección 4, con tests.
-- **FR-4 Actual medida:** feedback, coste, imbalance y shard más lento correctos contra fixtures.
+- **FR-4 Actual medida:** feedback, coste, imbalance y shard más lento correctos contra fixtures. Si los reports de Playwright traen `config.workers`, se usa; si no, flag manual (default 1).
 - **FR-5 Escenario reequilibrio:** Δcoste = 0 exacto; incluye `ShardPlan`; el `--shard-weights` generado suma coherente con el reparto.
 - **FR-6 Misma espera menor coste:** cumple su definición formal (tabla 5.2) contra la frontera; si no existe, lo dice.
 - **FR-7 Mismo coste menor espera:** ídem.
@@ -258,6 +274,7 @@ Frontier (shards · feedback · billed · price)
 - **FR-10 Flaky:** lista con retries y `wastedMs = Σ duración de intentos extra`.
 - **FR-11 Exporters:** text/json/markdown consistentes entre sí (mismo summary); github/bitbucket generan config del escenario elegido.
 - **FR-12 Web:** criterios de la sección 8, cubiertos por E2E (Playwright) incluida la subida múltiple y la privacidad (sin peticiones de red con el report).
+- **FR-13 Modelo de workers:** con W=1, `wall_i` = suma exacta del shard; con W>1, `wall_i` nunca es menor que `max(pmax, Σt/W)` (tests de propiedad); con W>1 la granularidad por defecto es fichero (test solo con fullyParallel confirmado); con reports de Cypress, W se fuerza a 1; el finding "workers antes que máquinas" se emite exactamente cuando simular W+1 con el N actual mejora el feedback por encima del umbral.
 
 ## 10. Qué se conserva, qué cambia, qué se aparca
 
@@ -274,3 +291,4 @@ Frontier (shards · feedback · billed · price)
 3. Ninguna cota inferior puede superar al óptimo (por eso `avgBound` es continuo, sin `ceil`).
 4. Salidas deterministas (sin locale, sin reloj) para que los snapshots sean estables.
 5. Los tests con aleatoriedad usan el PRNG con semilla (`mulberry32`), nunca `Math.random()`.
+6. La simulación de workers no reordena la cola (modelo fiel de Playwright, no optimizador). El feedback reportado sale siempre de la simulación, nunca de la partición teórica.
