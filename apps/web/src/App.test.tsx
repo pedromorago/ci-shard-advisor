@@ -52,7 +52,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    const input = screen.getByLabelText(/upload a playwright json report/i);
+    const input = screen.getByLabelText(/upload a playwright or cypress report/i);
     await user.upload(input, reportFile(twoTestReport, 'my-suite.json'));
 
     expect(await screen.findByText(/my-suite\.json/)).toBeInTheDocument();
@@ -61,11 +61,35 @@ describe('App', () => {
     expect(screen.queryByText(/12 tests/i)).not.toBeInTheDocument();
   });
 
+  it('auto-detects and analyzes a Cypress report', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    // A Cypress run result (top-level `runs`), no format hint needed.
+    const cypressReport = JSON.stringify({
+      runs: [
+        {
+          spec: { relative: 'a.cy.ts' },
+          tests: [
+            { title: ['A', 't1'], state: 'passed', duration: 1000 },
+            { title: ['A', 't2'], state: 'passed', duration: 2000 },
+            { title: ['A', 't3'], state: 'passed', duration: 3000 },
+          ],
+        },
+      ],
+    });
+    const input = screen.getByLabelText(/upload a playwright or cypress report/i);
+    await user.upload(input, reportFile(cypressReport, 'cypress-run.json'));
+
+    expect(await screen.findByText(/cypress-run\.json/)).toBeInTheDocument();
+    expect(screen.getByText(/3 tests/i)).toBeInTheDocument();
+  });
+
   it('shows an error for a malformed report and keeps the previous analysis', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    const input = screen.getByLabelText(/upload a playwright json report/i);
+    const input = screen.getByLabelText(/upload a playwright or cypress report/i);
     await user.upload(input, reportFile('{ not valid json', 'broken.json'));
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
@@ -77,7 +101,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    const input = screen.getByLabelText(/upload a playwright json report/i);
+    const input = screen.getByLabelText(/upload a playwright or cypress report/i);
     await user.upload(input, reportFile(twoTestReport, 'my-suite.json'));
     expect(await screen.findByText(/my-suite\.json/)).toBeInTheDocument();
 

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { parseCypressReport, normalizeCypress } from '../../src/report/cypress';
 import { ReportParseError } from '../../src/report/parser';
-import { analyze } from '../../src/report/analyze';
+import { analyze, detectFormat } from '../../src/report/analyze';
 import cypressReport from '../fixtures/cypress-report.json';
+import playwrightReport from '../fixtures/demo-report.json';
 
 function tasksFrom(raw: unknown) {
   return normalizeCypress(parseCypressReport(raw));
@@ -61,5 +62,20 @@ describe('analyze with format: cypress', () => {
     expect(tasks.filter((t) => t.block === 'sanity')).toHaveLength(1);
     expect(recommendation.recommended.shardCount).toBeGreaterThanOrEqual(1);
     expect(recommendation.frontier).toHaveLength(4);
+  });
+});
+
+describe('format auto-detection', () => {
+  it('detects Cypress by its top-level runs array, Playwright by suites', () => {
+    expect(detectFormat(cypressReport)).toBe('cypress');
+    expect(detectFormat(playwrightReport)).toBe('playwright');
+    expect(detectFormat(JSON.stringify(cypressReport))).toBe('cypress');
+    expect(detectFormat('{ not json')).toBe('playwright');
+  });
+
+  it('analyze auto-detects the format when none is given', () => {
+    // No `format` option — the Cypress report is recognized from its shape.
+    expect(analyze(cypressReport, { maxShards: 4 }).tasks).toHaveLength(5);
+    expect(analyze(playwrightReport, { maxShards: 4 }).tasks).toHaveLength(12);
   });
 });

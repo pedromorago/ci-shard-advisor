@@ -32,10 +32,10 @@ interface AnalyzeQuery {
 }
 
 /** Validate the optional report-format query param. */
-function reportFormat(raw: string | undefined): ReportFormat | undefined {
+function reportFormat(raw: string | undefined): ReportFormat | 'auto' | undefined {
   if (raw === undefined) return undefined;
-  if (raw !== 'playwright' && raw !== 'cypress') {
-    throw new Error(`format must be 'playwright' or 'cypress'`);
+  if (raw !== 'auto' && raw !== 'playwright' && raw !== 'cypress') {
+    throw new Error(`format must be 'auto', 'playwright' or 'cypress'`);
   }
   return raw;
 }
