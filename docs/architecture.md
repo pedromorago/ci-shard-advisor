@@ -71,7 +71,9 @@ Playwright JSON
 El motor es **agnóstico al framework**: lo único específico de cada herramienta es
 el *lector* de entrada (parser + normalizer) que traduce su report a `AtomicTask[]`.
 Hay dos lectores —Playwright y Cypress ([`cypress.ts`](../packages/core/src/report/cypress.ts))—
-y `analyze(input, { format })` elige uno. A partir de ahí (duraciones), scheduler,
+y `analyze(input, { format })` elige uno. Por defecto (`format: 'auto'`) se
+**detecta por la forma** del JSON (Cypress tiene `runs`, Playwright `suites`), así
+que la web, la CLI y la API aceptan cualquiera de los dos sin configurar nada. A partir de ahí (duraciones), scheduler,
 simulador, recommender y exporters no saben ni les importa el origen. Añadir Jest,
 JUnit XML, etc. es **un lector más**; nada del núcleo cambia. La opción `format`
 está expuesta en el core, la CLI (`--input-format`) y la API (`?format=`).

@@ -18,7 +18,7 @@ export { parseCypressReport, normalizeCypress } from './report/cypress';
 export type { CypressReport } from './report/cypress-report';
 export { classify } from './report/classifier';
 export type { ClassifyRule, ClassifyOptions } from './report/classifier';
-export { analyze } from './report/analyze';
+export { analyze, detectFormat } from './report/analyze';
 export type { AnalyzeOptions, AnalysisResult, ReportFormat } from './report/analyze';
 export { summarize, formatDuration } from './exporters/summary';
 export type { AnalysisSummary, BlockSummary } from './exporters/summary';
