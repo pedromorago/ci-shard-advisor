@@ -79,7 +79,7 @@ export function App() {
         {formatDuration(testTimeMs)} of test time
       </p>
 
-      <Controls settings={settings} onChange={setSettings} />
+      <Controls settings={settings} merged={reports.length < 2} onChange={setSettings} />
 
       <CurrentCard
         current={result.current}

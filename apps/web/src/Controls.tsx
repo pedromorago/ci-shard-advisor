@@ -2,11 +2,14 @@ import type { AnalysisSettings } from './analysis';
 
 interface ControlsProps {
   settings: AnalysisSettings;
+  /** With one merged report the shard count must be declared; with one report
+   * per shard it is deduced from the file count, so the field disappears. */
+  merged: boolean;
   onChange: (settings: AnalysisSettings) => void;
 }
 
 /** The knobs that are not in the reports: setup, price, workers, shard count. */
-export function Controls({ settings, onChange }: ControlsProps) {
+export function Controls({ settings, merged, onChange }: ControlsProps) {
   const update = (patch: Partial<AnalysisSettings>) => onChange({ ...settings, ...patch });
   const num = (raw: string, min: number) => {
     const value = Number(raw);
@@ -48,16 +51,18 @@ export function Controls({ settings, onChange }: ControlsProps) {
             onChange={(e) => update({ workersPerShard: Math.round(num(e.target.value, 1)) })}
           />
         </label>
-        <label className="control">
-          <span>Shards (merged report)</span>
-          <input
-            type="number"
-            min={1}
-            step={1}
-            value={settings.currentShardCount}
-            onChange={(e) => update({ currentShardCount: Math.round(num(e.target.value, 1)) })}
-          />
-        </label>
+        {merged ? (
+          <label className="control">
+            <span>Shards you run today</span>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={settings.currentShardCount}
+              onChange={(e) => update({ currentShardCount: Math.round(num(e.target.value, 1)) })}
+            />
+          </label>
+        ) : null}
       </div>
     </section>
   );
