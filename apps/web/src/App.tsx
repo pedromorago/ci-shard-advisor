@@ -1,48 +1,47 @@
 import { useMemo, useState } from 'react';
-import { summarize, formatDuration } from '@ci-shard-advisor/core';
-import { analyzeReport, DEFAULT_SETTINGS, DEMO_REPORT } from './analysis';
-import type { AnalysisSettings, ReportInput } from './analysis';
-import { ReportInput as ReportInputControl } from './ReportInput';
+import { formatDuration } from '@ci-shard-advisor/core';
+import type { ReportFile } from '@ci-shard-advisor/core';
+import { adviseFrom, DEFAULT_SETTINGS, DEMO_REPORTS } from './analysis';
+import type { AnalysisSettings } from './analysis';
+import { ReportInput } from './ReportInput';
 import { ReportHelp } from './ReportHelp';
 import { Controls } from './Controls';
-import { CurrentPipeline } from './CurrentPipeline';
-import { Recommendation } from './Recommendation';
-import type { RecommendationMode } from './Recommendation';
-import { CiConfig } from './CiConfig';
-import { Explore } from './Explore';
+import { CurrentCard } from './CurrentCard';
+import { MoveCard } from './MoveCard';
+import { FindingsCard } from './FindingsCard';
 import { FrontierChart } from './FrontierChart';
 
 export function App() {
-  const [report, setReport] = useState<ReportInput>(DEMO_REPORT);
-  const [source, setSource] = useState('demo report');
+  const [reports, setReports] = useState<ReportFile[]>(DEMO_REPORTS);
+  const [source, setSource] = useState('demo (4 shards)');
   const [settings, setSettings] = useState<AnalysisSettings>(DEFAULT_SETTINGS);
-  const [mode, setMode] = useState<RecommendationMode>('same-shards');
   const [error, setError] = useState<string | null>(null);
 
-  const summary = useMemo(() => summarize(analyzeReport(report, settings)), [report, settings]);
-  const current = summary.current ?? summary.frontier[0];
-  const balanced = summary.recommended;
-  const sameShards = summary.frontier[Math.min(settings.currentShardCount, summary.frontier.length) - 1];
-  const recommended = mode === 'same-shards' ? sameShards : balanced;
+  const result = useMemo(() => adviseFrom(reports, settings), [reports, settings]);
+  const testTimeMs = useMemo(
+    () => result.tasks.reduce((sum, task) => sum + task.durationMs, 0),
+    [result],
+  );
+  const objective = result.scenarios.find((s) => s.id === 'objective') ?? result.scenarios[0];
 
-  function handleSelect(jsonText: string, fileName: string) {
+  function handleSelect(uploaded: ReportFile[]) {
     try {
-      const result = analyzeReport(jsonText, settings);
-      if (result.tasks.length === 0) {
-        setError('That report has no tests to analyze.');
+      const preview = adviseFrom(uploaded, settings);
+      if (preview.tasks.length === 0) {
+        setError('Those reports have no tests to analyze.');
         return;
       }
-      setReport(jsonText);
-      setSource(fileName);
+      setReports(uploaded);
+      setSource(uploaded.length >= 2 ? `${uploaded.length} uploaded reports` : uploaded[0].name);
       setError(null);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not read that report.');
+      setError(cause instanceof Error ? cause.message : 'Could not read those reports.');
     }
   }
 
   function handleLoadDemo() {
-    setReport(DEMO_REPORT);
-    setSource('demo report');
+    setReports(DEMO_REPORTS);
+    setSource('demo (4 shards)');
     setError(null);
   }
 
@@ -51,12 +50,11 @@ export function App() {
       <header className="app__header">
         <h1>CI Shard Advisor</h1>
         <p className="app__tagline">
-          Split your test pipeline to balance feedback time and cost.
+          You are here — these are your moves and what each one costs or saves.
         </p>
       </header>
 
-      <ReportInputControl onSelect={handleSelect} onLoadDemo={handleLoadDemo} />
-
+      <ReportInput onSelect={handleSelect} onLoadDemo={handleLoadDemo} />
       <ReportHelp />
 
       {error ? (
@@ -66,63 +64,45 @@ export function App() {
       ) : null}
 
       <p className="app__meta">
-        Showing <strong>{source}</strong> · {summary.totalTests} tests ·{' '}
-        {formatDuration(summary.totalDurationMs)} total
+        Showing <strong>{source}</strong> · {result.tasks.length} tests ·{' '}
+        {formatDuration(testTimeMs)} of test time
       </p>
 
       <Controls settings={settings} onChange={setSettings} />
 
-      <CurrentPipeline current={current} ratePerMin={settings.costRatePerMin} />
-
-      <Recommendation
-        current={current}
-        recommended={recommended}
-        mode={mode}
-        onModeChange={setMode}
-        ratePerMin={settings.costRatePerMin}
+      <CurrentCard
+        current={result.current}
+        workersPerShard={settings.workersPerShard}
+        pricePerMinute={settings.pricePerMinute}
       />
 
-      <CiConfig shardCount={recommended.shardCount} />
+      <section className="card" aria-labelledby="moves-heading">
+        <h2 id="moves-heading">Your moves</h2>
+        <ol className="moves-list">
+          {result.scenarios.map((scenario, i) => (
+            <MoveCard
+              key={scenario.id}
+              scenario={scenario}
+              moveNumber={i + 1}
+              pricePerMinute={settings.pricePerMinute}
+            />
+          ))}
+        </ol>
+      </section>
 
-      <Explore
-        frontier={summary.frontier}
-        ratePerMin={settings.costRatePerMin}
-        initialShardCount={settings.currentShardCount}
-      />
+      <FindingsCard findings={result.findings} />
 
       <details className="card details">
         <summary>Show the full cost / time frontier</summary>
         <div className="details__body">
           <FrontierChart
-            frontier={summary.frontier}
-            recommended={balanced}
-            current={current}
-            ratePerMin={settings.costRatePerMin}
+            frontier={result.frontier}
+            recommended={objective.config}
+            current={result.current}
+            ratePerMin={settings.pricePerMinute}
           />
         </div>
       </details>
-
-      <section className="card" aria-labelledby="blocks-heading">
-        <h2 id="blocks-heading">Blocks</h2>
-        <table className="blocks">
-          <thead>
-            <tr>
-              <th scope="col">Block</th>
-              <th scope="col">Tests</th>
-              <th scope="col">Duration</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.blocks.map((block) => (
-              <tr key={block.block}>
-                <td>{block.block}</td>
-                <td>{block.tests}</td>
-                <td>{formatDuration(block.durationMs)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
     </main>
   );
 }
