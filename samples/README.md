@@ -9,6 +9,11 @@ is auto-detected, so you can drop any of these into the web, the CLI or the API.
 | `playwright-bottleneck.json` | Playwright JSON | One 3-minute test dominates — more shards don't help; the advice is *fewer* shards |
 | `cypress-run.json` | Cypress run result (Module API) | Specs with retries (flaky) and a pending test |
 | `mochawesome.json` | mochawesome (Cypress/Mocha) | Nested suites, a failure and a pending test |
+| [`playwright-dev-shards/`](playwright-dev-shards) | Playwright JSON × 4 | A **real** 4-shard run (measured setup with imbalance) — pass all four at once |
+
+The single files above are one merged report each (the advisor *models* the
+split). The `playwright-dev-shards/` folder is one report **per shard** from a
+real run, so the advisor *measures* your setup — see its [README](playwright-dev-shards/README.md).
 
 ## Try them in the web (easiest)
 
