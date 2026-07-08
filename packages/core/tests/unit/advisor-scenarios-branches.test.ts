@@ -102,17 +102,55 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
     tasks: TASKS,
   };
 
-  it('text names the unavailable moves and the coinciding one', () => {
+  it('text merges the chosen move into the rebalance when they coincide', () => {
+    // fastest lands on 3 shards = the rebalance point → one single entry.
     const text = toAdvisorText(result, cost);
-    expect(text).toMatch(/not available: Nothing cheaper/);
-    expect(text).toMatch(/not available: Nothing faster/);
-    expect(text).toMatch(/same as move #1/);
+    expect(text).toMatch(/Fastest\) Rebalance your 3 shards — your best move is free/);
+    expect(text).not.toMatch(/Free\)/);
   });
 
-  it('markdown renders unavailable moves and the sameAs note', () => {
+  it('text shows rebalance + the unavailable chosen move separately', () => {
+    // A budget nothing meets → the objective falls back to cheapest (1 shard ≠ 3).
+    const scenarios = buildScenarios(FRONTIER, unbeatable, TASKS, 1, { kind: 'budget', costMs: 100000 });
+    const text = toAdvisorText({ ...result, scenarios }, cost);
+    expect(text).toMatch(/Free\) Rebalance your 3 shards/);
+    expect(text).toMatch(/Within your budget\)/);
+  });
+
+  it('markdown renders the merged move row when they coincide', () => {
     const md = toAdvisorMarkdown(result, cost);
-    expect(md).toMatch(/not available/);
-    expect(md).toMatch(/\(same as rebalance\)/);
+    expect(md).toMatch(/Fastest — rebalance your 3 shards \(free\)/);
+  });
+
+  it('labels every objective kind on the chosen move', () => {
+    const labelFor = (objective: Parameters<typeof buildScenarios>[4]) =>
+      toAdvisorText({ ...result, scenarios: buildScenarios(FRONTIER, unbeatable, TASKS, 1, objective) }, cost);
+    expect(labelFor({ kind: 'max-feedback', feedbackMs: 10_000_000 })).toMatch(/Within your wait\)/);
+    expect(labelFor({ kind: 'cheapest' })).toMatch(/Cheapest\)/);
+    expect(labelFor({ kind: 'weight', costPerFeedbackMinute: 0 })).toMatch(/Your weighting\)/);
+    expect(labelFor({ kind: 'balanced' })).toMatch(/Recommended\)/);
+  });
+
+  it('markdown renders rebalance + chosen as two rows when they differ', () => {
+    const scenarios = buildScenarios(FRONTIER, unbeatable, TASKS, 1, { kind: 'cheapest' }); // 1 shard ≠ 3
+    const md = toAdvisorMarkdown({ ...result, scenarios }, cost);
+    expect(md).toMatch(/Rebalance your 3 shards \(free\)/);
+    expect(md).toMatch(/\| Cheapest \| 1 \|/);
+  });
+
+  it('says the chosen move is not available instead of inventing one', () => {
+    // Hand-built: an objective scenario flagged unavailable (defensive path).
+    const rebalance = buildScenarios(FRONTIER, unbeatable, TASKS, 1, { kind: 'fastest' }).find((s) => s.id === 'rebalance')!;
+    const unavailable = {
+      id: 'objective' as const,
+      config: rebalance.config,
+      reason: 'Nothing fits that budget.',
+      unavailable: true,
+      objective: { kind: 'budget' as const, costMs: 1 },
+    };
+    const custom = { ...result, scenarios: [rebalance, unavailable] };
+    expect(toAdvisorText(custom, cost)).toMatch(/Within your budget\) not available: Nothing fits/);
+    expect(toAdvisorMarkdown(custom, cost)).toMatch(/\| Within your budget \| — \| not available \|/);
   });
 });
 

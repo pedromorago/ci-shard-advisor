@@ -2,7 +2,20 @@ import { advise } from '@ci-shard-advisor/core';
 import type { AdvisorResult, CostModel, Objective, ReportFile } from '@ci-shard-advisor/core';
 import { DEMO_REPORTS } from './demo';
 
-export type ObjectiveKind = 'balanced' | 'fastest' | 'cheapest';
+/**
+ * The objective the user picks in "Optimize for" (spec §5.4):
+ * - recommended: the knee of the frontier (the core's 'balanced').
+ * - fastest: minimum wait, whatever it costs.
+ * - max-wait: cheapest within a wait limit — prefilled with the current wait.
+ * - budget: fastest within a cost budget — prefilled with the current cost.
+ */
+export type ObjectiveSetting =
+  | { kind: 'recommended' }
+  | { kind: 'fastest' }
+  | { kind: 'max-wait'; seconds: number }
+  | { kind: 'budget'; euros: number };
+
+export type ObjectiveKind = ObjectiveSetting['kind'];
 
 /** The knobs the user controls — none of these come from the reports. */
 export interface AnalysisSettings {
@@ -14,8 +27,8 @@ export interface AnalysisSettings {
   workersPerShard: number;
   /** Declared shard count when a single merged report is uploaded. */
   currentShardCount: number;
-  /** The "by objective" move. */
-  objective: ObjectiveKind;
+  /** The chosen move. */
+  objective: ObjectiveSetting;
 }
 
 export const DEFAULT_SETTINGS: AnalysisSettings = {
@@ -23,10 +36,28 @@ export const DEFAULT_SETTINGS: AnalysisSettings = {
   pricePerMinute: 0.01,
   workersPerShard: 1,
   currentShardCount: 4,
-  objective: 'balanced',
+  objective: { kind: 'recommended' },
 };
 
 export { DEMO_REPORTS };
+
+/** Map the UI objective onto the core Objective. */
+function toObjective(setting: ObjectiveSetting, pricePerMinute: number): Objective {
+  switch (setting.kind) {
+    case 'recommended':
+      return { kind: 'balanced' };
+    case 'fastest':
+      return { kind: 'fastest' };
+    case 'max-wait':
+      return { kind: 'max-feedback', feedbackMs: setting.seconds * 1000 };
+    case 'budget':
+      // With a price, the budget is euros; without one it is machine minutes.
+      return {
+        kind: 'budget',
+        costMs: pricePerMinute > 0 ? (setting.euros / pricePerMinute) * 60_000 : setting.euros * 60_000,
+      };
+  }
+}
 
 /** Run the advisor over the uploaded reports (per-shard) or a single one (merged). */
 export function adviseFrom(reports: ReportFile[], settings: AnalysisSettings): AdvisorResult {
@@ -39,7 +70,7 @@ export function adviseFrom(reports: ReportFile[], settings: AnalysisSettings): A
       : { kind: 'merged' as const, report: reports[0], currentShardCount: settings.currentShardCount };
 
   return advise(input, cost, {
-    objective: { kind: settings.objective } as Objective,
+    objective: toObjective(settings.objective, settings.pricePerMinute),
     workersPerShard: settings.workersPerShard,
     maxShards: 16,
   });
