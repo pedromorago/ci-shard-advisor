@@ -5,9 +5,9 @@
 ![Node](https://img.shields.io/badge/node-%3E%3D22-3c873a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 
-Analyze a test report (**Playwright**, **Cypress** or **JUnit XML**) and find the
-CI sharding strategy that balances **feedback time** against **cost** — with an
-exact scheduler, a faithful worker simulator, and an honest cost/time frontier.
+Analyze your **Playwright** or **Cypress** shard reports and find the CI sharding
+strategy that balances **feedback time** against **cost** — with an exact
+scheduler, a faithful worker simulator, and an honest cost/time frontier.
 
 **▶ Live demo: [pedro-morago.github.io/ci-shard-advisor](https://pedro-morago.github.io/ci-shard-advisor/)** — runs entirely in your browser; drop in your own shard reports.
 
@@ -25,23 +25,37 @@ tells you how it compares to what you run today.
 
 ## A quick look
 
+You give it one report per shard, so it *measures* where you are today — then
+shows your moves and what each one costs or saves:
+
 ```text
-$ ci-shard-advisor report.json --shards 6 --overhead 30s
+$ ci-shard-advisor shard-*.json --setup 45s --price 0.008
 
-Recommended: 4 shards x 1 worker
-  Feedback time: 1m 32s
-  Billed cost:   6m 4s
-  optimal split
+Your current setup (measured)
+  4 shards × 1 worker
+  Feedback time: 4m 5s   (slowest shard: #1)
+  Billed cost:   10m 50s  →  €0.09 per run
+  ⚠ Imbalance: shard #4 finishes 2m 0s before shard #1. You are paying for idle machines.
 
-Current: 6 shards x 1 worker
-  Feedback time: 1m 30s
-  Billed cost:   7m 4s
-Change vs current: feedback +1.7s, cost -1m 0s
+Your moves
+  1) Rebalance your 4 shards   feedback 3m 45s (−20.0s)   cost €0.09 (±0)
+     Same machines, tests redistributed by duration — rebalancing is free.
+     Apply: npx playwright test --shard-weights=180,110,90,90
+  2) Same wait, cheaper: 3 shards   feedback 3m 45s (−20.0s)   cost €0.08 (−€0.01)
+     3 shards still beat your current wait.
+  3) Same cost, faster: 3 shards — same as move #2.
+  4) By objective: 3 shards — same as move #2.
+
+Warnings
+  • You run 4 shards, but past 3 you only pay more: +7% cost for −20.0s.
+  • Past 3 shards the wait stops dropping: 'checkout.spec.ts' (3m 0s) sets the floor. Consider splitting it.
+  • Your fastest shard finishes 2m 0s before the slowest — you are paying for idle machines.
 ```
 
-Same feedback time, one billed minute cheaper — the last two shards were buying
-nothing. The web demo shows the same analysis as an interactive cost/time
-frontier, processed entirely in your browser.
+You are not at the optimum, but the optimum is not 6 shards either: your fourth
+shard buys nothing, one slow file sets the floor, and your shards are unbalanced.
+The web demo shows the same analysis as an interactive cost/time frontier,
+processed entirely in your browser.
 
 ## Architecture
 
@@ -76,9 +90,9 @@ See [docs/architecture.md](docs/architecture.md) and the
 - **Faithful simulation.** The worker simulator models the runner's real queue
   (greedy, no reordering), so estimates reflect the tool, not an ideal.
 - **Framework-agnostic engine.** Only the input reader is tool-specific. It reads
-  Playwright JSON, Cypress run results and **JUnit XML** — the universal format
-  emitted by Playwright, Cypress, Jest, pytest, Maven and more — and the format is
-  auto-detected. Adding another reader is all it takes; the engine never changes.
+  **Playwright JSON** and **Cypress** run results (native or mochawesome), with the
+  format auto-detected. Adding another reader is all it takes; the engine never
+  changes.
 - **Privacy by construction.** The web processes reports in the browser and
   never uploads them — proven by a dedicated E2E test.
 - **Closes the loop to CI.** From the recommendation it generates ready-to-paste
