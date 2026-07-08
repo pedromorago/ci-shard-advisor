@@ -1,0 +1,80 @@
+{
+  "totalTests": 9,
+  "totalPassed": 7,
+  "totalFailed": 1,
+  "totalPending": 1,
+  "runs": [
+    {
+      "spec": { "name": "login.cy.ts", "relative": "cypress/e2e/login.cy.ts" },
+      "tests": [
+        {
+          "title": ["Login", "logs in with valid credentials @sanity"],
+          "state": "passed",
+          "duration": 7200,
+          "attempts": [{ "state": "passed", "duration": 7200 }]
+        },
+        {
+          "title": ["Login", "shows an error for a wrong password"],
+          "state": "passed",
+          "duration": 5400,
+          "attempts": [{ "state": "passed", "duration": 5400 }]
+        }
+      ]
+    },
+    {
+      "spec": { "name": "dashboard.cy.ts", "relative": "cypress/e2e/dashboard.cy.ts" },
+      "tests": [
+        {
+          "title": ["Dashboard", "renders the widgets @smoke"],
+          "state": "passed",
+          "duration": 18000,
+          "attempts": [{ "state": "passed", "duration": 18000 }]
+        },
+        {
+          "title": ["Dashboard", "refreshes live data"],
+          "state": "passed",
+          "attempts": [
+            { "state": "failed", "duration": 12000 },
+            { "state": "passed", "duration": 11500 }
+          ]
+        },
+        {
+          "title": ["Dashboard", "exports the report"],
+          "state": "passed",
+          "duration": 52000,
+          "attempts": [{ "state": "passed", "duration": 52000 }]
+        }
+      ]
+    },
+    {
+      "spec": { "name": "admin.cy.ts", "relative": "cypress/e2e/admin.cy.ts" },
+      "tests": [
+        {
+          "title": ["Admin", "creates a user"],
+          "state": "passed",
+          "duration": 9000,
+          "attempts": [{ "state": "passed", "duration": 9000 }]
+        },
+        {
+          "title": ["Admin", "deletes a user"],
+          "state": "failed",
+          "duration": 30000,
+          "attempts": [
+            { "state": "failed", "duration": 15000 },
+            { "state": "failed", "duration": 15000 }
+          ]
+        },
+        {
+          "title": ["Admin", "bulk-imports users"],
+          "state": "passed",
+          "duration": 40000,
+          "attempts": [{ "state": "passed", "duration": 40000 }]
+        },
+        {
+          "title": ["Admin", "audits permissions"],
+          "state": "pending"
+        }
+      ]
+    }
+  ]
+}

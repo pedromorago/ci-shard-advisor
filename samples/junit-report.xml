@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="10" failures="1" skipped="1" time="118.4">
+  <testsuite name="services/UserService" tests="4" failures="0" skipped="0" time="34.5">
+    <testcase classname="services/UserService" name="creates a user @sanity" time="3.2"/>
+    <testcase classname="services/UserService" name="finds a user by id" time="1.8"/>
+    <testcase classname="services/UserService" name="updates a user profile" time="4.5"/>
+    <testcase classname="services/UserService" name="hashes passwords with argon2" time="25.0"/>
+  </testsuite>
+  <testsuite name="services/BillingService" tests="3" failures="1" skipped="0" time="61.0">
+    <testcase classname="services/BillingService" name="charges a card" time="18.0"/>
+    <testcase classname="services/BillingService" name="reconciles an invoice" time="40.0">
+      <failure message="Timeout of 40000ms exceeded">at BillingService.reconcile</failure>
+    </testcase>
+    <testcase classname="services/BillingService" name="refunds a payment" time="3.0"/>
+  </testsuite>
+  <testsuite name="services/SearchService" tests="3" failures="0" skipped="1" time="22.9">
+    <testcase classname="services/SearchService" name="indexes documents @smoke" time="12.4"/>
+    <testcase classname="services/SearchService" name="ranks results by relevance" time="10.5"/>
+    <testcase classname="services/SearchService" name="supports fuzzy matching">
+      <skipped/>
+    </testcase>
+  </testsuite>
+</testsuites>
