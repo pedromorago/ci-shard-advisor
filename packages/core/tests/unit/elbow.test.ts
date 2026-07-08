@@ -29,6 +29,26 @@ describe('findElbow', () => {
     });
   });
 
+  describe('degenerate axes (no trade-off)', () => {
+    it('minimizes feedback time when every config costs the same', () => {
+      // Zero startup overhead: cost is flat, so pick the fewest shards that
+      // reach the fastest (floored) feedback time — here 3.
+      const flatCost = [
+        point(1, 100, 200),
+        point(2, 60, 200),
+        point(3, 50, 200),
+        point(4, 50, 200),
+        point(5, 50, 200),
+      ];
+      expect(findElbow(flatCost).shardCount).toBe(3);
+    });
+
+    it('minimizes cost when feedback time never changes', () => {
+      const flatTime = [point(1, 90, 90), point(2, 90, 120), point(3, 90, 150)];
+      expect(findElbow(flatTime).shardCount).toBe(1);
+    });
+  });
+
   describe('finds the point of maximum curvature', () => {
     it('picks the corner of an L-shaped frontier', () => {
       // Chord runs from (10,0) to (0,10); the middle point (0,0) is farthest.
