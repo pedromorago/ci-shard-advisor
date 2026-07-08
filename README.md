@@ -92,10 +92,14 @@ covered with the technique that fits it:
 - **Invariants** — "the engine never lies", work conservation, monotonicity.
 - **Snapshot testing** for the deterministic text/Markdown exporters.
 - **Component tests** (Testing Library) querying by role and accessible name.
-- **End-to-end** (Playwright): the upload flow, an **accessibility** scan (axe)
-  and a **privacy** test asserting the report never leaves the page.
+- **End-to-end** in **Playwright and Cypress**: the upload flow, an
+  **accessibility** scan (axe) and a **privacy** test asserting the report never
+  leaves the page.
 - **API testing** in two languages — Fastify `inject` in TS and a **JUnit 5 +
-  REST Assured** suite over real HTTP.
+  REST Assured** suite over real HTTP — plus **JSON Schema contract** checks.
+- **Performance testing** of the API with **k6** and **JMeter** (pass/fail SLOs).
+- **Mutation testing** (Stryker) and enforced **coverage** thresholds on the core.
+- **Jira/Xray**-ready: every suite emits **JUnit XML** for test-management import.
 
 The full catalog, with the rationale and file paths for each technique, is in
 [docs/testing.md](docs/testing.md).

@@ -12,7 +12,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: [
+    [process.env.CI ? 'github' : 'list'],
+    // JUnit XML for Jira/Xray import.
+    ['junit', { outputFile: 'reports/junit/e2e.xml' }],
+  ],
   use: {
     baseURL,
     trace: 'on-first-retry',
