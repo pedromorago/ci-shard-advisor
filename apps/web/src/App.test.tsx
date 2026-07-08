@@ -83,6 +83,16 @@ describe('App', () => {
     expect(screen.getByLabelText(/optimize for/i)).toBeInTheDocument();
   });
 
+  it('only asks for the shard count when a single merged report is loaded', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    // Demo = one report per shard → N is deduced, the field is hidden.
+    expect(screen.queryByLabelText(/shards you run today/i)).not.toBeInTheDocument();
+
+    await user.upload(screen.getByLabelText(/upload your shard reports/i), reportFile(pw([50000, 10000]), 'all.json'));
+    expect(await screen.findByLabelText(/shards you run today/i)).toBeInTheDocument();
+  });
+
   it('re-analyzes when the objective changes', () => {
     render(<App />);
     // Switching to "fastest" is accepted and keeps rendering the moves.
