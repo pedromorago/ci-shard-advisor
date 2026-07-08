@@ -2,23 +2,40 @@ import { analyze } from '@ci-shard-advisor/core';
 import type { AnalyzeOptions, AnalysisResult } from '@ci-shard-advisor/core';
 import demoReport from './demo-report.json';
 
-/**
- * Analysis options tuned for the browser. maxShards is capped and the solver
- * gets a time budget so a large real report can never hang the tab — the
- * branch-and-bound falls back to its LPT incumbent when the budget runs out.
- */
-const BASE_OPTIONS: AnalyzeOptions = {
-  maxShards: 12,
-  startupOverheadMs: 30000,
-  solve: { timeBudgetMs: 100 },
-};
-
-/** The preloaded demo analysis, including a "current config" to compare against. */
-export function demoAnalysis(): AnalysisResult {
-  return analyze(demoReport, { ...BASE_OPTIONS, currentShardCount: 6 });
+/** The knobs the user controls — none of these come from the report itself. */
+export interface AnalysisSettings {
+  /** Per-shard CI startup overhead, in seconds (machine boot, install, …). */
+  startupOverheadSec: number;
+  /** Workers running in parallel inside each shard. */
+  workersPerShard: number;
+  /** The team's current shard count, for the comparison. */
+  currentShardCount: number;
 }
 
-/** Analyze a report supplied by the user (raw JSON text). */
-export function analyzeText(jsonText: string): AnalysisResult {
-  return analyze(jsonText, BASE_OPTIONS);
+export const DEFAULT_SETTINGS: AnalysisSettings = {
+  startupOverheadSec: 30,
+  workersPerShard: 1,
+  currentShardCount: 6,
+};
+
+function toOptions(settings: AnalysisSettings): AnalyzeOptions {
+  return {
+    maxShards: 12,
+    startupOverheadMs: settings.startupOverheadSec * 1000,
+    workersPerShard: settings.workersPerShard,
+    currentShardCount: settings.currentShardCount,
+    // Cap the solver so a large real report never hangs the tab.
+    solve: { timeBudgetMs: 100 },
+  };
+}
+
+/** The raw report a user can supply (parsed object or raw text). */
+export type ReportInput = string | unknown;
+
+/** The preloaded demo report (a Playwright run). */
+export const DEMO_REPORT: ReportInput = demoReport;
+
+/** Analyze any report with the given settings. Format is auto-detected. */
+export function analyzeReport(input: ReportInput, settings: AnalysisSettings): AnalysisResult {
+  return analyze(input, toOptions(settings));
 }

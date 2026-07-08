@@ -17,7 +17,7 @@ describe('FrontierChart', () => {
   it('renders an accessible chart describing the recommendation', () => {
     render(<FrontierChart frontier={frontier} recommended={frontier[2]} current={frontier[3]} />);
 
-    const chart = screen.getByRole('img', { name: /cost versus feedback time/i });
+    const chart = screen.getByRole('img', { name: /feedback time versus billed cost/i });
     expect(chart).toBeInTheDocument();
     expect(chart).toHaveAccessibleName(/recommended is 3 shards/i);
   });
