@@ -126,6 +126,10 @@ export function normalizeCypress(report: CypressReport): AtomicTask[] {
       const fullTitle = parts.join(' ');
       const retries = Math.max(0, (test.attempts?.length ?? 1) - 1);
       const tags = extractTags(fullTitle);
+      const attempts = test.attempts ?? [];
+      const wastedMs = attempts
+        .slice(0, -1)
+        .reduce((sum, attempt) => sum + (attempt.duration ?? attempt.wallClockDuration ?? 0), 0);
       const task: AtomicTask = {
         id: `${file}::${fullTitle}`,
         title: parts[parts.length - 1] ?? fullTitle,
@@ -135,6 +139,7 @@ export function normalizeCypress(report: CypressReport): AtomicTask[] {
         retries,
       };
       if (tags.length > 0) task.tags = tags;
+      if (wastedMs > 0) task.wastedMs = wastedMs;
       tasks.push(task);
     }
   }

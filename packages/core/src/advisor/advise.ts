@@ -4,6 +4,7 @@ import { buildFrontier } from '../recommender/frontier';
 import { readReports } from './reports';
 import { measureCurrent, modelCurrent } from './current';
 import { buildScenarios } from './scenarios';
+import { computeFindings } from './findings';
 import type { AdvisorResult, AnalyzeInput, CostModel, Objective } from './types';
 
 const SOLVE = { timeBudgetMs: 200 };
@@ -53,7 +54,7 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
     current,
     scenarios,
     frontier,
-    findings: { warnings: [], flaky: [] },
+    findings: computeFindings(frontier, current, tasks, cost),
     tasks,
   };
 }
