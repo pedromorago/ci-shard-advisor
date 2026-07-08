@@ -1,0 +1,52 @@
+{
+  "stats": { "suites": 3, "tests": 8, "passes": 6, "pending": 1, "failures": 1, "duration": 138000 },
+  "results": [
+    {
+      "file": "cypress/e2e/login.cy.ts",
+      "fullFile": "cypress/e2e/login.cy.ts",
+      "tests": [],
+      "suites": [
+        {
+          "title": "Login",
+          "tests": [
+            { "title": "logs in @sanity", "fullTitle": "Login logs in @sanity", "duration": 9000, "state": "passed", "pass": true },
+            { "title": "rejects a bad password", "fullTitle": "Login rejects a bad password", "duration": 7000, "state": "passed", "pass": true },
+            { "title": "locks after 5 tries", "fullTitle": "Login locks after 5 tries", "duration": 26000, "state": "passed", "pass": true }
+          ],
+          "suites": []
+        }
+      ]
+    },
+    {
+      "file": "cypress/e2e/dashboard.cy.ts",
+      "fullFile": "cypress/e2e/dashboard.cy.ts",
+      "tests": [],
+      "suites": [
+        {
+          "title": "Dashboard",
+          "tests": [
+            { "title": "renders widgets @smoke", "fullTitle": "Dashboard renders widgets @smoke", "duration": 18000, "state": "passed", "pass": true },
+            { "title": "exports the report", "fullTitle": "Dashboard exports the report", "duration": 52000, "state": "passed", "pass": true }
+          ],
+          "suites": []
+        }
+      ]
+    },
+    {
+      "file": "cypress/e2e/admin.cy.ts",
+      "fullFile": "cypress/e2e/admin.cy.ts",
+      "tests": [],
+      "suites": [
+        {
+          "title": "Admin",
+          "tests": [
+            { "title": "creates a user", "fullTitle": "Admin creates a user", "duration": 10000, "state": "passed", "pass": true },
+            { "title": "deletes a user", "fullTitle": "Admin deletes a user", "duration": 16000, "state": "failed", "fail": true },
+            { "title": "audits permissions", "fullTitle": "Admin audits permissions", "duration": 0, "pending": true }
+          ],
+          "suites": []
+        }
+      ]
+    }
+  ]
+}
