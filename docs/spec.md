@@ -178,6 +178,7 @@ export interface Scenario {
   reason: string;               // una frase: por qué este punto
   plan?: ShardPlan;             // cómo aplicarlo (5.3)
   sameAs?: Scenario['id'];      // si coincide con otro escenario
+  objective?: Objective;        // solo en id 'objective': el objetivo que lo produjo (para etiquetar)
 }
 
 export interface Findings {
