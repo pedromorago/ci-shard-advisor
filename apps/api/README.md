@@ -47,3 +47,8 @@ pnpm --filter @ci-shard-advisor/api start &     # start the API first
 cd apps/api/rest-assured
 mvn test                                          # or: mvn -DAPI_BASE_URL=http://localhost:3001 test
 ```
+
+### Performance (`perf/`)
+
+Load tests against `POST /analyze` with **k6** and **JMeter**, with pass/fail
+SLOs (p95 latency, error rate). See [`perf/README.md`](perf/README.md).
