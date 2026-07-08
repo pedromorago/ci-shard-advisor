@@ -12,7 +12,9 @@ test.describe('demo analysis', () => {
     await expect(current.getByText(/measured/i)).toBeVisible();
 
     const moves = page.getByRole('region', { name: /your moves/i });
-    await expect(moves.getByText(/rebalance/i)).toBeVisible();
+    // "Rebalance" appears in the move title and in the "same as" notes of any
+    // coinciding move; the first is the rebalance move itself.
+    await expect(moves.getByText(/rebalance/i).first()).toBeVisible();
 
     // The frontier chart lives in a collapsible section; expand it.
     await page.getByText(/show the full cost \/ time frontier/i).click();
