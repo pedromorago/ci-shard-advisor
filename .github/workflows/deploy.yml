@@ -29,6 +29,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ci-shard-advisor/web build
+        env:
+          PAGES_BASE: /ci-shard-advisor/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/web/dist
