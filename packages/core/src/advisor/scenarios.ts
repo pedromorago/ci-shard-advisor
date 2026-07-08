@@ -158,6 +158,7 @@ export function buildScenarios(
     vsCurrent: deltas(objectiveConfig, current),
     reason: objectiveReason(objective),
     plan: planFor(tasks, objectiveConfig.shardCount, workersPerShard),
+    objective,
   };
 
   const scenarios = [rebalance, sameFeedbackCheaper, sameCostFaster, objectiveScenario];
@@ -167,7 +168,7 @@ export function buildScenarios(
 function objectiveReason(objective: Objective): string {
   switch (objective.kind) {
     case 'balanced':
-      return 'The balanced sweet spot of the cost/time frontier.';
+      return 'The knee of the cost/time frontier — past it, shards stop paying off.';
     case 'fastest':
       return 'The fastest feedback available.';
     case 'cheapest':
