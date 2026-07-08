@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": { "ci-shard-advisor": "./src/bin.ts" },
+  "bin": {
+    "ci-shard-advisor": "./src/bin.ts"
+  },
   "scripts": {
     "start": "tsx src/bin.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:junit": "vitest run --reporter=junit --outputFile=reports/junit/results.xml"
   },
   "dependencies": {
     "@ci-shard-advisor/core": "workspace:*"
