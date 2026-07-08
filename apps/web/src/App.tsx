@@ -6,6 +6,8 @@ import { ReportInput as ReportInputControl } from './ReportInput';
 import { Controls } from './Controls';
 import { CurrentPipeline } from './CurrentPipeline';
 import { Recommendation } from './Recommendation';
+import type { RecommendationMode } from './Recommendation';
+import { CiConfig } from './CiConfig';
 import { Explore } from './Explore';
 import { FrontierChart } from './FrontierChart';
 
@@ -13,12 +15,14 @@ export function App() {
   const [report, setReport] = useState<ReportInput>(DEMO_REPORT);
   const [source, setSource] = useState('demo report');
   const [settings, setSettings] = useState<AnalysisSettings>(DEFAULT_SETTINGS);
+  const [mode, setMode] = useState<RecommendationMode>('same-shards');
   const [error, setError] = useState<string | null>(null);
 
   const summary = useMemo(() => summarize(analyzeReport(report, settings)), [report, settings]);
   const current = summary.current ?? summary.frontier[0];
   const balanced = summary.recommended;
   const sameShards = summary.frontier[Math.min(settings.currentShardCount, summary.frontier.length) - 1];
+  const recommended = mode === 'same-shards' ? sameShards : balanced;
 
   function handleSelect(jsonText: string, fileName: string) {
     try {
@@ -69,10 +73,13 @@ export function App() {
 
       <Recommendation
         current={current}
-        sameShards={sameShards}
-        balanced={balanced}
+        recommended={recommended}
+        mode={mode}
+        onModeChange={setMode}
         ratePerMin={settings.costRatePerMin}
       />
+
+      <CiConfig shardCount={recommended.shardCount} />
 
       <Explore
         frontier={summary.frontier}

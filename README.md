@@ -79,6 +79,9 @@ See [docs/architecture.md](docs/architecture.md) and the
   auto-detected. Adding another reader is all it takes; the engine never changes.
 - **Privacy by construction.** The web processes reports in the browser and
   never uploads them — proven by a dedicated E2E test.
+- **Closes the loop to CI.** From the recommendation it generates ready-to-paste
+  **GitHub Actions** and **Bitbucket Pipelines** config that shards the run and
+  merges the reports back into the JSON it reads. See [examples/ci/](examples/ci).
 
 ## Testing strategy
 

@@ -64,6 +64,16 @@ describe('App', () => {
     expect(screen.getByLabelText(/cost per minute/i)).toBeInTheDocument();
   });
 
+  it('generates CI config for the recommended shards and switches platform', () => {
+    render(<App />);
+    const ci = screen.getByRole('region', { name: /set it up in ci/i });
+    // GitHub Actions by default: a sharding matrix.
+    expect(within(ci).getByText(/strategy:/)).toBeInTheDocument();
+
+    fireEvent.click(within(ci).getByRole('button', { name: /bitbucket/i }));
+    expect(within(ci).getByText(/- parallel:/)).toBeInTheDocument();
+  });
+
   it('shows costs as money and switches recommendation mode', () => {
     render(<App />);
     const recommendation = screen.getByRole('region', { name: /recommendation/i });

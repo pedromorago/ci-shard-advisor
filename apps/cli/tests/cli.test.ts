@@ -50,6 +50,19 @@ describe('cli', () => {
       expect(out).toContain('## CI Shard Advisor');
     });
 
+    it('emits a GitHub Actions config for the recommended shards', () => {
+      const { code, out } = invoke([FILE, '--overhead', '30s', '--format', 'github']);
+      expect(code).toBe(0);
+      expect(out).toContain('strategy:');
+      expect(out).toMatch(/--shard=\$\{\{ matrix\.shard \}\}\/\d+/);
+    });
+
+    it('emits a Bitbucket Pipelines config', () => {
+      const { out } = invoke([FILE, '--overhead', '30s', '--format', 'bitbucket']);
+      expect(out).toContain('- parallel:');
+      expect(out).toMatch(/merge-reports --reporter json/);
+    });
+
     it('analyzes a Cypress report with --input-format cypress', () => {
       const cypress = JSON.stringify({
         runs: [
