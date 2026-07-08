@@ -2,176 +2,122 @@ import { describe, expect, it } from 'vitest';
 import { run } from '../src/cli';
 import type { CliIO } from '../src/cli';
 
-const REPORT = JSON.stringify({
-  suites: [
-    {
-      specs: [
-        { title: 'a', tags: ['@sanity'], tests: [{ status: 'expected', results: [{ duration: 10000 }] }] },
-        { title: 'b', tests: [{ status: 'expected', results: [{ duration: 20000 }] }] },
-        { title: 'c', tests: [{ status: 'expected', results: [{ duration: 30000 }] }] },
-        { title: 'd', tests: [{ status: 'expected', results: [{ duration: 40000 }] }] },
-      ],
-    },
-  ],
-});
+const pw = (durations: number[]): string =>
+  JSON.stringify({
+    suites: [
+      {
+        specs: durations.map((d, i) => ({
+          title: `t${i}`,
+          file: `t${i}.spec.ts`,
+          tests: [{ status: 'expected', results: [{ duration: d }] }],
+        })),
+      },
+    ],
+  });
 
-const FILE = 'report.json';
-
-/** Invoke the CLI capturing output, with a configurable file reader. */
-function invoke(args: string[], readFile: CliIO['readFile'] = () => REPORT) {
+/** Run the CLI capturing output, with an in-memory file system. */
+function invoke(args: string[], files: Record<string, string> = {}) {
   const out: string[] = [];
   const err: string[] = [];
-  const code = run(args, {
-    readFile,
-    stdout: (line) => out.push(line),
-    stderr: (line) => err.push(line),
-  });
+  const readFile: CliIO['readFile'] = (path) => {
+    if (path in files) return files[path];
+    throw new Error('ENOENT');
+  };
+  const code = run(args, { readFile, stdout: (l) => out.push(l), stderr: (l) => err.push(l) });
   return { code, out: out.join('\n'), err: err.join('\n') };
 }
 
+// A shard that finishes early, and a shard with the slow work.
+const twoShards = { 's1.json': pw([50000, 50000]), 's2.json': pw([10000, 10000]) };
+// 6 shards, one holding a 60s bottleneck — heavily over-provisioned.
+const overSharded: Record<string, string> = {
+  's1.json': pw([60000]),
+  's2.json': pw([5000]),
+  's3.json': pw([5000]),
+  's4.json': pw([5000]),
+  's5.json': pw([5000]),
+  's6.json': pw([5000]),
+};
+
 describe('cli', () => {
-  describe('output formats', () => {
-    it('prints a text report by default and exits 0', () => {
-      const { code, out } = invoke([FILE]);
+  describe('input & output', () => {
+    it('reads one report per shard (measured) and prints the moves', () => {
+      const { code, out } = invoke(['s1.json', 's2.json', '--setup', '30s'], twoShards);
       expect(code).toBe(0);
-      expect(out).toContain('CI Shard Advisor');
-      expect(out).toContain('Recommended:');
+      expect(out).toContain('Your current setup (measured)');
+      expect(out).toContain('Your moves');
+      expect(out).toMatch(/--shard-weights=/);
+    });
+
+    it('models a single merged report with --shards', () => {
+      const { out } = invoke(['all.json', '--shards', '2', '--setup', '30s'], { 'all.json': pw([50000, 50000, 10000, 10000]) });
+      expect(out).toContain('(modeled)');
+    });
+
+    it('shows money with --price', () => {
+      const { out } = invoke(['s1.json', 's2.json', '--setup', '30s', '--price', '0.1'], twoShards);
+      expect(out).toMatch(/€\d+\.\d\d/);
     });
 
     it('prints JSON with --format json', () => {
-      const { code, out } = invoke([FILE, '--format', 'json']);
-      expect(code).toBe(0);
+      const { out } = invoke(['s1.json', 's2.json', '--setup', '30s', '--format', 'json'], twoShards);
       const parsed = JSON.parse(out);
-      expect(parsed.recommended.shardCount).toBeGreaterThanOrEqual(1);
+      expect(parsed.current.measured).toBe(true);
+      expect(Array.isArray(parsed.scenarios)).toBe(true);
     });
 
-    it('prints Markdown with --format markdown', () => {
-      const { out } = invoke([FILE, '--format', 'markdown']);
-      expect(out).toContain('## CI Shard Advisor');
-    });
-
-    it('emits a GitHub Actions config for the recommended shards', () => {
-      const { code, out } = invoke([FILE, '--overhead', '30s', '--format', 'github']);
-      expect(code).toBe(0);
+    it('emits CI config for the chosen scenario with --format github', () => {
+      const { out } = invoke(['s1.json', 's2.json', '--setup', '30s', '--format', 'github'], twoShards);
       expect(out).toContain('strategy:');
       expect(out).toMatch(/--shard=\$\{\{ matrix\.shard \}\}\/\d+/);
     });
-
-    it('emits a Bitbucket Pipelines config', () => {
-      const { out } = invoke([FILE, '--overhead', '30s', '--format', 'bitbucket']);
-      expect(out).toContain('- parallel:');
-      expect(out).toMatch(/merge-reports --reporter json/);
-    });
-
-    it('analyzes a Cypress report with --input-format cypress', () => {
-      const cypress = JSON.stringify({
-        runs: [
-          {
-            spec: { relative: 'a.cy.ts' },
-            tests: [
-              { title: ['A', 't1'], state: 'passed', duration: 10000 },
-              { title: ['A', 't2'], state: 'passed', duration: 20000 },
-            ],
-          },
-        ],
-      });
-      const { code, out } = invoke([FILE, '--input-format', 'cypress'], () => cypress);
-      expect(code).toBe(0);
-      expect(out).toContain('2 tests');
-    });
-
-    it('auto-detects and analyzes a JUnit XML report', () => {
-      const junit =
-        '<testsuites><testsuite name="s"><testcase name="t1" time="1"/><testcase name="t2" time="2"/></testsuite></testsuites>';
-      const { code, out } = invoke([FILE], () => junit);
-      expect(code).toBe(0);
-      expect(out).toContain('2 tests');
-    });
-
-    it('errors on an unknown input format', () => {
-      const { code, err } = invoke([FILE, '--input-format', 'jest']);
-      expect(code).toBe(2);
-      expect(err).toMatch(/unknown input format/);
-    });
   });
 
-  describe('usage and input errors (exit 2)', () => {
-    it('errors when the report file is missing', () => {
+  describe('usage & input errors (exit 2)', () => {
+    it('errors when no report is given', () => {
       const { code, err } = invoke([]);
       expect(code).toBe(2);
-      expect(err).toMatch(/missing report file/);
+      expect(err).toMatch(/at least one report/);
     });
 
-    it('errors when the file cannot be read', () => {
-      const { code, err } = invoke([FILE], () => {
-        throw new Error('ENOENT');
-      });
+    it('errors when a file cannot be read', () => {
+      const { code, err } = invoke(['missing.json', '--setup', '30s']);
       expect(code).toBe(2);
       expect(err).toMatch(/cannot read/);
     });
 
-    it('errors on a malformed report', () => {
-      const { code, err } = invoke([FILE], () => '{ not json');
+    it('errors on mixed report formats', () => {
+      const cypress = JSON.stringify({ runs: [{ spec: { relative: 'a.cy.ts' }, tests: [{ title: ['a'], state: 'passed', duration: 1000 }] }] });
+      const { code, err } = invoke(['pw.json', 'cy.json', '--setup', '30s'], { 'pw.json': pw([1000]), 'cy.json': cypress });
       expect(code).toBe(2);
-      expect(err).toMatch(/error:/);
+      expect(err).toMatch(/mixed report formats/);
     });
 
-    it('errors on an unknown format', () => {
-      const { code, err } = invoke([FILE, '--format', 'yaml']);
+    it('errors on an invalid objective', () => {
+      const { code, err } = invoke(['s1.json', 's2.json', '--objective', 'weird'], twoShards);
       expect(code).toBe(2);
-      expect(err).toMatch(/unknown format/);
-    });
-
-    it('errors on an invalid numeric option', () => {
-      const { code, err } = invoke([FILE, '--workers', 'lots']);
-      expect(code).toBe(2);
-      expect(err).toMatch(/--workers must be a positive integer/);
-    });
-
-    it('accepts a priority preset and rejects an invalid one', () => {
-      expect(invoke([FILE, '--priority', 'fastest']).code).toBe(0);
-      expect(invoke([FILE, '--priority', '5']).code).toBe(0);
-      const bad = invoke([FILE, '--priority', 'nope']);
-      expect(bad.code).toBe(2);
-      expect(bad.err).toMatch(/--priority must be/);
-    });
-
-    it('prints help and exits 0', () => {
-      const { code, out } = invoke(['--help']);
-      expect(code).toBe(0);
-      expect(out).toMatch(/Quality gate/);
+      expect(err).toMatch(/--objective must be/);
     });
   });
 
-  describe('quality gate (exit 1 on failure)', () => {
-    it('fails when the best feedback time exceeds the budget', () => {
-      const { code, err } = invoke([FILE, '--max-feedback', '1ms']);
+  describe('quality gates (exit 1)', () => {
+    it('fails when the best feedback exceeds --gate-feedback', () => {
+      const { code, err } = invoke(['s1.json', 's2.json', '--setup', '30s', '--gate-feedback', '1ms'], twoShards);
       expect(code).toBe(1);
-      expect(err).toMatch(/gate failed: best feedback time/);
-    });
-
-    it('passes when the feedback budget is comfortable', () => {
-      const { code } = invoke([FILE, '--max-feedback', '10m']);
-      expect(code).toBe(0);
+      expect(err).toMatch(/gate failed: best achievable feedback/);
     });
 
     it('fails when the current config wastes too much cost', () => {
-      // 8 shards on a 4-test suite over-provisions: cheaper configs exist.
-      const { code, err } = invoke([
-        FILE,
-        '--shards',
-        '8',
-        '--overhead',
-        '30s',
-        '--max-cost-waste',
-        '0',
-      ]);
+      const { code, err } = invoke(
+        ['s1.json', 's2.json', 's3.json', 's4.json', 's5.json', 's6.json', '--setup', '30s', '--gate-cost-waste', '20'],
+        overSharded,
+      );
       expect(code).toBe(1);
-      expect(err).toMatch(/wastes .* cost vs recommended/);
+      expect(err).toMatch(/wastes .* cost/);
     });
 
-    it('passes the cost gate when the waste is within the limit', () => {
-      const { code } = invoke([FILE, '--shards', '8', '--overhead', '30s', '--max-cost-waste', '100']);
+    it('passes gates that are comfortably met', () => {
+      const { code } = invoke(['s1.json', 's2.json', '--setup', '30s', '--gate-feedback', '10m', '--gate-cost-waste', '90'], twoShards);
       expect(code).toBe(0);
     });
   });
