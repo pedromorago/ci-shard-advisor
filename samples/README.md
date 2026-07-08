@@ -7,7 +7,8 @@ is auto-detected, so you can drop any of these into the web, the CLI or the API.
 | --- | --- | --- |
 | `playwright-report.json` | Playwright JSON | A balanced suite (2 projects, a flaky test, a skip) — a clear knee around 3–4 shards |
 | `playwright-bottleneck.json` | Playwright JSON | One 3-minute test dominates — more shards don't help; the advice is *fewer* shards |
-| `cypress-run.json` | Cypress run result | Specs with retries (flaky) and a pending test |
+| `cypress-run.json` | Cypress run result (Module API) | Specs with retries (flaky) and a pending test |
+| `mochawesome.json` | mochawesome (Cypress/Mocha) | Nested suites, a failure and a pending test |
 | `junit-report.xml` | JUnit XML | A generic suite (as Jest/pytest/Maven emit) with a failure and a skip |
 
 ## Try them in the web (easiest)

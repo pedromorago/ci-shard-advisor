@@ -18,7 +18,7 @@ pnpm --filter @ci-shard-advisor/api start   # http://127.0.0.1:3001 (PORT to ove
 | `POST` | `/analyze` | Body: a Playwright JSON report. Returns the analysis summary. |
 
 `POST /analyze` query parameters: `shards` (current shard count), `workers`,
-`overheadMs`, `maxShards`, `format` (`auto` | `playwright` | `cypress` | `junit`;
+`overheadMs`, `maxShards`, `format` (`auto` | `playwright` | `cypress` | `mochawesome` | `junit`;
 defaults to auto-detect), `priority` (`knee` | `fastest` | `cheapest` | a number).
 A malformed report or bad parameter returns `400` with `{ "error": "..." }`.
 
