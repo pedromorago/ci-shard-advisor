@@ -11,9 +11,8 @@ import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInC
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * REST Assured + JUnit 5 suite against the local CI Shard Advisor API.
@@ -28,6 +27,14 @@ class AnalyzeApiTest {
           {"title":"b","tests":[{"status":"expected","results":[{"duration":20000}]}]},
           {"title":"c","tests":[{"status":"expected","results":[{"duration":30000}]}]}
         ]}]}
+        """;
+
+    /** Two shard reports with unequal wall time — a measurable per-shard setup. */
+    private static final String PER_SHARD = """
+        {"reports":[
+          {"suites":[{"specs":[{"title":"a","tests":[{"status":"expected","results":[{"duration":50000}]}]}]}]},
+          {"suites":[{"specs":[{"title":"b","tests":[{"status":"expected","results":[{"duration":10000}]}]}]}]}
+        ]}
         """;
 
     @BeforeAll
@@ -50,48 +57,48 @@ class AnalyzeApiTest {
     }
 
     @Test
-    @DisplayName("analyze returns a recommendation over the posted report")
-    void analyzeReturnsRecommendation() {
+    @DisplayName("advise returns the current situation, four moves and a frontier")
+    void adviseReturnsMoves() {
         given()
             .contentType(ContentType.JSON)
             .body(REPORT)
         .when()
-            .post("/analyze")
+            .post("/advise")
         .then()
             .statusCode(200)
             .contentType(ContentType.JSON)
             .body("totalTests", equalTo(3))
-            .body("recommended.shardCount", greaterThanOrEqualTo(1))
+            .body("current.measured", equalTo(false))
+            .body("scenarios.size()", equalTo(4))
             .body("frontier", not(empty()));
     }
 
     @Test
-    @DisplayName("analyze response matches the published JSON Schema (contract)")
-    void analyzeMatchesSchema() {
+    @DisplayName("advise response matches the published JSON Schema (contract)")
+    void adviseMatchesSchema() {
         given()
             .contentType(ContentType.JSON)
             .body(REPORT)
         .when()
-            .post("/analyze")
+            .post("/advise")
         .then()
             .statusCode(200)
-            .body(matchesJsonSchemaInClasspath("analysis-summary.schema.json"));
+            .body(matchesJsonSchemaInClasspath("advisor-result.schema.json"));
     }
 
     @Test
-    @DisplayName("analyze compares against the current shard count")
-    void analyzeComparesAgainstCurrent() {
+    @DisplayName("advise measures the current setup from per-shard reports")
+    void adviseMeasuresPerShard() {
         given()
             .contentType(ContentType.JSON)
-            .queryParam("shards", 3)
-            .queryParam("overheadMs", 30000)
-            .body(REPORT)
+            .body(PER_SHARD)
         .when()
-            .post("/analyze")
+            .post("/advise")
         .then()
             .statusCode(200)
-            .body("current.shardCount", equalTo(3))
-            .body("savings", notNullValue());
+            .body("current.measured", equalTo(true))
+            .body("current.shardCount", equalTo(2))
+            .body("current.imbalanceMs", greaterThan(0));
     }
 
     @Test
@@ -101,7 +108,7 @@ class AnalyzeApiTest {
             .contentType(ContentType.JSON)
             .body("{\"suites\":\"not-an-array\"}")
         .when()
-            .post("/analyze")
+            .post("/advise")
         .then()
             .statusCode(400)
             .body("error", containsString("suites"));
@@ -115,7 +122,7 @@ class AnalyzeApiTest {
             .queryParam("workers", "lots")
             .body(REPORT)
         .when()
-            .post("/analyze")
+            .post("/advise")
         .then()
             .statusCode(400)
             .body("error", containsString("workers"));
