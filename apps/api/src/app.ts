@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { analyze, toSummaryObject } from '@ci-shard-advisor/core';
-import type { AnalyzeOptions } from '@ci-shard-advisor/core';
+import type { AnalyzeOptions, ReportFormat } from '@ci-shard-advisor/core';
 
 /** Parse an optional positive-integer query param. */
 function positiveInt(raw: string | undefined, name: string): number | undefined {
@@ -28,6 +28,16 @@ interface AnalyzeQuery {
   workers?: string;
   overheadMs?: string;
   maxShards?: string;
+  format?: string;
+}
+
+/** Validate the optional report-format query param. */
+function reportFormat(raw: string | undefined): ReportFormat | undefined {
+  if (raw === undefined) return undefined;
+  if (raw !== 'playwright' && raw !== 'cypress') {
+    throw new Error(`format must be 'playwright' or 'cypress'`);
+  }
+  return raw;
 }
 
 /**
@@ -49,10 +59,12 @@ export function buildApp(): FastifyInstance {
       const maxShards = positiveInt(query.maxShards, 'maxShards');
       const shards = positiveInt(query.shards, 'shards');
       const overheadMs = nonNegative(query.overheadMs, 'overheadMs');
+      const format = reportFormat(query.format);
       if (workers !== undefined) options.workersPerShard = workers;
       if (maxShards !== undefined) options.maxShards = maxShards;
       if (shards !== undefined) options.currentShardCount = shards;
       if (overheadMs !== undefined) options.startupOverheadMs = overheadMs;
+      if (format !== undefined) options.format = format;
     } catch (error) {
       return reply.code(400).send({ error: (error as Error).message });
     }
