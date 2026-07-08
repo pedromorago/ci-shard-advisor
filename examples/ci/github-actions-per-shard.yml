@@ -1,0 +1,40 @@
+# Example: shard a Playwright suite across 4 jobs on GitHub Actions and keep
+# ONE JSON report per shard — the per-shard input CI Shard Advisor prefers.
+#
+# With one report per shard the advisor *measures* your real situation (true
+# per-shard times, so it can see imbalance) instead of modelling it from a
+# single merged report. Copy this into .github/workflows/tests.yml in your
+# Playwright project. (It lives under examples/ so it does NOT run in this repo.)
+name: Playwright Tests (per-shard reports)
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    name: Shard ${{ matrix.shard }}/4
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Run shard ${{ matrix.shard }}/4 → its own JSON report
+        # The json reporter writes to stdout; capture it as this shard's report.
+        run: npx playwright test --shard=${{ matrix.shard }}/4 --reporter=json > shard-${{ matrix.shard }}.json
+      - name: Upload this shard's report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: shard-${{ matrix.shard }}.json
+          retention-days: 7
+# Then download every `shard-*` artifact and feed them all at once:
+#   ci-shard-advisor shard-1.json shard-2.json shard-3.json shard-4.json --setup 45s --price 0.008
+# or drop the four files together into the web app's upload.
