@@ -16,6 +16,8 @@ export type { PlaywrightReport } from './report/playwright-report';
 export { normalize, durationsOf } from './report/normalizer';
 export { parseCypressReport, normalizeCypress } from './report/cypress';
 export type { CypressReport } from './report/cypress-report';
+export { parseJUnitReport, normalizeJUnit } from './report/junit';
+export type { JUnitReport, JUnitCase } from './report/junit';
 export { classify } from './report/classifier';
 export type { ClassifyRule, ClassifyOptions } from './report/classifier';
 export { analyze, detectFormat } from './report/analyze';

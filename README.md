@@ -5,9 +5,9 @@
 ![Node](https://img.shields.io/badge/node-%3E%3D22-3c873a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 
-Analyze a **Playwright or Cypress** test report and find the CI sharding
-strategy that balances **feedback time** against **cost** — with an exact
-scheduler, a faithful worker simulator, and an honest cost/time frontier.
+Analyze a test report (**Playwright**, **Cypress** or **JUnit XML**) and find the
+CI sharding strategy that balances **feedback time** against **cost** — with an
+exact scheduler, a faithful worker simulator, and an honest cost/time frontier.
 
 ## Why
 
@@ -73,9 +73,10 @@ See [docs/architecture.md](docs/architecture.md) and the
   time, it says so and reports the gap.
 - **Faithful simulation.** The worker simulator models the runner's real queue
   (greedy, no reordering), so estimates reflect the tool, not an ideal.
-- **Framework-agnostic engine.** Only the input reader is tool-specific: a
-  Playwright and a Cypress reader both feed the same pure scheduler. Adding a new
-  format (JUnit XML, Jest, …) is one more reader, nothing else changes.
+- **Framework-agnostic engine.** Only the input reader is tool-specific. It reads
+  Playwright JSON, Cypress run results and **JUnit XML** — the universal format
+  emitted by Playwright, Cypress, Jest, pytest, Maven and more — and the format is
+  auto-detected. Adding another reader is all it takes; the engine never changes.
 - **Privacy by construction.** The web processes reports in the browser and
   never uploads them — proven by a dedicated E2E test.
 

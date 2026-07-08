@@ -30,10 +30,10 @@ export function ReportInput({ onSelect, onLoadDemo }: ReportInputProps) {
   return (
     <div className="report-input">
       <label className="report-input__file">
-        <span>Upload a Playwright or Cypress report</span>
+        <span>Upload a test report (Playwright, Cypress or JUnit XML)</span>
         <input
           type="file"
-          accept="application/json,.json"
+          accept="application/json,.json,application/xml,text/xml,.xml"
           onChange={handleChange}
         />
       </label>

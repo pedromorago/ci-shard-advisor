@@ -67,6 +67,14 @@ describe('cli', () => {
       expect(out).toContain('2 tests');
     });
 
+    it('auto-detects and analyzes a JUnit XML report', () => {
+      const junit =
+        '<testsuites><testsuite name="s"><testcase name="t1" time="1"/><testcase name="t2" time="2"/></testsuite></testsuites>';
+      const { code, out } = invoke([FILE], () => junit);
+      expect(code).toBe(0);
+      expect(out).toContain('2 tests');
+    });
+
     it('errors on an unknown input format', () => {
       const { code, err } = invoke([FILE, '--input-format', 'jest']);
       expect(code).toBe(2);
