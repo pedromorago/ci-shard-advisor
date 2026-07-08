@@ -66,6 +66,16 @@ Playwright JSON
 - `recommend` orquesta todo y, dada la config actual del equipo (`currentShardCount`), cuantifica el ahorro (tiempo ganado y delta de coste) frente a la recomendación. La comparación es honesta: si el equipo ya ha pasado el codo, la recomendación sale más lenta pero más barata.
 - QA destacable del recommender: el codo se valida con fixtures geométricos de resultado conocido y con una propiedad **metamórfica** (reescalar un eje no mueve el codo); la frontera con invariantes de monotonía; y el ahorro con aritmética comprobada a mano.
 
+## Lectores por formato (Playwright y Cypress)
+
+El motor es **agnóstico al framework**: lo único específico de cada herramienta es
+el *lector* de entrada (parser + normalizer) que traduce su report a `AtomicTask[]`.
+Hay dos lectores —Playwright y Cypress ([`cypress.ts`](../packages/core/src/report/cypress.ts))—
+y `analyze(input, { format })` elige uno. A partir de ahí (duraciones), scheduler,
+simulador, recommender y exporters no saben ni les importa el origen. Añadir Jest,
+JUnit XML, etc. es **un lector más**; nada del núcleo cambia. La opción `format`
+está expuesta en el core, la CLI (`--input-format`) y la API (`?format=`).
+
 ## Decisiones de diseño del pipeline de datos (parser / normalizer / classifier)
 
 - **Parser** (`parseReport`): acepta el JSON como string o ya parseado (el core no toca `fs`; leer es cosa del adaptador), valida solo el subconjunto del report de Playwright que consumimos y tolera campos extra u opcionales ausentes, para no romperse entre versiones. Falla con `ReportParseError` indicando la **ruta del campo** culpable.
