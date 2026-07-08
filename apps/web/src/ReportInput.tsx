@@ -30,7 +30,7 @@ export function ReportInput({ onSelect, onLoadDemo }: ReportInputProps) {
   return (
     <div className="report-input">
       <label className="report-input__file">
-        <span>Upload a Playwright JSON report</span>
+        <span>Upload a Playwright or Cypress report</span>
         <input
           type="file"
           accept="application/json,.json"
