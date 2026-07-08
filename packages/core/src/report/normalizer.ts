@@ -27,6 +27,9 @@ function normalizeSpec(spec: ReportSpec, suiteFile: string | undefined): AtomicT
     // A retried test runs several times; the CI machine pays for every attempt.
     const durationMs = test.results.reduce((sum, result) => sum + result.duration, 0);
     const retries = Math.max(0, test.results.length - 1);
+    // Wasted = every attempt but the final one.
+    const finalMs = test.results.length ? test.results[test.results.length - 1].duration : 0;
+    const wastedMs = durationMs - finalMs;
     const project = test.projectName;
     const id = [file, spec.title, project ?? ''].join('::');
     const task: AtomicTask = {
@@ -38,6 +41,7 @@ function normalizeSpec(spec: ReportSpec, suiteFile: string | undefined): AtomicT
       retries,
     };
     if (project !== undefined) task.project = project;
+    if (wastedMs > 0) task.wastedMs = wastedMs;
     if (spec.tags && spec.tags.length > 0) task.tags = spec.tags;
     return task;
   });

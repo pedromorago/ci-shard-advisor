@@ -27,6 +27,7 @@ export type { AnalyzeOptions, AnalysisResult, ReportFormat } from './report/anal
 export { advise } from './advisor/advise';
 export type { AdviseOptions } from './advisor/advise';
 export { buildScenarios, chooseObjective, planFor } from './advisor/scenarios';
+export { computeFindings } from './advisor/findings';
 export { readReports } from './advisor/reports';
 export { measureCurrent, modelCurrent } from './advisor/current';
 export type {
