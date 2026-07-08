@@ -13,7 +13,7 @@ import { FrontierChart } from './FrontierChart';
 
 export function App() {
   const [reports, setReports] = useState<ReportFile[]>(DEMO_REPORTS);
-  const [source, setSource] = useState('demo (4 shards)');
+  const [source, setSource] = useState('demo · playwright.dev (4 shards)');
   const [settings, setSettings] = useState<AnalysisSettings>(DEFAULT_SETTINGS);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export function App() {
 
   function handleLoadDemo() {
     setReports(DEMO_REPORTS);
-    setSource('demo (4 shards)');
+    setSource('demo · playwright.dev (4 shards)');
     setError(null);
   }
 
