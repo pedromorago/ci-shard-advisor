@@ -28,7 +28,7 @@ Options:
   --price <num>            machine price per minute               [optional, adds money]
   --workers <n>            workers per shard (default: 1)
   --shards <n>             declared shard count for a single merged report
-  --objective <balanced|fastest|cheapest>   the "by objective" move (default: balanced)
+  --objective <recommended|fastest>   the chosen move (default: recommended, the knee)
   --max-feedback <dur>     objective: cheapest within this feedback budget
   --budget <price|dur>     objective: fastest within this cost budget
   --max-shards <n>         largest shard count to evaluate
@@ -136,10 +136,11 @@ export function run(argv: string[], io: CliIO): number {
       objective = parseBudget(values.budget, cost.pricePerMinute);
     } else if (values.objective) {
       const o = values.objective;
-      if (o !== 'balanced' && o !== 'fastest' && o !== 'cheapest') {
-        throw new Error(`--objective must be balanced, fastest or cheapest`);
+      if (o !== 'recommended' && o !== 'fastest') {
+        throw new Error(`--objective must be recommended or fastest`);
       }
-      objective = { kind: o };
+      // 'recommended' is the knee criterion — the core's 'balanced' objective.
+      objective = { kind: o === 'recommended' ? 'balanced' : o };
     }
   } catch (error) {
     io.stderr(`error: ${(error as Error).message}`);
