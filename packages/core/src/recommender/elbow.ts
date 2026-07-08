@@ -29,17 +29,19 @@ export function findElbow(frontier: readonly ConfigPoint[]): ConfigPoint {
   const costMin = Math.min(...costs);
   const costMax = Math.max(...costs);
 
-  // Degenerate cases: if one objective never varies there is no trade-off, so
-  // optimize the other — taking the FEWEST shards that reach it (e.g. with zero
-  // startup overhead every split costs the same, so we minimize feedback time;
-  // extra shards past the fastest time change neither axis and are pure waste).
-  // The frontier is ordered by ascending shard count, so the first match is the
-  // cheapest way to get there.
-  if (costMax === costMin) {
-    return frontier.find((p) => p.feedbackTimeMs === timeMin) ?? frontier[0];
-  }
-  if (timeMax === timeMin) {
+  // No meaningful trade-off on an axis — either flat, or a negligible relative
+  // spread — means there is nothing to balance, so optimize the other one and
+  // take the FEWEST shards that reach it. This is what stops a 0.3s suite behind
+  // a 30s startup from being told to add shards for a 0.1s "gain": the feedback
+  // spread is a tiny fraction of the runtime, so we just minimize cost.
+  const NEGLIGIBLE = 0.02;
+  const timeFlat = timeMax - timeMin <= NEGLIGIBLE * timeMax;
+  const costFlat = costMax - costMin <= NEGLIGIBLE * costMax;
+  if (timeFlat) {
     return frontier.find((p) => p.costMs === costMin) ?? frontier[0];
+  }
+  if (costFlat) {
+    return frontier.find((p) => p.feedbackTimeMs === timeMin) ?? frontier[0];
   }
 
   const timeRange = timeMax - timeMin;
