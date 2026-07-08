@@ -39,7 +39,7 @@ test.describe('uploading a report', () => {
 
     await expect(page.getByRole('alert')).toBeVisible();
     // The demo analysis stays on screen.
-    await expect(page.getByText(/demo \(4 shards\)/i)).toBeVisible();
+    await expect(page.getByText(/demo.*4 shards/i)).toBeVisible();
   });
 
   test('never sends the report off the page (privacy)', async ({ page }) => {

@@ -1,51 +1,18 @@
 import type { ReportFile } from '@ci-shard-advisor/core';
+import shard1 from './demo/shard-1.json';
+import shard2 from './demo/shard-2.json';
+import shard3 from './demo/shard-3.json';
+import shard4 from './demo/shard-4.json';
 
-type Spec = [title: string, file: string, durationMs: number];
-
-function shard(specs: Spec[]): unknown {
-  return {
-    suites: [
-      {
-        specs: specs.map(([title, file, duration]) => ({
-          title,
-          file,
-          tests: [{ status: 'expected', results: [{ duration }] }],
-        })),
-      },
-    ],
-  };
-}
-
-/** A preloaded 4-shard run, deliberately unbalanced (shard 1 is the bottleneck). */
+/**
+ * A preloaded, *real* 4-shard run: a 14-test Playwright suite executed against
+ * playwright.dev with `--shard=i/4`, one JSON report per shard. Because it is
+ * real per-shard data the advisor measures the setup (and its imbalance) rather
+ * than modelling it. The same files live in samples/playwright-dev-shards/.
+ */
 export const DEMO_REPORTS: ReportFile[] = [
-  {
-    name: 'shard-1.json',
-    content: shard([
-      ['the full checkout journey', 'checkout.spec.ts', 180000],
-      ['adds an item to the cart', 'cart.spec.ts', 22000],
-    ]),
-  },
-  {
-    name: 'shard-2.json',
-    content: shard([
-      ['logs in with valid credentials', 'login.spec.ts', 34000],
-      ['resets the password', 'login.spec.ts', 30000],
-      ['returns search results', 'search.spec.ts', 25000],
-    ]),
-  },
-  {
-    name: 'shard-3.json',
-    content: shard([
-      ['exports a PDF report', 'export.spec.ts', 61000],
-      ['exports a CSV report', 'export.spec.ts', 13000],
-    ]),
-  },
-  {
-    name: 'shard-4.json',
-    content: shard([
-      ['renders the dashboard', 'dashboard.spec.ts', 20000],
-      ['creates an admin user', 'admin.spec.ts', 15000],
-      ['saves settings', 'settings.spec.ts', 10000],
-    ]),
-  },
+  { name: 'shard-1.json', content: shard1 },
+  { name: 'shard-2.json', content: shard2 },
+  { name: 'shard-3.json', content: shard3 },
+  { name: 'shard-4.json', content: shard4 },
 ];

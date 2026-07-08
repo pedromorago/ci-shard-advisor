@@ -23,7 +23,7 @@ describe('App', () => {
   it('loads the preloaded demo', () => {
     render(<App />);
     expect(screen.getByRole('heading', { level: 1, name: /CI Shard Advisor/i })).toBeInTheDocument();
-    expect(screen.getByText(/demo \(4 shards\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/demo.*4 shards/i)).toBeInTheDocument();
     expect(screen.getByText(/of test time/i)).toBeInTheDocument();
   });
 
@@ -38,7 +38,8 @@ describe('App', () => {
   it('lists the four moves including a rebalance apply command', () => {
     render(<App />);
     const moves = screen.getByRole('region', { name: /your moves/i });
-    expect(within(moves).getByText(/Rebalance/)).toBeInTheDocument();
+    // The rebalance move is present (its label may also appear in "same as" notes).
+    expect(within(moves).getAllByText(/Rebalance/).length).toBeGreaterThanOrEqual(1);
     expect(within(moves).getAllByText(/--shard-weights=/).length).toBeGreaterThanOrEqual(1);
     expect(within(moves).getAllByRole('listitem')).toHaveLength(4);
   });
