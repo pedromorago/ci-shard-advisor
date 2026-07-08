@@ -2,6 +2,7 @@ import type { AtomicTask } from '../types/domain';
 import { parseReport } from './parser';
 import { normalize, durationsOf } from './normalizer';
 import { parseCypressReport, normalizeCypress } from './cypress';
+import { parseMochawesomeReport, normalizeMochawesome } from './mochawesome';
 import { parseJUnitReport, normalizeJUnit } from './junit';
 import { classify } from './classifier';
 import type { ClassifyOptions } from './classifier';
@@ -9,7 +10,7 @@ import { recommend } from '../recommender/recommend';
 import type { RecommendOptions, RecommendationResult } from '../recommender/recommend';
 
 /** Test report format the input is in. */
-export type ReportFormat = 'playwright' | 'cypress' | 'junit';
+export type ReportFormat = 'playwright' | 'cypress' | 'mochawesome' | 'junit';
 
 export interface AnalyzeOptions extends RecommendOptions {
   /** Report format. Defaults to 'auto' (detected from the report shape). */
@@ -24,7 +25,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /**
  * Detect the report format from its shape: XML text is JUnit, a top-level
- * `runs` array is a Cypress run result, `suites` is a Playwright report.
+ * `runs` array is a Cypress run result, `results` is a mochawesome report,
+ * `suites` is a Playwright report.
  */
 export function detectFormat(input: string | unknown): ReportFormat {
   let raw: unknown = input;
@@ -36,7 +38,11 @@ export function detectFormat(input: string | unknown): ReportFormat {
       return 'playwright';
     }
   }
-  return isRecord(raw) && Array.isArray(raw.runs) ? 'cypress' : 'playwright';
+  if (isRecord(raw)) {
+    if (Array.isArray(raw.runs)) return 'cypress';
+    if (Array.isArray(raw.results)) return 'mochawesome';
+  }
+  return 'playwright';
 }
 
 /** Turn a raw report into tasks, choosing the reader by format. */
@@ -44,6 +50,8 @@ function readTasks(input: string | unknown, format: ReportFormat): AtomicTask[] 
   switch (format) {
     case 'cypress':
       return normalizeCypress(parseCypressReport(input));
+    case 'mochawesome':
+      return normalizeMochawesome(parseMochawesomeReport(input));
     case 'junit':
       return normalizeJUnit(parseJUnitReport(input));
     default:

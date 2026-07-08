@@ -28,8 +28,14 @@ reporter: [['json', { outputFile: 'report.json' }]]`}</code>
         </p>
 
         <h3>Cypress</h3>
+        <p>
+          Cypress has no built-in JSON, so use the standard <code>mochawesome</code>{' '}
+          reporter (it writes a clean file):
+        </p>
         <pre className="help__code">
-          <code>{'npx cypress run --reporter json > report.json'}</code>
+          <code>{`npm i -D mochawesome
+npx cypress run --reporter mochawesome
+# → mochawesome-report/mochawesome.json`}</code>
         </pre>
 
         <h3>Any runner — JUnit XML</h3>

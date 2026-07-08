@@ -1,0 +1,61 @@
+{
+  "stats": { "suites": 2, "tests": 4, "passes": 2, "pending": 1, "failures": 1, "duration": 44000 },
+  "results": [
+    {
+      "file": "cypress/e2e/login.cy.ts",
+      "fullFile": "cypress/e2e/login.cy.ts",
+      "tests": [],
+      "suites": [
+        {
+          "title": "Login",
+          "tests": [
+            {
+              "title": "logs in with valid credentials @sanity",
+              "fullTitle": "Login logs in with valid credentials @sanity",
+              "duration": 8000,
+              "state": "passed",
+              "pass": true,
+              "fail": false,
+              "pending": false
+            },
+            {
+              "title": "rejects a bad password",
+              "fullTitle": "Login rejects a bad password",
+              "duration": 6000,
+              "state": "passed",
+              "pass": true
+            }
+          ],
+          "suites": []
+        }
+      ]
+    },
+    {
+      "file": "cypress/e2e/checkout.cy.ts",
+      "fullFile": "cypress/e2e/checkout.cy.ts",
+      "tests": [],
+      "suites": [
+        {
+          "title": "Checkout",
+          "tests": [
+            {
+              "title": "completes a purchase",
+              "fullTitle": "Checkout completes a purchase",
+              "duration": 30000,
+              "state": "failed",
+              "pass": false,
+              "fail": true
+            },
+            {
+              "title": "skips gift wrapping",
+              "fullTitle": "Checkout skips gift wrapping",
+              "duration": 0,
+              "pending": true
+            }
+          ],
+          "suites": []
+        }
+      ]
+    }
+  ]
+}
