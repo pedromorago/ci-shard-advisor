@@ -1,55 +1,52 @@
-import { analyze } from '@ci-shard-advisor/core';
-import type { AnalyzeOptions, AnalysisResult } from '@ci-shard-advisor/core';
-import demoReport from './demo-report.json';
+import { advise } from '@ci-shard-advisor/core';
+import type { AdvisorResult, CostModel, Objective, ReportFile } from '@ci-shard-advisor/core';
+import { DEMO_REPORTS } from './demo';
 
-/** The knobs the user controls — none of these come from the report itself. */
+export type ObjectiveKind = 'balanced' | 'fastest' | 'cheapest';
+
+/** The knobs the user controls — none of these come from the reports. */
 export interface AnalysisSettings {
-  /** Per-shard CI startup overhead, in seconds (machine boot, install, …). */
+  /** Per-shard CI startup overhead, in seconds. */
   startupOverheadSec: number;
+  /** Machine price per minute; 0 means "show machine time, not money". */
+  pricePerMinute: number;
   /** Workers running in parallel inside each shard. */
   workersPerShard: number;
-  /** The team's current shard (container) count. */
+  /** Declared shard count when a single merged report is uploaded. */
   currentShardCount: number;
-  /** What the platform bills per shard-minute (e.g. 0.01 $/min). */
-  costRatePerMin: number;
+  /** The "by objective" move. */
+  objective: ObjectiveKind;
 }
 
 export const DEFAULT_SETTINGS: AnalysisSettings = {
-  startupOverheadSec: 30,
+  startupOverheadSec: 45,
+  pricePerMinute: 0.01,
   workersPerShard: 1,
-  currentShardCount: 6,
-  costRatePerMin: 0.01,
+  currentShardCount: 4,
+  objective: 'balanced',
 };
 
-/** Largest shard count to evaluate — always includes the current config. */
-export function maxShardsFor(settings: AnalysisSettings): number {
-  return Math.max(16, settings.currentShardCount);
-}
+export { DEMO_REPORTS };
 
-function toOptions(settings: AnalysisSettings): AnalyzeOptions {
-  return {
-    maxShards: maxShardsFor(settings),
-    startupOverheadMs: settings.startupOverheadSec * 1000,
+/** Run the advisor over the uploaded reports (per-shard) or a single one (merged). */
+export function adviseFrom(reports: ReportFile[], settings: AnalysisSettings): AdvisorResult {
+  const cost: CostModel = { startupOverheadMs: settings.startupOverheadSec * 1000, currency: '€' };
+  if (settings.pricePerMinute > 0) cost.pricePerMinute = settings.pricePerMinute;
+
+  const input =
+    reports.length >= 2
+      ? { kind: 'per-shard' as const, reports }
+      : { kind: 'merged' as const, report: reports[0], currentShardCount: settings.currentShardCount };
+
+  return advise(input, cost, {
+    objective: { kind: settings.objective } as Objective,
     workersPerShard: settings.workersPerShard,
-    currentShardCount: settings.currentShardCount,
-    // Cap the solver so a large real report never hangs the tab.
-    solve: { timeBudgetMs: 100 },
-  };
+    maxShards: 16,
+  });
 }
 
-/** The raw report a user can supply (parsed object or raw text). */
-export type ReportInput = string | unknown;
-
-/** The preloaded demo report (a Playwright run). */
-export const DEMO_REPORT: ReportInput = demoReport;
-
-/** Analyze any report with the given settings. Format is auto-detected. */
-export function analyzeReport(input: ReportInput, settings: AnalysisSettings): AnalysisResult {
-  return analyze(input, toOptions(settings));
-}
-
-/** Format billed machine time (ms) as money at the given per-minute rate. */
-export function formatMoney(costMs: number, ratePerMin: number): string {
-  const dollars = (costMs / 60_000) * ratePerMin;
-  return `$${dollars.toFixed(2)}`;
+/** Format billed ms as money at the given rate, or null when there is no price. */
+export function formatMoney(costMs: number, pricePerMinute: number): string | null {
+  if (!pricePerMinute) return null;
+  return `€${((costMs / 60_000) * pricePerMinute).toFixed(2)}`;
 }

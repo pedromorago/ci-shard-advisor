@@ -1,18 +1,13 @@
-import type { AnalysisSettings } from './analysis';
+import type { AnalysisSettings, ObjectiveKind } from './analysis';
 
 interface ControlsProps {
   settings: AnalysisSettings;
   onChange: (settings: AnalysisSettings) => void;
 }
 
-/**
- * The knobs that are NOT in the report and must come from the user: workers per
- * shard, CI startup overhead, the current container count, and the platform's
- * per-minute price. Changing any of them re-runs the analysis.
- */
+/** The knobs that are not in the reports: setup, price, workers, objective. */
 export function Controls({ settings, onChange }: ControlsProps) {
   const update = (patch: Partial<AnalysisSettings>) => onChange({ ...settings, ...patch });
-
   const num = (raw: string, min: number) => {
     const value = Number(raw);
     return Number.isFinite(value) ? Math.max(min, value) : min;
@@ -21,18 +16,8 @@ export function Controls({ settings, onChange }: ControlsProps) {
   return (
     <section className="controls card" aria-labelledby="controls-heading">
       <h2 id="controls-heading">Your CI setup</h2>
-      <p className="controls__hint">These describe how you run CI — they are not in the report.</p>
+      <p className="controls__hint">These describe how you run CI — they are not in the reports.</p>
       <div className="controls__grid">
-        <label className="control">
-          <span>Workers per shard</span>
-          <input
-            type="number"
-            min={1}
-            step={1}
-            value={settings.workersPerShard}
-            onChange={(e) => update({ workersPerShard: Math.round(num(e.target.value, 1)) })}
-          />
-        </label>
         <label className="control">
           <span>Startup overhead (s)</span>
           <input
@@ -44,7 +29,27 @@ export function Controls({ settings, onChange }: ControlsProps) {
           />
         </label>
         <label className="control">
-          <span>Your current shards</span>
+          <span>Cost per minute (€)</span>
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            value={settings.pricePerMinute}
+            onChange={(e) => update({ pricePerMinute: num(e.target.value, 0) })}
+          />
+        </label>
+        <label className="control">
+          <span>Workers per shard</span>
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={settings.workersPerShard}
+            onChange={(e) => update({ workersPerShard: Math.round(num(e.target.value, 1)) })}
+          />
+        </label>
+        <label className="control">
+          <span>Shards (merged report)</span>
           <input
             type="number"
             min={1}
@@ -54,14 +59,15 @@ export function Controls({ settings, onChange }: ControlsProps) {
           />
         </label>
         <label className="control">
-          <span>Cost per minute ($)</span>
-          <input
-            type="number"
-            min={0}
-            step={0.01}
-            value={settings.costRatePerMin}
-            onChange={(e) => update({ costRatePerMin: num(e.target.value, 0) })}
-          />
+          <span>Optimize for</span>
+          <select
+            value={settings.objective}
+            onChange={(e) => update({ objective: e.target.value as ObjectiveKind })}
+          >
+            <option value="balanced">Balanced</option>
+            <option value="fastest">Fastest</option>
+            <option value="cheapest">Cheapest</option>
+          </select>
         </label>
       </div>
     </section>
