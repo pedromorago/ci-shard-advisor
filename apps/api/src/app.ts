@@ -46,7 +46,7 @@ function priorityParam(raw: string | undefined): Priority | undefined {
 /** Validate the optional report-format query param. */
 function reportFormat(raw: string | undefined): ReportFormat | 'auto' | undefined {
   if (raw === undefined) return undefined;
-  const allowed = ['auto', 'playwright', 'cypress', 'junit'] as const;
+  const allowed = ['auto', 'playwright', 'cypress', 'mochawesome', 'junit'] as const;
   if (!(allowed as readonly string[]).includes(raw)) {
     throw new Error(`format must be one of: ${allowed.join(', ')}`);
   }

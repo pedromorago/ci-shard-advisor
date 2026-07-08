@@ -71,11 +71,12 @@ Playwright JSON
 
 El motor es **agnóstico al framework**: lo único específico de cada herramienta es
 el *lector* de entrada (parser + normalizer) que traduce su report a `AtomicTask[]`.
-Hay tres lectores —Playwright, Cypress ([`cypress.ts`](../packages/core/src/report/cypress.ts))
-y **JUnit XML** ([`junit.ts`](../packages/core/src/report/junit.ts))— y
-`analyze(input, { format })` elige uno. Por defecto (`format: 'auto'`) se
-**detecta por la forma** del report: XML → JUnit, `runs` → Cypress, `suites` →
-Playwright. JUnit XML es la *lingua franca* (lo emiten Playwright, Cypress, Jest,
+Hay cuatro lectores —Playwright, Cypress (Module API, [`cypress.ts`](../packages/core/src/report/cypress.ts)),
+**mochawesome** ([`mochawesome.ts`](../packages/core/src/report/mochawesome.ts), el
+reporter JSON estándar de Cypress/Mocha) y **JUnit XML**
+([`junit.ts`](../packages/core/src/report/junit.ts))— y `analyze(input, { format })`
+elige uno. Por defecto (`format: 'auto'`) se **detecta por la forma** del report:
+XML → JUnit, `runs` → Cypress, `results` → mochawesome, `suites` → Playwright. JUnit XML es la *lingua franca* (lo emiten Playwright, Cypress, Jest,
 pytest, Maven…), así que un solo lector cubre casi cualquier herramienta. El lector
 de JUnit está escrito **sin dependencias** (solo strings/regex) para no romper la
 pureza del core que corre en navegador. A partir de ahí (duraciones), scheduler,
