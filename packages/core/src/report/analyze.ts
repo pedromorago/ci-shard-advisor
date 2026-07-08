@@ -59,6 +59,14 @@ function readTasks(input: string | unknown, format: ReportFormat): AtomicTask[] 
   }
 }
 
+/**
+ * Read a single report into tasks, detecting the format (or using a forced one).
+ * The public entry point the advisor uses per report file.
+ */
+export function readReport(input: string | unknown, format: ReportFormat | 'auto' = 'auto'): AtomicTask[] {
+  return readTasks(input, format === 'auto' ? detectFormat(input) : format);
+}
+
 export interface AnalysisResult {
   /** Normalized and classified tasks extracted from the report. */
   tasks: AtomicTask[];
