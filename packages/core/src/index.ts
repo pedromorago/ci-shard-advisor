@@ -22,8 +22,24 @@ export { parseMochawesomeReport, normalizeMochawesome } from './report/mochaweso
 export type { MochawesomeReport } from './report/mochawesome';
 export { classify } from './report/classifier';
 export type { ClassifyRule, ClassifyOptions } from './report/classifier';
-export { analyze, detectFormat } from './report/analyze';
+export { analyze, detectFormat, readReport } from './report/analyze';
 export type { AnalyzeOptions, AnalysisResult, ReportFormat } from './report/analyze';
+export { advise } from './advisor/advise';
+export type { AdviseOptions } from './advisor/advise';
+export { buildScenarios, chooseObjective, planFor } from './advisor/scenarios';
+export { readReports } from './advisor/reports';
+export { measureCurrent, modelCurrent } from './advisor/current';
+export type {
+  ReportFile,
+  AnalyzeInput,
+  CostModel,
+  Objective,
+  MeasuredCurrent,
+  ShardPlan,
+  Scenario,
+  Findings,
+  AdvisorResult,
+} from './advisor/types';
 export { summarize, formatDuration } from './exporters/summary';
 export type { AnalysisSummary, BlockSummary } from './exporters/summary';
 export { toJson, toSummaryObject } from './exporters/json';

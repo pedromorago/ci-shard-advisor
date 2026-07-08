@@ -1,0 +1,59 @@
+import { classify } from '../report/classifier';
+import { durationsOf } from '../report/normalizer';
+import { buildFrontier } from '../recommender/frontier';
+import { readReports } from './reports';
+import { measureCurrent, modelCurrent } from './current';
+import { buildScenarios } from './scenarios';
+import type { AdvisorResult, AnalyzeInput, CostModel, Objective } from './types';
+
+const SOLVE = { timeBudgetMs: 200 };
+
+export interface AdviseOptions {
+  objective?: Objective;
+  workersPerShard?: number;
+  maxShards?: number;
+}
+
+/**
+ * The v2 public gate. Reads the report(s), establishes the current situation
+ * (measured from per-shard reports, or modeled from a merged one), builds the
+ * optimal frontier, and returns the four anchored scenarios plus findings.
+ */
+export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOptions = {}): AdvisorResult {
+  const workersPerShard = options.workersPerShard ?? 1;
+  const { perShardTasks, allTasks } = readReports(input);
+  const tasks = classify(allTasks);
+  const durations = durationsOf(tasks);
+
+  const current =
+    input.kind === 'per-shard'
+      ? measureCurrent(perShardTasks, cost, workersPerShard)
+      : modelCurrent(tasks, input.currentShardCount ?? 1, cost, workersPerShard);
+
+  const maxShards = Math.max(
+    options.maxShards ?? Math.max(1, durations.length),
+    current.shardCount,
+  );
+  const frontier = buildFrontier(durations, {
+    maxShards,
+    workersPerShard,
+    startupOverheadMs: cost.startupOverheadMs,
+    solve: SOLVE,
+  });
+
+  const scenarios = buildScenarios(
+    frontier,
+    current,
+    tasks,
+    workersPerShard,
+    options.objective ?? { kind: 'balanced' },
+  );
+
+  return {
+    current,
+    scenarios,
+    frontier,
+    findings: { warnings: [], flaky: [] },
+    tasks,
+  };
+}
