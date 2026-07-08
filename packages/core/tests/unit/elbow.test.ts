@@ -47,6 +47,18 @@ describe('findElbow', () => {
       const flatTime = [point(1, 90, 90), point(2, 90, 120), point(3, 90, 150)];
       expect(findElbow(flatTime).shardCount).toBe(1);
     });
+
+    it('minimizes cost when the feedback gain is negligible (overhead dominates)', () => {
+      // A 0.3s suite behind a 30s startup: feedback barely moves, cost grows —
+      // don't add shards for a fraction of a second.
+      const overheadDominated = [
+        point(1, 30300, 30000),
+        point(2, 30150, 60000),
+        point(3, 30100, 90000),
+        point(4, 30000, 120000),
+      ];
+      expect(findElbow(overheadDominated).shardCount).toBe(1);
+    });
   });
 
   describe('finds the point of maximum curvature', () => {
