@@ -2,13 +2,14 @@ import type { AtomicTask } from '../types/domain';
 import { parseReport } from './parser';
 import { normalize, durationsOf } from './normalizer';
 import { parseCypressReport, normalizeCypress } from './cypress';
+import { parseJUnitReport, normalizeJUnit } from './junit';
 import { classify } from './classifier';
 import type { ClassifyOptions } from './classifier';
 import { recommend } from '../recommender/recommend';
 import type { RecommendOptions, RecommendationResult } from '../recommender/recommend';
 
 /** Test report format the input is in. */
-export type ReportFormat = 'playwright' | 'cypress';
+export type ReportFormat = 'playwright' | 'cypress' | 'junit';
 
 export interface AnalyzeOptions extends RecommendOptions {
   /** Report format. Defaults to 'auto' (detected from the report shape). */
@@ -22,12 +23,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Detect the report format from its shape: a Cypress run result has a top-level
- * `runs` array, a Playwright report has `suites`. Falls back to Playwright.
+ * Detect the report format from its shape: XML text is JUnit, a top-level
+ * `runs` array is a Cypress run result, `suites` is a Playwright report.
  */
 export function detectFormat(input: string | unknown): ReportFormat {
   let raw: unknown = input;
   if (typeof input === 'string') {
+    if (input.trimStart().startsWith('<')) return 'junit';
     try {
       raw = JSON.parse(input);
     } catch {
@@ -39,9 +41,14 @@ export function detectFormat(input: string | unknown): ReportFormat {
 
 /** Turn a raw report into tasks, choosing the reader by format. */
 function readTasks(input: string | unknown, format: ReportFormat): AtomicTask[] {
-  return format === 'cypress'
-    ? normalizeCypress(parseCypressReport(input))
-    : normalize(parseReport(input));
+  switch (format) {
+    case 'cypress':
+      return normalizeCypress(parseCypressReport(input));
+    case 'junit':
+      return normalizeJUnit(parseJUnitReport(input));
+    default:
+      return normalize(parseReport(input));
+  }
 }
 
 export interface AnalysisResult {
