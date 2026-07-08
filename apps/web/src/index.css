@@ -264,9 +264,10 @@ body {
   margin-left: auto;
 }
 
-.ci__code {
-  margin: 1rem 0 0;
-  padding: 1rem;
+.ci__code,
+.help__code {
+  margin: 0.5rem 0;
+  padding: 0.9rem 1rem;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -275,9 +276,25 @@ body {
   line-height: 1.5;
 }
 
-.ci__code code {
+.ci__code code,
+.help__code code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   white-space: pre;
+}
+
+.help__body h3,
+.help h3 {
+  margin: 1.25rem 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.help p {
+  color: var(--muted);
+  margin: 0.4rem 0;
+}
+
+.help code {
+  color: var(--text);
 }
 
 .chart {
