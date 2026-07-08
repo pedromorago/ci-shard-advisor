@@ -1,25 +1,15 @@
 import { parseArgs } from 'node:util';
+import { basename } from 'node:path';
 import {
-  analyze,
-  toText,
-  toJson,
-  toMarkdown,
+  advise,
+  toAdvisorText,
+  toAdvisorJson,
+  toAdvisorMarkdown,
   toGitHubActions,
   toBitbucketPipelines,
-  formatDuration,
 } from '@ci-shard-advisor/core';
-import type { AnalyzeOptions, Priority } from '@ci-shard-advisor/core';
+import type { AnalyzeInput, CostModel, Objective, ReportFile, AdvisorResult } from '@ci-shard-advisor/core';
 import { parseDuration, parseIntOption } from './duration';
-
-/** Parse the --priority flag (a preset or a numeric time value). */
-function parsePriority(raw: string): Priority {
-  if (raw === 'knee' || raw === 'fastest' || raw === 'cheapest') return raw;
-  const value = Number(raw);
-  if (!Number.isFinite(value) || value < 0) {
-    throw new Error(`--priority must be knee, fastest, cheapest or a number >= 0, got '${raw}'`);
-  }
-  return value;
-}
 
 /** Injected I/O so the CLI is testable without a process or the filesystem. */
 export interface CliIO {
@@ -28,37 +18,51 @@ export interface CliIO {
   stderr: (line: string) => void;
 }
 
-const USAGE = `ci-shard-advisor <report.json> [options]
+const USAGE = `ci-shard-advisor <reports...> [options]
 
-Analyze a Playwright JSON report and recommend a CI sharding strategy.
+Analyze the reports of your last sharded run (one file per shard, or one merged
+report) and get your current situation plus the moves that improve it.
 
 Options:
-  --format <text|json|markdown|github|bitbucket>  Output format (default: text;
-                                 github/bitbucket emit a CI config for the
-                                 recommended shard count)
-  --input-format <auto|playwright|cypress|mochawesome|junit>  Report format
-                                 (default: auto-detect)
-  --shards <n>                   Your current shard count (enables comparison)
-  --workers <n>                  Workers per shard (default: 1)
-  --overhead <duration>          Per-shard startup overhead (e.g. 30s, default: 0)
-  --max-shards <n>               Largest shard count to evaluate
-  --priority <knee|fastest|cheapest|N>  How to choose (default: knee; N = cost per
-                                 minute of feedback)
+  --setup <duration>       per-shard startup overhead (e.g. 45s)  [needed for cost]
+  --price <num>            machine price per minute               [optional, adds money]
+  --workers <n>            workers per shard (default: 1)
+  --shards <n>             declared shard count for a single merged report
+  --objective <balanced|fastest|cheapest>   the "by objective" move (default: balanced)
+  --max-feedback <dur>     objective: cheapest within this feedback budget
+  --budget <price|dur>     objective: fastest within this cost budget
+  --max-shards <n>         largest shard count to evaluate
+  --format <text|json|markdown|github|bitbucket>   output (default: text)
+  --input-format <auto|playwright|cypress|mochawesome>   report format (default: auto)
 
-Quality gate (sets a non-zero exit code on failure):
-  --max-feedback <duration>      Fail if the best feedback time exceeds this budget
-  --max-cost-waste <pct>         Fail if your current config wastes more than pct%
-                                 cost versus the recommendation (needs --shards)
+Quality gates (non-zero exit on failure):
+  --gate-feedback <dur>    fail if the best achievable feedback exceeds the limit
+  --gate-cost-waste <pct>  fail if your current config wastes more than pct% cost
 
-  -h, --help                     Show this help`;
+  -h, --help               show this help`;
 
-const REPORT_FORMATS = { text: toText, json: toJson, markdown: toMarkdown };
+const REPORT_FORMATS = { text: toAdvisorText, json: toAdvisorJson, markdown: toAdvisorMarkdown };
 const CI_FORMATS = { github: toGitHubActions, bitbucket: toBitbucketPipelines };
 const ALL_FORMATS = [...Object.keys(REPORT_FORMATS), ...Object.keys(CI_FORMATS)];
 
+/** Parse --budget: a duration (machine time) or a money amount (needs --price). */
+function parseBudget(raw: string, pricePerMinute: number | undefined): Objective {
+  if (/^\d+(\.\d+)?(ms|s|m)$/.test(raw.trim())) {
+    return { kind: 'budget', costMs: parseDuration(raw) };
+  }
+  const amount = Number(raw);
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error(`--budget must be a duration (e.g. 5m) or a price amount`);
+  }
+  if (pricePerMinute === undefined) {
+    throw new Error('--budget as a price needs --price to be set');
+  }
+  return { kind: 'budget', costMs: (amount / pricePerMinute) * 60_000 };
+}
+
 /**
- * Run the CLI. Returns the process exit code: 0 on success, 1 when a quality
- * gate fails, 2 on a usage or input error.
+ * Run the CLI. Returns the exit code: 0 success, 1 a quality gate failed, 2 a
+ * usage or input error.
  */
 export function run(argv: string[], io: CliIO): number {
   let parsed;
@@ -67,15 +71,18 @@ export function run(argv: string[], io: CliIO): number {
       args: argv,
       allowPositionals: true,
       options: {
+        setup: { type: 'string' },
+        price: { type: 'string' },
+        workers: { type: 'string' },
+        shards: { type: 'string' },
+        objective: { type: 'string' },
+        'max-feedback': { type: 'string' },
+        budget: { type: 'string' },
+        'max-shards': { type: 'string' },
         format: { type: 'string', default: 'text' },
         'input-format': { type: 'string' },
-        shards: { type: 'string' },
-        workers: { type: 'string' },
-        overhead: { type: 'string' },
-        'max-shards': { type: 'string' },
-        priority: { type: 'string' },
-        'max-feedback': { type: 'string' },
-        'max-cost-waste': { type: 'string' },
+        'gate-feedback': { type: 'string' },
+        'gate-cost-waste': { type: 'string' },
         help: { type: 'boolean', short: 'h', default: false },
       },
     });
@@ -96,88 +103,108 @@ export function run(argv: string[], io: CliIO): number {
     io.stderr(`error: unknown format '${values.format}' (use ${ALL_FORMATS.join(', ')})`);
     return 2;
   }
-
-  const file = positionals[0];
-  if (!file) {
-    io.stderr('error: missing report file');
+  if (positionals.length === 0) {
+    io.stderr('error: at least one report file is required');
     io.stderr(USAGE);
     return 2;
   }
 
-  const inputFormat = values['input-format'] ?? 'auto';
-  const allowedFormats = ['auto', 'playwright', 'cypress', 'mochawesome', 'junit'];
-  if (!allowedFormats.includes(inputFormat)) {
-    io.stderr(`error: unknown input format '${inputFormat}' (use ${allowedFormats.join(', ')})`);
-    return 2;
-  }
-
-  const options: AnalyzeOptions = {
-    solve: { timeBudgetMs: 200 },
-    format: inputFormat as AnalyzeOptions['format'],
-  };
-  let maxFeedbackMs: number | undefined;
-  let maxCostWastePct: number | undefined;
+  // Options and the cost model.
+  const cost: CostModel = { startupOverheadMs: 0 };
+  let workersPerShard = 1;
+  let maxShards: number | undefined;
+  let currentShardCount: number | undefined;
+  let objective: Objective | undefined;
+  let gateFeedbackMs: number | undefined;
+  let gateCostWastePct: number | undefined;
   try {
-    if (values.workers) options.workersPerShard = parseIntOption(values.workers, 'workers');
-    if (values['max-shards']) options.maxShards = parseIntOption(values['max-shards'], 'max-shards');
-    if (values.shards) options.currentShardCount = parseIntOption(values.shards, 'shards');
-    if (values.priority) options.priority = parsePriority(values.priority);
-    if (values.overhead) options.startupOverheadMs = parseDuration(values.overhead);
-    if (values['max-feedback']) maxFeedbackMs = parseDuration(values['max-feedback']);
-    if (values['max-cost-waste']) maxCostWastePct = Number(values['max-cost-waste']);
+    if (values.setup) cost.startupOverheadMs = parseDuration(values.setup);
+    if (values.price) {
+      const price = Number(values.price);
+      if (!Number.isFinite(price) || price < 0) throw new Error('--price must be a number >= 0');
+      cost.pricePerMinute = price;
+    }
+    if (values.workers) workersPerShard = parseIntOption(values.workers, 'workers');
+    if (values['max-shards']) maxShards = parseIntOption(values['max-shards'], 'max-shards');
+    if (values.shards) currentShardCount = parseIntOption(values.shards, 'shards');
+    if (values['gate-feedback']) gateFeedbackMs = parseDuration(values['gate-feedback']);
+    if (values['gate-cost-waste']) gateCostWastePct = Number(values['gate-cost-waste']);
+
+    if (values['max-feedback']) {
+      objective = { kind: 'max-feedback', feedbackMs: parseDuration(values['max-feedback']) };
+    } else if (values.budget) {
+      objective = parseBudget(values.budget, cost.pricePerMinute);
+    } else if (values.objective) {
+      const o = values.objective;
+      if (o !== 'balanced' && o !== 'fastest' && o !== 'cheapest') {
+        throw new Error(`--objective must be balanced, fastest or cheapest`);
+      }
+      objective = { kind: o };
+    }
   } catch (error) {
     io.stderr(`error: ${(error as Error).message}`);
     return 2;
   }
 
-  let text: string;
-  try {
-    text = io.readFile(file);
-  } catch (error) {
-    io.stderr(`error: cannot read '${file}': ${(error as Error).message}`);
-    return 2;
+  // Read the report files.
+  const reports: ReportFile[] = [];
+  for (const path of positionals) {
+    try {
+      reports.push({ name: basename(path), content: io.readFile(path) });
+    } catch (error) {
+      io.stderr(`error: cannot read '${path}': ${(error as Error).message}`);
+      return 2;
+    }
   }
 
-  let result;
+  const input: AnalyzeInput =
+    reports.length >= 2
+      ? { kind: 'per-shard', reports }
+      : { kind: 'merged', report: reports[0], currentShardCount: currentShardCount ?? 1 };
+
+  let result: AdvisorResult;
   try {
-    result = analyze(text, options);
+    result = advise(input, cost, { objective, workersPerShard, maxShards });
   } catch (error) {
     io.stderr(`error: ${(error as Error).message}`);
     return 2;
   }
 
   if (format in REPORT_FORMATS) {
-    io.stdout(REPORT_FORMATS[format as keyof typeof REPORT_FORMATS](result));
+    io.stdout(REPORT_FORMATS[format as keyof typeof REPORT_FORMATS](result, cost));
   } else {
-    // CI config: generate the workflow for the recommended shard count.
-    io.stdout(CI_FORMATS[format as keyof typeof CI_FORMATS](result.recommendation.recommended.shardCount));
+    // CI config for the chosen (objective) scenario.
+    const chosen = result.scenarios.find((s) => s.id === 'objective') ?? result.scenarios[0];
+    io.stdout(CI_FORMATS[format as keyof typeof CI_FORMATS](chosen.config.shardCount));
   }
 
-  return evaluateGate(result.recommendation, { maxFeedbackMs, maxCostWastePct }, io);
+  return evaluateGates(result, { gateFeedbackMs, gateCostWastePct }, io);
 }
 
-function evaluateGate(
-  recommendation: ReturnType<typeof analyze>['recommendation'],
-  gate: { maxFeedbackMs?: number; maxCostWastePct?: number },
+function evaluateGates(
+  result: AdvisorResult,
+  gate: { gateFeedbackMs?: number; gateCostWastePct?: number },
   io: CliIO,
 ): number {
-  const { recommended, current } = recommendation;
   let failed = false;
 
-  if (gate.maxFeedbackMs !== undefined && recommended.feedbackTimeMs > gate.maxFeedbackMs) {
-    io.stderr(
-      `gate failed: best feedback time ${formatDuration(recommended.feedbackTimeMs)} exceeds budget ${formatDuration(gate.maxFeedbackMs)}`,
-    );
-    failed = true;
+  if (gate.gateFeedbackMs !== undefined) {
+    const best = Math.min(...result.frontier.map((p) => p.feedbackTimeMs));
+    if (best > gate.gateFeedbackMs) {
+      io.stderr(`gate failed: best achievable feedback exceeds the limit`);
+      failed = true;
+    }
   }
 
-  if (gate.maxCostWastePct !== undefined && current && current.costMs > 0) {
-    const wastePct = ((current.costMs - recommended.costMs) / current.costMs) * 100;
-    if (wastePct > gate.maxCostWastePct) {
-      io.stderr(
-        `gate failed: current config wastes ${wastePct.toFixed(1)}% cost vs recommended (limit ${gate.maxCostWastePct}%)`,
-      );
-      failed = true;
+  if (gate.gateCostWastePct !== undefined) {
+    const cheaper = result.scenarios.find((s) => s.id === 'same-feedback-cheaper' && !s.unavailable);
+    const current = result.current;
+    if (cheaper && current.costMs > 0) {
+      const wastePct = ((current.costMs - cheaper.config.costMs) / current.costMs) * 100;
+      if (wastePct > gate.gateCostWastePct) {
+        io.stderr(`gate failed: current config wastes ${wastePct.toFixed(1)}% cost (limit ${gate.gateCostWastePct}%)`);
+        failed = true;
+      }
     }
   }
 

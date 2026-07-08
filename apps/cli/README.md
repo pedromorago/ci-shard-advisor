@@ -1,38 +1,42 @@
 # @ci-shard-advisor/cli
 
-Command-line adapter for CI Shard Advisor. Reads a Playwright JSON report,
-prints a sharding recommendation, and can act as a **quality gate** in CI.
+Command-line adapter. Reads the reports of your last sharded run and prints your
+current situation plus the moves that improve it. Also acts as a CI quality gate.
 
 ## Usage
 
 ```bash
-pnpm --filter @ci-shard-advisor/cli start -- report.json [options]
+pnpm --filter @ci-shard-advisor/cli exec tsx src/bin.ts <reports...> [options]
 ```
 
-Options:
+Pass **one report per shard** (measured), or a **single merged report** with
+`--shards N` (modeled).
 
 | Option | Description |
 | --- | --- |
-| `--format <text\|json\|markdown\|github\|bitbucket>` | Output (default: `text`); `github`/`bitbucket` emit CI config for the recommended shard count |
-| `--input-format <auto\|playwright\|cypress\|mochawesome\|junit>` | Report format (default: `auto`-detect) |
-| `--shards <n>` | Your current shard count (enables the comparison) |
+| `--setup <duration>` | Per-shard startup overhead, e.g. `45s` (needed for cost) |
+| `--price <num>` | Machine price per minute (adds money to every output) |
 | `--workers <n>` | Workers per shard (default: 1) |
-| `--overhead <duration>` | Per-shard startup overhead, e.g. `30s` |
+| `--shards <n>` | Declared shard count for a single merged report |
+| `--objective <balanced\|fastest\|cheapest>` | The "by objective" move (default: `balanced`) |
+| `--max-feedback <dur>` | Objective: cheapest within this feedback budget |
+| `--budget <price\|dur>` | Objective: fastest within this cost budget |
 | `--max-shards <n>` | Largest shard count to evaluate |
-| `--priority <knee\|fastest\|cheapest\|N>` | How to choose (default: `knee`; `N` = cost per minute of feedback) |
-| `--max-feedback <duration>` | **Gate:** fail if the best feedback time exceeds this |
-| `--max-cost-waste <pct>` | **Gate:** fail if your config wastes more than `pct`% cost |
+| `--format <text\|json\|markdown\|github\|bitbucket>` | Output (default: `text`) |
+| `--input-format <auto\|playwright\|cypress\|mochawesome>` | Report format (default: `auto`) |
 
-Durations accept `ms`, `s` or `m` suffixes (a bare number is milliseconds).
+Quality gates (non-zero exit):
+
+| Option | Description |
+| --- | --- |
+| `--gate-feedback <dur>` | Fail if the best achievable feedback exceeds the limit |
+| `--gate-cost-waste <pct>` | Fail if your current config wastes more than `pct`% cost |
 
 ## Exit codes
 
 `0` success · `1` a quality gate failed · `2` a usage or input error.
 
-Example CI gate — fail the build if feedback can't get under 5 minutes or the
-current 8 shards waste more than 20% cost:
-
 ```bash
-ci-shard-advisor report.json --shards 8 --overhead 30s \
-  --max-feedback 5m --max-cost-waste 20
+ci-shard-advisor artifacts/shard-*.json --setup 45s --price 0.08 \
+  --gate-feedback 5m --gate-cost-waste 20
 ```
