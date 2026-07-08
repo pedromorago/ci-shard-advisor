@@ -26,9 +26,9 @@ describe('toText', () => {
         optimal split
 
       Current: 6 shards x 1 worker
-        Feedback time: 1m 30s
+        Feedback time: 1m 56s
         Billed cost:   7m 4s
-      Change vs current: feedback +22.8s, cost -1m 30s
+      Change vs current: feedback -3.0s, cost -1m 30s
 
       Frontier:
         shards  feedback    cost

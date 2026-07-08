@@ -33,6 +33,22 @@ export interface FrontierOptions {
   startupOverheadMs?: number;
   /** Budget forwarded to the branch-and-bound solver for each shard count. */
   solve?: SolveOptions;
+  /**
+   * How to split tasks across shards:
+   * - 'optimal' (default): the duration-balanced branch-and-bound split.
+   * - 'even': a round-robin split that balances test *count*, not duration —
+   *   a model of default sharding, used to estimate the *current* pipeline.
+   */
+  split?: 'optimal' | 'even';
+}
+
+/** Round-robin assignment: balances the number of tests, ignoring duration. */
+function evenAssignment(taskCount: number, shardCount: number): number[][] {
+  const assignment: number[][] = Array.from({ length: shardCount }, () => []);
+  for (let index = 0; index < taskCount; index++) {
+    assignment[index % shardCount].push(index);
+  }
+  return assignment;
 }
 
 function assertNonNegativeFinite(value: number, name: string): void {
@@ -57,8 +73,10 @@ export function evaluateConfig(
   const startupOverheadMs = options.startupOverheadMs ?? 0;
   assertNonNegativeFinite(startupOverheadMs, 'startupOverheadMs');
 
-  const plan = branchAndBound(durations, shardCount, options.solve);
-  const run = simulateRun(durations, plan.assignment, workersPerShard);
+  const even = options.split === 'even';
+  const plan = even ? null : branchAndBound(durations, shardCount, options.solve);
+  const assignment = plan ? plan.assignment : evenAssignment(durations.length, shardCount);
+  const run = simulateRun(durations, assignment, workersPerShard);
   const costMs = run.shards.reduce(
     (sum, shard) => sum + shard.makespan + startupOverheadMs,
     0,
@@ -69,7 +87,7 @@ export function evaluateConfig(
     runTimeMs: run.makespan,
     feedbackTimeMs: run.makespan + startupOverheadMs,
     costMs,
-    optimal: plan.optimal,
+    optimal: plan ? plan.optimal : false,
   };
 }
 
@@ -89,7 +107,8 @@ export function buildFrontier(
 
   const points: ConfigPoint[] = [];
   for (let shardCount = 1; shardCount <= maxShards; shardCount++) {
-    points.push(evaluateConfig(durations, shardCount, options));
+    // The frontier always shows the best achievable split.
+    points.push(evaluateConfig(durations, shardCount, { ...options, split: 'optimal' }));
   }
   return points;
 }

@@ -11,7 +11,8 @@ test.describe('demo analysis', () => {
     const recommendation = page.getByRole('region', { name: /recommendation/i });
     await expect(recommendation.getByText(/^\d+ shards$/)).toBeVisible();
 
-    // The frontier chart renders with its accessible description.
+    // The frontier chart lives in a collapsible section; expand it.
+    await page.getByText(/show the full cost \/ time frontier/i).click();
     await expect(page.getByRole('img', { name: /feedback time versus billed cost/i })).toBeVisible();
   });
 
