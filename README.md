@@ -9,6 +9,8 @@ Analyze a test report (**Playwright**, **Cypress** or **JUnit XML**) and find th
 CI sharding strategy that balances **feedback time** against **cost** — with an
 exact scheduler, a faithful worker simulator, and an honest cost/time frontier.
 
+**▶ Live demo: [pedro-morago.github.io/ci-shard-advisor](https://pedro-morago.github.io/ci-shard-advisor/)** — runs entirely in your browser; drop in your own shard reports.
+
 ## Why
 
 Most teams pick their number of CI shards by gut feeling: "let's use 8 because
@@ -126,7 +128,7 @@ pnpm --filter @ci-shard-advisor/api start    # http://127.0.0.1:3001
 
 - [x] Monorepo setup
 - [x] Phase 1 — Scheduling core (LPT, bounds, branch & bound, worker simulator, frontier)
-- [x] Phase 2 — Web demo with preloaded analysis (upload, frontier chart, client-side)
+- [x] Phase 2 — Web demo with preloaded analysis (upload, frontier chart, client-side), deployed to GitHub Pages
 - [x] Phase 3 — Testing strategy (unit, integration, privacy, a11y)
 - [x] Phase 4 — CLI with quality-gate mode
 - [x] Phase 5 — Local API + Java REST Assured test suite
