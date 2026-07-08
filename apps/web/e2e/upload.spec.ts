@@ -18,7 +18,7 @@ test.describe('uploading a report', () => {
   test('analyzes an uploaded report client-side', async ({ page }) => {
     await page.goto('/');
 
-    await page.getByLabel(/upload a test report/i).setInputFiles({
+    await page.getByLabel(/upload your shard reports/i).setInputFiles({
       name: 'my-suite.json',
       mimeType: 'application/json',
       buffer: Buffer.from(reportWithCanary('renders results fast')),
@@ -31,7 +31,7 @@ test.describe('uploading a report', () => {
   test('surfaces a clear error for a malformed report', async ({ page }) => {
     await page.goto('/');
 
-    await page.getByLabel(/upload a test report/i).setInputFiles({
+    await page.getByLabel(/upload your shard reports/i).setInputFiles({
       name: 'broken.json',
       mimeType: 'application/json',
       buffer: Buffer.from('{ not valid json'),
@@ -39,7 +39,7 @@ test.describe('uploading a report', () => {
 
     await expect(page.getByRole('alert')).toBeVisible();
     // The demo analysis stays on screen.
-    await expect(page.getByText(/demo report/i)).toBeVisible();
+    await expect(page.getByText(/demo \(4 shards\)/i)).toBeVisible();
   });
 
   test('never sends the report off the page (privacy)', async ({ page }) => {
@@ -53,7 +53,7 @@ test.describe('uploading a report', () => {
     await page.goto('/');
     const baseline = requests.length;
 
-    await page.getByLabel(/upload a test report/i).setInputFiles({
+    await page.getByLabel(/upload your shard reports/i).setInputFiles({
       name: 'canary.json',
       mimeType: 'application/json',
       buffer: Buffer.from(reportWithCanary(canary)),

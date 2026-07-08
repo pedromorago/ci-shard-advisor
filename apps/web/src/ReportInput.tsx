@@ -1,13 +1,13 @@
 import type { ChangeEvent } from 'react';
+import type { ReportFile } from '@ci-shard-advisor/core';
 
 interface ReportInputProps {
-  /** Called with the selected file's raw text and its name. */
-  onSelect: (jsonText: string, fileName: string) => void;
-  /** Called to restore the preloaded demo analysis. */
+  /** Called with every selected file (one per shard, or a single merged one). */
+  onSelect: (reports: ReportFile[]) => void;
+  /** Called to restore the preloaded demo. */
   onLoadDemo: () => void;
 }
 
-/** Read a File as text via FileReader (works in browsers and jsdom alike). */
 function readFileText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -19,20 +19,22 @@ function readFileText(file: File): Promise<string> {
 
 export function ReportInput({ onSelect, onLoadDemo }: ReportInputProps) {
   async function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const text = await readFileText(file);
-    onSelect(text, file.name);
-    // Reset so selecting the same file again still fires a change event.
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+    const reports = await Promise.all(
+      files.map(async (file) => ({ name: file.name, content: await readFileText(file) })),
+    );
+    onSelect(reports);
     event.target.value = '';
   }
 
   return (
     <div className="report-input">
       <label className="report-input__file">
-        <span>Upload a test report (Playwright, Cypress or JUnit XML)</span>
+        <span>Upload your shard reports (one per shard, or a merged one)</span>
         <input
           type="file"
+          multiple
           accept="application/json,.json,application/xml,text/xml,.xml"
           onChange={handleChange}
         />
@@ -41,7 +43,7 @@ export function ReportInput({ onSelect, onLoadDemo }: ReportInputProps) {
         Load demo
       </button>
       <p className="report-input__note">
-        Processed entirely in your browser — your report is never uploaded.
+        Processed entirely in your browser — your reports are never uploaded.
       </p>
     </div>
   );

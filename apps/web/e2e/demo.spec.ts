@@ -2,14 +2,17 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test.describe('demo analysis', () => {
-  test('loads a preloaded recommendation without any input', async ({ page }) => {
+  test('loads a preloaded current situation and moves without any input', async ({ page }) => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { level: 1, name: /CI Shard Advisor/i })).toBeVisible();
-    await expect(page.getByText(/demo report/i)).toBeVisible();
+    await expect(page.getByText(/demo \(4 shards\)/i)).toBeVisible();
 
-    const recommendation = page.getByRole('region', { name: /recommendation/i });
-    await expect(recommendation.getByText(/^\d+ shards$/)).toBeVisible();
+    const current = page.getByRole('region', { name: /your setup today/i });
+    await expect(current.getByText(/measured/i)).toBeVisible();
+
+    const moves = page.getByRole('region', { name: /your moves/i });
+    await expect(moves.getByText(/rebalance/i)).toBeVisible();
 
     // The frontier chart lives in a collapsible section; expand it.
     await page.getByText(/show the full cost \/ time frontier/i).click();
