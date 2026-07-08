@@ -1,0 +1,60 @@
+# Example: shard a Playwright suite across 4 jobs on GitHub Actions and merge
+# the blob reports into report.json — the file CI Shard Advisor reads.
+#
+# Copy this into .github/workflows/tests.yml in your Playwright project and
+# adjust the shard count to the one the advisor recommends. (This lives under
+# examples/ so it does NOT run in this repo.)
+name: Playwright Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    name: Shard ${{ matrix.shard }}/4
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Run shard ${{ matrix.shard }}/4
+        run: npx playwright test --shard=${{ matrix.shard }}/4 --reporter=blob
+      - name: Upload blob report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 1
+  merge-report:
+    name: Merge into report.json
+    if: ${{ !cancelled() }}
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Download blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+      - name: Merge reports
+        run: npx playwright merge-reports --reporter json ./all-blob-reports > report.json
+      - name: Upload report.json (feed it to CI Shard Advisor)
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-json-report
+          path: report.json
+          retention-days: 7
