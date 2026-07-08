@@ -63,7 +63,7 @@ Playwright JSON
 - Modelo de coste, explícito y parametrizable (nada mágico): coste facturado **por máquina** = Σ por shard de (`startupOverheadMs` + tiempo del shard). El tiempo de feedback = tiempo del shard más lento + `startupOverheadMs`. `workersPerShard` y `startupOverheadMs` son parámetros con defaults neutros (1 y 0).
 - La tensión: más shards bajan el tiempo (rendimientos decrecientes) pero suben el coste (cada máquina extra cuesta su arranque). Con 1 worker y overhead > 0 el coste es exactamente `trabajo_total + shards × overhead`.
 - El codo (`findElbow`) es el punto de máxima curvatura: se normalizan ambos ejes a [0,1] (para que ninguna magnitud domine) y se elige el más alejado de la cuerda entre los extremos. Si un eje **no varía** (p.ej. overhead 0 → coste plano) no hay trade-off, así que se optimiza el otro cogiendo el **menor nº de shards** que lo alcanza (los shards extra que no cambian ni tiempo ni coste son desperdicio).
-- Criterio de recomendación configurable (`priority`, por defecto el codo): además del codo balanceado están los presets `fastest` (mínimo tiempo) y `cheapest` (mínimo coste), que **no requieren saber ningún precio**; y un valor numérico opcional (cuántas unidades de coste vale una de tiempo de feedback) que minimiza `coste + valor × tiempo`, para quien sí conoce su trade-off. Expuesto en web, CLI (`--priority`) y API (`?priority=`).
+- Criterio de recomendación configurable (`priority`, por defecto el codo): además del codo balanceado están los presets `fastest` (mínimo tiempo) y `cheapest` (mínimo coste), que **no requieren saber ningún precio**; y un valor numérico opcional (cuántas unidades de coste vale una de tiempo de feedback) que minimiza `coste + valor × tiempo`, para quien sí conoce su trade-off. En v2 esto se expone como el **objetivo** del escenario «por objetivo»: web, CLI (`--objective` / `--max-feedback` / `--budget`) y API (`?objective=`).
 - `recommend` orquesta todo y, dada la config actual del equipo (`currentShardCount`), cuantifica el ahorro (tiempo ganado y delta de coste) frente a la recomendación. La comparación es honesta: si el equipo ya ha pasado el codo, la recomendación sale más lenta pero más barata.
 - QA destacable del recommender: el codo se valida con fixtures geométricos de resultado conocido y con una propiedad **metamórfica** (reescalar un eje no mueve el codo); la frontera con invariantes de monotonía; y el ahorro con aritmética comprobada a mano.
 
@@ -71,18 +71,18 @@ Playwright JSON
 
 El motor es **agnóstico al framework**: lo único específico de cada herramienta es
 el *lector* de entrada (parser + normalizer) que traduce su report a `AtomicTask[]`.
-Hay cuatro lectores —Playwright, Cypress (Module API, [`cypress.ts`](../packages/core/src/report/cypress.ts)),
-**mochawesome** ([`mochawesome.ts`](../packages/core/src/report/mochawesome.ts), el
-reporter JSON estándar de Cypress/Mocha) y **JUnit XML**
-([`junit.ts`](../packages/core/src/report/junit.ts))— y `analyze(input, { format })`
-elige uno. Por defecto (`format: 'auto'`) se **detecta por la forma** del report:
-XML → JUnit, `runs` → Cypress, `results` → mochawesome, `suites` → Playwright. JUnit XML es la *lingua franca* (lo emiten Playwright, Cypress, Jest,
-pytest, Maven…), así que un solo lector cubre casi cualquier herramienta. El lector
-de JUnit está escrito **sin dependencias** (solo strings/regex) para no romper la
-pureza del core que corre en navegador. A partir de ahí (duraciones), scheduler,
-simulador, recommender y exporters no saben ni les importa el origen. Añadir Jest,
-JUnit XML, etc. es **un lector más**; nada del núcleo cambia. La opción `format`
-está expuesta en el core, la CLI (`--input-format`) y la API (`?format=`).
+Los lectores soportados son **Playwright**, **Cypress** (Module API,
+[`cypress.ts`](../packages/core/src/report/cypress.ts)) y **mochawesome**
+([`mochawesome.ts`](../packages/core/src/report/mochawesome.ts), el reporter JSON
+estándar de Cypress/Mocha). El formato se **detecta por la forma** del report:
+`runs` → Cypress, `results` → mochawesome, `suites` → Playwright. A partir de ahí
+(duraciones), scheduler, simulador, recommender y exporters no saben ni les importa
+el origen. Añadir otro runner es **un lector más**; nada del núcleo cambia. El
+formato puede forzarse desde el core, la CLI (`--input-format`) y `advise()`.
+
+> Existe además un lector de **JUnit XML** ([`junit.ts`](../packages/core/src/report/junit.ts))
+> escrito sin dependencias, que se conserva en el código como extra pero **queda
+> fuera del pitch**: no se documenta ni se amplía (ver `docs/CLAUDE.md`, regla 4).
 
 ## Decisiones de diseño del pipeline de datos (parser / normalizer / classifier)
 
