@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "e2e:cypress": "start-server-and-test 'vite preview --port 4173 --strictPort' http://localhost:4173 'cypress run'",
+    "e2e:cypress": "start-server-and-test 'vite build && vite preview --port 4173 --strictPort' http://localhost:4173 'cypress run'",
     "cypress:open": "cypress open",
     "test:junit": "vitest run --reporter=junit --outputFile=reports/junit/results.xml"
   },
