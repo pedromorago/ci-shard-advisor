@@ -1,5 +1,13 @@
 import { parseArgs } from 'node:util';
-import { analyze, toText, toJson, toMarkdown, formatDuration } from '@ci-shard-advisor/core';
+import {
+  analyze,
+  toText,
+  toJson,
+  toMarkdown,
+  toGitHubActions,
+  toBitbucketPipelines,
+  formatDuration,
+} from '@ci-shard-advisor/core';
 import type { AnalyzeOptions, Priority } from '@ci-shard-advisor/core';
 import { parseDuration, parseIntOption } from './duration';
 
@@ -25,7 +33,9 @@ const USAGE = `ci-shard-advisor <report.json> [options]
 Analyze a Playwright JSON report and recommend a CI sharding strategy.
 
 Options:
-  --format <text|json|markdown>  Output format (default: text)
+  --format <text|json|markdown|github|bitbucket>  Output format (default: text;
+                                 github/bitbucket emit a CI config for the
+                                 recommended shard count)
   --input-format <auto|playwright|cypress|junit>  Report format (default: auto-detect)
   --shards <n>                   Your current shard count (enables comparison)
   --workers <n>                  Workers per shard (default: 1)
@@ -41,7 +51,9 @@ Quality gate (sets a non-zero exit code on failure):
 
   -h, --help                     Show this help`;
 
-const FORMATTERS = { text: toText, json: toJson, markdown: toMarkdown };
+const REPORT_FORMATS = { text: toText, json: toJson, markdown: toMarkdown };
+const CI_FORMATS = { github: toGitHubActions, bitbucket: toBitbucketPipelines };
+const ALL_FORMATS = [...Object.keys(REPORT_FORMATS), ...Object.keys(CI_FORMATS)];
 
 /**
  * Run the CLI. Returns the process exit code: 0 on success, 1 when a quality
@@ -78,9 +90,9 @@ export function run(argv: string[], io: CliIO): number {
     return 0;
   }
 
-  const format = values.format as keyof typeof FORMATTERS;
-  if (!(format in FORMATTERS)) {
-    io.stderr(`error: unknown format '${values.format}' (use text, json or markdown)`);
+  const format = values.format as string;
+  if (!ALL_FORMATS.includes(format)) {
+    io.stderr(`error: unknown format '${values.format}' (use ${ALL_FORMATS.join(', ')})`);
     return 2;
   }
 
@@ -133,7 +145,12 @@ export function run(argv: string[], io: CliIO): number {
     return 2;
   }
 
-  io.stdout(FORMATTERS[format](result));
+  if (format in REPORT_FORMATS) {
+    io.stdout(REPORT_FORMATS[format as keyof typeof REPORT_FORMATS](result));
+  } else {
+    // CI config: generate the workflow for the recommended shard count.
+    io.stdout(CI_FORMATS[format as keyof typeof CI_FORMATS](result.recommendation.recommended.shardCount));
+  }
 
   return evaluateGate(result.recommendation, { maxFeedbackMs, maxCostWastePct }, io);
 }

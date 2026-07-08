@@ -95,5 +95,6 @@ está expuesta en el core, la CLI (`--input-format`) y la API (`?format=`).
 
 - Los tres formatos (JSON, texto CLI, Markdown) renderizan desde un único modelo intermedio `summarize()` (totales, desglose por bloque, recomendación, frontera), así se mantienen **consistentes** entre sí.
 - `toJson` es la salida máquina (para API o artefacto): objeto estable con tiempos en ms crudos, sin formatear. `toText` y `toMarkdown` son para humanos y usan `formatDuration`.
+- `toGitHubActions` y `toBitbucketPipelines` cierran el bucle con la nube: a partir del nº de shards recomendado generan el YAML de CI (matriz / parallel) que shardea la ejecución y fusiona los blob reports en el `report.json` que el tool luego lee. Se exponen en web ("Set it up in CI") y CLI (`--format github|bitbucket`). Ver [examples/ci](../examples/ci).
 - Formato **determinista** a propósito: `formatDuration` no usa reloj ni locale (`toLocaleString` haría los snapshots *flaky*). Esto habilita **snapshot testing**: la salida formateada se congela y cualquier cambio salta como diff.
 - QA destacable: los exporters de texto y Markdown se fijan con **inline snapshots** sobre el fixture demo; el de JSON con aserciones estructurales + comprobación de que la salida es **byte-idéntica** entre llamadas (determinismo).

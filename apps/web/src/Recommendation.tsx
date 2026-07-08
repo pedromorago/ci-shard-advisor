@@ -1,23 +1,25 @@
-import { useState } from 'react';
 import { formatDuration } from '@ci-shard-advisor/core';
 import type { ConfigPoint } from '@ci-shard-advisor/core';
 import { formatMoney } from './analysis';
 
-type Mode = 'same-shards' | 'balanced';
+export type RecommendationMode = 'same-shards' | 'balanced';
 
 interface RecommendationProps {
   current: ConfigPoint;
-  /** Optimal split at the current shard count (same cost, less time). */
-  sameShards: ConfigPoint;
-  /** The balanced knee of the cost/time frontier. */
-  balanced: ConfigPoint;
+  /** The chosen recommendation (depends on the mode). */
+  recommended: ConfigPoint;
+  mode: RecommendationMode;
+  onModeChange: (mode: RecommendationMode) => void;
   ratePerMin: number;
 }
 
-export function Recommendation({ current, sameShards, balanced, ratePerMin }: RecommendationProps) {
-  const [mode, setMode] = useState<Mode>('same-shards');
-  const recommended = mode === 'same-shards' ? sameShards : balanced;
-
+export function Recommendation({
+  current,
+  recommended,
+  mode,
+  onModeChange,
+  ratePerMin,
+}: RecommendationProps) {
   const timeSavedMs = current.feedbackTimeMs - recommended.feedbackTimeMs;
   const costDeltaMs = recommended.costMs - current.costMs;
 
@@ -30,7 +32,7 @@ export function Recommendation({ current, sameShards, balanced, ratePerMin }: Re
           type="button"
           className={mode === 'same-shards' ? 'mode mode--active' : 'mode'}
           aria-pressed={mode === 'same-shards'}
-          onClick={() => setMode('same-shards')}
+          onClick={() => onModeChange('same-shards')}
         >
           Same shards, faster
         </button>
@@ -38,7 +40,7 @@ export function Recommendation({ current, sameShards, balanced, ratePerMin }: Re
           type="button"
           className={mode === 'balanced' ? 'mode mode--active' : 'mode'}
           aria-pressed={mode === 'balanced'}
-          onClick={() => setMode('balanced')}
+          onClick={() => onModeChange('balanced')}
         >
           Best balance
         </button>

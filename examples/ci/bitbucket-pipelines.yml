@@ -1,0 +1,48 @@
+# Example: shard a Playwright suite across 4 parallel steps on Bitbucket
+# Pipelines and merge the blob reports into report.json — the file CI Shard
+# Advisor reads. Copy into bitbucket-pipelines.yml and adjust the shard count.
+image: node:20
+pipelines:
+  default:
+    - parallel:
+        - step:
+            name: Tests (shard 1/4)
+            script:
+              - npm ci
+              - npx playwright install --with-deps
+              - npx playwright test --shard=1/4 --reporter=blob
+            artifacts:
+              - blob-report/**
+        - step:
+            name: Tests (shard 2/4)
+            script:
+              - npm ci
+              - npx playwright install --with-deps
+              - npx playwright test --shard=2/4 --reporter=blob
+            artifacts:
+              - blob-report/**
+        - step:
+            name: Tests (shard 3/4)
+            script:
+              - npm ci
+              - npx playwright install --with-deps
+              - npx playwright test --shard=3/4 --reporter=blob
+            artifacts:
+              - blob-report/**
+        - step:
+            name: Tests (shard 4/4)
+            script:
+              - npm ci
+              - npx playwright install --with-deps
+              - npx playwright test --shard=4/4 --reporter=blob
+            artifacts:
+              - blob-report/**
+    - step:
+        name: Merge into report.json
+        script:
+          - npm ci
+          # Blob reports from every shard are collected here as artifacts;
+          # Playwright names them uniquely per shard.
+          - npx playwright merge-reports --reporter json ./blob-report > report.json
+        artifacts:
+          - report.json
