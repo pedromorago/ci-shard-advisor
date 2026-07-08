@@ -17,9 +17,17 @@ describe('parseCypressReport', () => {
 
   it('rejects malformed input with a field path', () => {
     expect(() => parseCypressReport('{ not json')).toThrow(ReportParseError);
+    expect(() => parseCypressReport(123)).toThrow(/object/); // a non-object payload
     expect(() => parseCypressReport({})).toThrow(/report\.runs/);
     expect(() => parseCypressReport({ runs: [{ tests: 'nope' }] })).toThrow(/runs\[0\]\.tests/);
     expect(() => parseCypressReport({ runs: [{ tests: [{}] }] })).toThrow(/title/);
+  });
+});
+
+describe('normalizeCypress — unknown state', () => {
+  it('treats a state outside the known set as passed', () => {
+    const raw = { runs: [{ spec: { relative: 'a.cy.ts' }, tests: [{ title: ['A', 't'], state: 'weird', duration: 1000 }] }] };
+    expect(tasksFrom(raw)[0].status).toBe('passed');
   });
 });
 

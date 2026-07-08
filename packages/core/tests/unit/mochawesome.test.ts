@@ -8,6 +8,41 @@ function tasksFrom(raw: unknown) {
   return normalizeMochawesome(parseMochawesomeReport(raw));
 }
 
+describe('normalizeMochawesome — nested suites', () => {
+  it('walks result.suites and their nested children, inheriting the file', () => {
+    const report = {
+      results: [
+        {
+          file: 'spec.js',
+          suites: [
+            {
+              title: 'outer',
+              tests: [{ title: 'a', duration: 100, pass: true }],
+              suites: [
+                {
+                  title: 'inner',
+                  file: 'inner.js',
+                  tests: [
+                    { title: 'b', duration: 200, state: 'passed' },
+                    { title: 'c', duration: 50, fail: true }, // boolean fail flag
+                    { title: 'd', duration: 0, pending: true }, // boolean pending flag
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const tasks = normalizeMochawesome(parseMochawesomeReport(report));
+    expect(tasks.map((t) => t.title)).toEqual(['a', 'b', 'c', 'd']);
+    expect(tasks.find((t) => t.title === 'a')!.file).toBe('spec.js'); // inherited from result
+    expect(tasks.find((t) => t.title === 'b')!.file).toBe('inner.js'); // nested suite's own file
+    expect(tasks.find((t) => t.title === 'c')!.status).toBe('failed');
+    expect(tasks.find((t) => t.title === 'd')!.status).toBe('skipped');
+  });
+});
+
 describe('parseMochawesomeReport', () => {
   it('parses a valid report (object and string)', () => {
     expect(parseMochawesomeReport(mochawesomeReport).results).toHaveLength(2);
