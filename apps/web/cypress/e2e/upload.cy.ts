@@ -33,7 +33,7 @@ describe('uploading a report', () => {
   it('surfaces a clear error for a malformed report', () => {
     upload('{ not valid json', 'broken.json');
     cy.get('[role="alert"]').should('be.visible');
-    cy.contains(/demo \(4 shards\)/i).should('be.visible');
+    cy.contains(/demo.*4 shards/i).should('be.visible');
   });
 
   it('never sends the report off the page (privacy)', () => {
