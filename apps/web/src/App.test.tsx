@@ -48,6 +48,12 @@ describe('App', () => {
     expect(screen.getByText(/never uploaded/i)).toBeInTheDocument();
   });
 
+  it('explains which file to upload and how to get it', () => {
+    render(<App />);
+    expect(screen.getByText(/which file do i upload/i)).toBeInTheDocument();
+    expect(screen.getByText(/reporter: \[\['json'/)).toBeInTheDocument();
+  });
+
   it('shows the current pipeline and re-runs when the shard count changes', () => {
     render(<App />);
     const current = screen.getByRole('region', { name: /your pipeline today/i });
@@ -128,11 +134,11 @@ describe('App', () => {
 
     const junit =
       '<testsuites><testsuite name="s"><testcase name="t1" time="1"/><testcase name="t2" time="2"/></testsuite></testsuites>';
-    const file = new File([junit], 'results.xml', { type: 'application/xml' });
+    const file = new File([junit], 'junit-run.xml', { type: 'application/xml' });
     const input = screen.getByLabelText(/upload a test report/i);
     await user.upload(input, file);
 
-    expect(await screen.findByText(/results\.xml/)).toBeInTheDocument();
+    expect(await screen.findByText(/junit-run\.xml/)).toBeInTheDocument();
     expect(screen.getByText(/2 tests/i)).toBeInTheDocument();
   });
 

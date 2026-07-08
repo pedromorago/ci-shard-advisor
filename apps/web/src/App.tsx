@@ -3,6 +3,7 @@ import { summarize, formatDuration } from '@ci-shard-advisor/core';
 import { analyzeReport, DEFAULT_SETTINGS, DEMO_REPORT } from './analysis';
 import type { AnalysisSettings, ReportInput } from './analysis';
 import { ReportInput as ReportInputControl } from './ReportInput';
+import { ReportHelp } from './ReportHelp';
 import { Controls } from './Controls';
 import { CurrentPipeline } from './CurrentPipeline';
 import { Recommendation } from './Recommendation';
@@ -55,6 +56,8 @@ export function App() {
       </header>
 
       <ReportInputControl onSelect={handleSelect} onLoadDemo={handleLoadDemo} />
+
+      <ReportHelp />
 
       {error ? (
         <p className="app__error" role="alert">
