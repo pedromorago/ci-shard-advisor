@@ -78,6 +78,47 @@ describe('advise — findings (spec §5.5)', () => {
     expect(findings.warnings.some((w) => /flaky/i.test(w) && /retries/i.test(w))).toBe(true);
   });
 
+  it('FR-13 suggests workers before machines when W+1 cuts the wait', () => {
+    // One shard holds two 60s files: with 2 workers they run side by side.
+    const twoFiles = {
+      kind: 'per-shard' as const,
+      reports: [file('s1', pwReport([['a', 'a.spec.ts', 60000], ['b', 'b.spec.ts', 60000]]))],
+    };
+    const { findings, current } = advise(twoFiles, cost);
+    const workers = findings.warnings.find((w) => /workers per shard/.test(w));
+    expect(workers).toBeDefined();
+    // 2 workers: 60s makespan + 30s setup = 1m 30s (vs 2m 30s today).
+    expect(workers).toContain('With 2 workers per shard');
+    expect(workers).toContain('1m 30s');
+    expect(current.feedbackTimeMs).toBe(150000);
+  });
+
+  it('FR-13 stays silent when an extra worker buys nothing', () => {
+    // Single file per shard: a file is indivisible, so W+1 cannot help.
+    const { findings } = advise(overSharded, cost);
+    expect(findings.warnings.some((w) => /workers per shard/.test(w))).toBe(false);
+  });
+
+  it('FR-13 never suggests workers for Cypress, and forces W to 1', () => {
+    const cyReport = {
+      runs: [
+        {
+          spec: { relative: 'a.cy.ts' },
+          tests: [{ title: ['A', 't1'], state: 'passed', duration: 60000 }],
+        },
+        {
+          spec: { relative: 'b.cy.ts' },
+          tests: [{ title: ['B', 't2'], state: 'passed', duration: 60000 }],
+        },
+      ],
+    };
+    const input = { kind: 'per-shard' as const, reports: [file('c1', cyReport), file('c2', cyReport)] };
+    const withWorkers = advise(input, cost, { workersPerShard: 2 });
+    expect(withWorkers.findings.warnings.some((w) => /workers per shard/.test(w))).toBe(false);
+    // Requesting 2 workers changes nothing: Cypress runs a machine's specs serially.
+    expect(withWorkers.current.feedbackTimeMs).toBe(advise(input, cost).current.feedbackTimeMs);
+  });
+
   it('formats savings in money when a price is given', () => {
     const underSharded = {
       kind: 'merged' as const,

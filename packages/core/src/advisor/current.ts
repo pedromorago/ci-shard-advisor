@@ -35,17 +35,39 @@ export function measureCurrent(
 }
 
 /**
- * Model the current setup from a merged report + a declared shard count. The
- * split is by-count over spec FILES (how `--shard=i/N` behaves: a file never
- * straddles shards), round-robin.
+ * Split a merged suite into N shards by-count over spec FILES (how
+ * `--shard=i/N` behaves: a file never straddles shards), round-robin.
  */
+export function splitByCount(allTasks: AtomicTask[], shardCount: number): AtomicTask[][] {
+  const shards: AtomicTask[][] = Array.from({ length: shardCount }, () => []);
+  groupByFile(allTasks).forEach((group, index) => shards[index % shardCount].push(...group.tasks));
+  return shards;
+}
+
+/** Model the current setup from a merged report + a declared shard count. */
 export function modelCurrent(
   allTasks: AtomicTask[],
   shardCount: number,
   cost: CostModel,
   workersPerShard: number,
 ): MeasuredCurrent {
-  const shards: AtomicTask[][] = Array.from({ length: shardCount }, () => []);
-  groupByFile(allTasks).forEach((group, index) => shards[index % shardCount].push(...group.tasks));
-  return { ...measureCurrent(shards, cost, workersPerShard), measured: false };
+  return { ...measureCurrent(splitByCount(allTasks, shardCount), cost, workersPerShard), measured: false };
+}
+
+/**
+ * The feedback the SAME shard layout would give with a different worker count —
+ * the material for the "workers before machines" finding (FR-13).
+ */
+export function feedbackAtWorkers(
+  perShardTasks: AtomicTask[][],
+  cost: CostModel,
+  workersPerShard: number,
+): number {
+  const slowest = Math.max(
+    0,
+    ...perShardTasks.map(
+      (tasks) => simulateShard(groupByFile(tasks).map((g) => g.durationMs), workersPerShard).makespan,
+    ),
+  );
+  return slowest + cost.startupOverheadMs;
 }
