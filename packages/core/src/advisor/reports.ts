@@ -9,6 +9,8 @@ export interface ReadReports {
   perShardTasks: AtomicTask[][];
   /** All tasks across shards, the material for re-planning. */
   allTasks: AtomicTask[];
+  /** The detected report format (all files share it). */
+  format: ReportFormat;
 }
 
 /**
@@ -18,8 +20,9 @@ export interface ReadReports {
  */
 export function readReports(input: AnalyzeInput): ReadReports {
   if (input.kind === 'merged') {
-    const tasks = readReport(input.report.content);
-    return { perShardTasks: [tasks], allTasks: tasks };
+    const format = detectFormat(input.report.content);
+    const tasks = readReport(input.report.content, format);
+    return { perShardTasks: [tasks], allTasks: tasks, format };
   }
 
   if (input.reports.length === 0) {
@@ -38,5 +41,5 @@ export function readReports(input: AnalyzeInput): ReadReports {
     return readReport(file.content, detected);
   });
 
-  return { perShardTasks, allTasks: perShardTasks.flat() };
+  return { perShardTasks, allTasks: perShardTasks.flat(), format: format! };
 }

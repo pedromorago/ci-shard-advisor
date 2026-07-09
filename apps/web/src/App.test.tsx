@@ -40,8 +40,9 @@ describe('App', () => {
     const moves = screen.getByRole('region', { name: /your moves/i });
     // With the real demo the recommended knee IS the rebalance point → one card.
     expect(within(moves).getByText(/rebalance your 4 shards/i)).toBeInTheDocument();
-    expect(within(moves).getAllByText(/--shard-weights=/).length).toBeGreaterThanOrEqual(1);
-    expect(within(moves).getAllByRole('listitem').length).toBeLessThanOrEqual(2);
+    // The apply block lists a runnable command per shard.
+    expect(within(moves).getAllByText(/npx playwright test /).length).toBeGreaterThanOrEqual(1);
+    expect(moves.querySelectorAll('.moves-list > li')).toHaveLength(1); // merged card
   });
 
   it('splits into two cards when the chosen move differs from rebalance', () => {
@@ -49,7 +50,7 @@ describe('App', () => {
     // "Fastest" on the demo picks more shards than the current 4 → two cards.
     fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'fastest' } });
     const moves = screen.getByRole('region', { name: /your moves/i });
-    const cards = within(moves).getAllByRole('listitem');
+    const cards = [...moves.querySelectorAll('.moves-list > li.move')];
     expect(cards).toHaveLength(2);
     expect(cards[0]).toHaveTextContent('Free');
     expect(cards[1]).toHaveTextContent('Fastest');

@@ -51,8 +51,9 @@ They live here (not in `.github/workflows/`) so they don't run in this repo.
 
 ## Note on the split
 
-`--shard=i/N` splits by test **count**, not duration. So the shard **count** is
-the bulk of the value. Making each shard equal in **duration** needs per-shard
-weighting, which the advisor reports as a ready-to-paste
-`--shard-weights=…` line on each move — the runner does not balance by duration
-natively.
+`--shard=i/N` splits by test **count**, not duration — the runner does not
+balance by duration natively. The advisor closes that gap by emitting the
+**exact spec list each shard should run**: as per-shard commands on every move,
+and as a full, paste-ready workflow via `--format github` or `--format
+bitbucket`, where each parallel job runs exactly its list and keeps its own
+report (ready to feed back to the advisor).

@@ -102,6 +102,7 @@ export function App() {
               title={`Rebalance your ${result.current.shardCount} shards — your best move is free`}
               scenario={chosen}
               pricePerMinute={settings.pricePerMinute}
+              runner={result.runner}
             />
           ) : (
             <>
@@ -110,12 +111,14 @@ export function App() {
                 title={`Rebalance your ${result.current.shardCount} shards`}
                 scenario={rebalance}
                 pricePerMinute={settings.pricePerMinute}
+                runner={result.runner}
               />
               <MoveCard
                 tag={chosenLabel}
                 title={`${chosen.config.shardCount} shards`}
                 scenario={chosen}
                 pricePerMinute={settings.pricePerMinute}
+                runner={result.runner}
               />
             </>
           )}

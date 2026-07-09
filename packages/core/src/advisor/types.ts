@@ -56,8 +56,8 @@ export interface MeasuredCurrent {
 export interface ShardPlan {
   /** Task ids per shard (the optimal split). */
   shards: string[][];
-  /** Playwright `--shard-weights` value, e.g. "31,27,22,20". */
-  shardWeights?: string;
+  /** Spec files per shard — the applicable part: each CI job runs its list. */
+  specs: string[][];
 }
 
 /** One recommended move, anchored to the current situation. */
@@ -86,6 +86,9 @@ export interface Findings {
   flaky: { id: string; title: string; retries: number; wastedMs: number }[];
 }
 
+/** The runner the reports came from; decides the plan's apply command. */
+export type Runner = 'playwright' | 'cypress';
+
 /** The full advisor answer. */
 export interface AdvisorResult {
   current: MeasuredCurrent;
@@ -93,4 +96,5 @@ export interface AdvisorResult {
   frontier: ConfigPoint[];
   findings: Findings;
   tasks: AtomicTask[];
+  runner: Runner;
 }

@@ -32,12 +32,15 @@ describe('advise — scenarios', () => {
     expect(current.imbalanceMs).toBe(80000);
   });
 
-  it('FR-5 rebalance: Δcost is exactly 0 and it ships a shard plan', () => {
+  it('FR-5 rebalance: Δcost is exactly 0 and it ships an applicable plan', () => {
     const rebalance = advise(unbalanced, cost).scenarios.find((s) => s.id === 'rebalance')!;
     expect(rebalance.vsCurrent!.costDeltaMs).toBe(0);
     expect(rebalance.vsCurrent!.feedbackDeltaMs).toBeLessThan(0); // faster
-    expect(rebalance.plan!.shardWeights).toBe('60,60'); // {50,10} and {50,10}
     expect(rebalance.plan!.shards.flat()).toHaveLength(4); // every task placed
+    // Every spec file lands on exactly one shard.
+    const files = rebalance.plan!.specs.flat();
+    expect(files).toHaveLength(new Set(files).size);
+    expect(rebalance.plan!.specs).toHaveLength(2);
   });
 
   it('FR-6 same-feedback-cheaper respects feedback <= current', () => {
