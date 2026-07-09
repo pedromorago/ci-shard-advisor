@@ -1,7 +1,7 @@
 /**
- * In-app guidance so a first-time user knows exactly what file to upload and
- * how to produce it. The report is a test-runner reporter output, not something
- * that exists by default.
+ * In-app guidance so a first-time Cypress user knows exactly what file to
+ * upload and how to produce it. The report is a reporter output, not something
+ * `cypress run` writes by default.
  */
 export function ReportHelp() {
   return (
@@ -9,40 +9,30 @@ export function ReportHelp() {
       <summary>Which file do I upload, and how do I get it?</summary>
       <div className="details__body">
         <p>
-          Upload the <strong>JSON</strong> your test runner writes (or a{' '}
-          <strong>JUnit XML</strong>). It is not produced by default — you turn on a
-          reporter. In CI it is saved as a build <strong>artifact</strong> you download.
+          Upload the <strong>JSON report</strong> of your last Cypress run — ideally{' '}
+          <strong>one file per container</strong> (that lets the advisor <em>measure</em> your
+          real split, imbalance included). In CI each container saves it as a build{' '}
+          <strong>artifact</strong> you download.
         </p>
 
-        <h3>Playwright</h3>
-        <p>
-          Enable the JSON reporter, run your tests, then upload <code>report.json</code>:
-        </p>
-        <pre className="help__code">
-          <code>{`// playwright.config.ts
-reporter: [['json', { outputFile: 'report.json' }]]`}</code>
-        </pre>
-        <p>
-          Sharded in CI? Merge the shards first (<code>merge-reports</code>) — see the
-          templates in <code>examples/ci</code>.
-        </p>
-
-        <h3>Cypress</h3>
-        <p>
-          Cypress has no built-in JSON, so use the standard <code>mochawesome</code>{' '}
-          reporter (it writes a clean file):
-        </p>
+        <h3>The standard way: mochawesome</h3>
+        <p>Cypress has no built-in JSON reporter, so use <code>mochawesome</code>:</p>
         <pre className="help__code">
           <code>{`npm i -D mochawesome
-npx cypress run --reporter mochawesome
-# → mochawesome-report/mochawesome.json`}</code>
+npx cypress run --reporter mochawesome \\
+  --reporter-options "reportDir=reports,overwrite=false,html=false,json=true"
+# → reports/mochawesome*.json  (upload these)`}</code>
         </pre>
+        <p>
+          Running several containers? Add that reporter to <em>each</em> container's{' '}
+          <code>cypress run</code> and upload every container's JSON together.
+        </p>
 
-        <h3>Any runner — JUnit XML</h3>
-        <p>Jest, pytest, Playwright, Maven… all can emit JUnit XML:</p>
-        <pre className="help__code">
-          <code>{'npx playwright test --reporter=junit   # → results.xml'}</code>
-        </pre>
+        <h3>Also accepted: the Module API result</h3>
+        <p>
+          If you drive Cypress from a script, the object <code>cypress.run()</code> resolves
+          with (saved as JSON) works too — retries included, which powers the flaky findings.
+        </p>
       </div>
     </details>
   );

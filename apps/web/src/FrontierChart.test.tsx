@@ -19,7 +19,7 @@ describe('FrontierChart', () => {
 
     const chart = screen.getByRole('img', { name: /feedback time versus billed cost/i });
     expect(chart).toBeInTheDocument();
-    expect(chart).toHaveAccessibleName(/recommended is 3 shards/i);
+    expect(chart).toHaveAccessibleName(/recommended is 3 containers/i);
   });
 
   it('exposes the frontier data as a table for assistive tech', () => {

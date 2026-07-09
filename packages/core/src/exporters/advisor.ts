@@ -1,6 +1,11 @@
 import { formatDuration } from './summary';
 import type { AdvisorResult, CostModel, Runner, Scenario } from '../advisor/types';
 
+/** The machine word each runner's users say: Cypress containers, Playwright shards. */
+export function unitOf(runner: Runner): string {
+  return runner === 'cypress' ? 'container' : 'shard';
+}
+
 /** The real, runnable command for one shard's spec list. */
 export function applyCommand(runner: Runner, specs: string[]): string {
   return runner === 'cypress'
@@ -81,16 +86,21 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
   lines.push('CI Shard Advisor', '================', '');
   lines.push(`Suite: ${result.tasks.length} tests, ${formatDuration(testTimeMs(result))} of test time`, '');
 
+  const unit = unitOf(result.runner);
   lines.push(`Your current setup (${current.measured ? 'measured' : 'modeled'})`);
-  lines.push(`  ${current.shardCount} shards × ${workers} worker${workers === 1 ? '' : 's'}`);
+  // Workers are a Playwright concept; Cypress containers run their specs serially.
+  const machines = result.runner === 'cypress'
+    ? `${current.shardCount} ${unit}${current.shardCount === 1 ? '' : 's'}`
+    : `${current.shardCount} ${unit}s × ${workers} worker${workers === 1 ? '' : 's'}`;
+  lines.push(`  ${machines}`);
   const slowest = indexOfMax(current.shardTimesMs) + 1;
-  lines.push(`  Feedback time: ${formatDuration(current.feedbackTimeMs)}   (slowest shard: #${slowest})`);
+  lines.push(`  Feedback time: ${formatDuration(current.feedbackTimeMs)}   (slowest ${unit}: #${slowest})`);
   const curMoney = money(current.costMs, cost);
   lines.push(`  Billed cost:   ${formatDuration(current.costMs)}${curMoney ? `  →  ${curMoney} per run` : ''}`);
   if (current.measured && current.imbalanceMs > 0) {
     const fastIdx = indexOfMin(current.shardTimesMs) + 1;
     lines.push(
-      `  ⚠ Imbalance: shard #${fastIdx} finishes ${formatDuration(current.imbalanceMs)} before shard #${slowest}. You are paying for idle machines.`,
+      `  ⚠ Imbalance: ${unit} #${fastIdx} finishes ${formatDuration(current.imbalanceMs)} before ${unit} #${slowest}. You are paying for idle machines.`,
     );
   }
   lines.push('');
@@ -109,7 +119,7 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
     if (scenario.plan) {
       lines.push('     Apply (each machine runs its own list):');
       scenario.plan.specs.forEach((specs, i) => {
-        lines.push(`       shard ${i + 1}: ${applyCommand(result.runner, specs)}`);
+        lines.push(`       ${unit} ${i + 1}: ${applyCommand(result.runner, specs)}`);
       });
       lines.push('     (--format github or bitbucket emits the full CI config)');
     }
@@ -117,13 +127,13 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
 
   if (coincides(chosen, rebalance)) {
     // One entry: the chosen move IS the rebalance of your current shards.
-    pushMove(objectiveLabel(chosen), chosen, `Rebalance your ${current.shardCount} shards — your best move is free`);
+    pushMove(objectiveLabel(chosen), chosen, `Rebalance your ${current.shardCount} ${unit}s — your best move is free`);
   } else {
-    pushMove('Free', rebalance, `Rebalance your ${current.shardCount} shards`);
+    pushMove('Free', rebalance, `Rebalance your ${current.shardCount} ${unit}s`);
     if (chosen.unavailable) {
       lines.push(`  ${objectiveLabel(chosen)}) not available: ${chosen.reason}`);
     } else {
-      pushMove(objectiveLabel(chosen), chosen, `${chosen.config.shardCount} shards`);
+      pushMove(objectiveLabel(chosen), chosen, `${chosen.config.shardCount} ${unit}s`);
     }
   }
   lines.push('');
@@ -135,7 +145,7 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
   }
 
   const hasPrice = cost.pricePerMinute !== undefined;
-  lines.push(`Frontier (shards · feedback · billed${hasPrice ? ' · price' : ''})`);
+  lines.push(`Frontier (${unit}s · feedback · billed${hasPrice ? ' · price' : ''})`);
   for (const point of frontier) {
     const m = money(point.costMs, cost);
     lines.push(
@@ -190,22 +200,22 @@ export function toAdvisorMarkdown(result: AdvisorResult, cost: CostModel): strin
   const curMoney = money(current.costMs, cost);
   md.push(`### Your setup today (${current.measured ? 'measured' : 'modeled'})`, '');
   md.push(
-    `**${current.shardCount} shards** — ${formatDuration(current.feedbackTimeMs)} feedback, ${curMoney ?? formatDuration(current.costMs)} cost.`,
+    `**${current.shardCount} ${unitOf(result.runner)}s** — ${formatDuration(current.feedbackTimeMs)} feedback, ${curMoney ?? formatDuration(current.costMs)} cost.`,
   );
   if (current.measured && current.imbalanceMs > 0) {
     md.push('', `Imbalance: ${formatDuration(current.imbalanceMs)} of idle machine time.`);
   }
   md.push('', '### Your moves', '');
-  md.push('| Move | Shards | Feedback | Cost |', '| --- | ---: | ---: | ---: |');
+  md.push('| Move | Machines | Feedback | Cost |', '| --- | ---: | ---: | ---: |');
   const { rebalance, chosen } = presentedMoves(scenarios);
   const row = (label: string, s: Scenario) => {
     const c = money(s.config.costMs, cost) ?? formatDuration(s.config.costMs);
     md.push(`| ${label} | ${s.config.shardCount} | ${formatDuration(s.config.feedbackTimeMs)} | ${c} |`);
   };
   if (coincides(chosen, rebalance)) {
-    row(`${objectiveLabel(chosen)} — rebalance your ${current.shardCount} shards (free)`, chosen);
+    row(`${objectiveLabel(chosen)} — rebalance your ${current.shardCount} ${unitOf(result.runner)}s (free)`, chosen);
   } else {
-    row(`Rebalance your ${current.shardCount} shards (free)`, rebalance);
+    row(`Rebalance your ${current.shardCount} ${unitOf(result.runner)}s (free)`, rebalance);
     if (chosen.unavailable) {
       md.push(`| ${objectiveLabel(chosen)} | — | not available | |`);
     } else {

@@ -57,7 +57,7 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
     .map((p, i) => `${i ? 'L' : 'M'}${sx(xOf(p)).toFixed(1)},${sy(yOf(p)).toFixed(1)}`)
     .join(' ');
 
-  const label = `Feedback time versus billed cost across ${frontier.length} shard configurations; recommended is ${recommended.shardCount} shards.`;
+  const label = `Feedback time versus billed cost across ${frontier.length} container configurations; recommended is ${recommended.shardCount} containers.`;
 
   return (
     <figure className="chart">
@@ -100,7 +100,7 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
 
         {frontier.map((p) => (
           <circle key={p.shardCount} className="chart__point" cx={sx(xOf(p))} cy={sy(yOf(p))} r={4}>
-            <title>{`${p.shardCount} shards · ${formatDuration(p.feedbackTimeMs)} · ${money(p.costMs)}`}</title>
+            <title>{`${p.shardCount} containers · ${formatDuration(p.feedbackTimeMs)} · ${money(p.costMs)}`}</title>
           </circle>
         ))}
 
@@ -123,10 +123,10 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
 
       {/* Table view for accessibility (the same data, screen-reader friendly). */}
       <table className="visually-hidden">
-        <caption>Cost/time frontier by shard count</caption>
+        <caption>Cost/time frontier by container count</caption>
         <thead>
           <tr>
-            <th scope="col">Shards</th>
+            <th scope="col">Containers</th>
             <th scope="col">Feedback time</th>
             <th scope="col">Cost per run</th>
           </tr>

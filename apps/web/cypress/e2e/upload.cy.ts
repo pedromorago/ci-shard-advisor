@@ -1,11 +1,12 @@
-/** A minimal valid Playwright report carrying a canary string in a spec title. */
+/** A minimal valid Cypress report carrying a canary string in a test title. */
 function reportWithCanary(canary: string): string {
   return JSON.stringify({
-    suites: [
+    runs: [
       {
-        specs: [
-          { title: canary, tags: ['@sanity'], tests: [{ status: 'expected', results: [{ duration: 4200 }] }] },
-          { title: 'another test', tests: [{ status: 'expected', results: [{ duration: 8100 }] }] },
+        spec: { relative: 'cypress/e2e/canary.cy.ts' },
+        tests: [
+          { title: ['Canary', canary], state: 'passed', duration: 4200 },
+          { title: ['Canary', 'another test'], state: 'passed', duration: 8100 },
         ],
       },
     ],
@@ -33,7 +34,7 @@ describe('uploading a report', () => {
   it('surfaces a clear error for a malformed report', () => {
     upload('{ not valid json', 'broken.json');
     cy.get('[role="alert"]').should('be.visible');
-    cy.contains(/demo.*4 shards/i).should('be.visible');
+    cy.contains(/demo.*3 containers/i).should('be.visible');
   });
 
   it('never sends the report off the page (privacy)', () => {

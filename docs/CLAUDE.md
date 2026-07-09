@@ -2,7 +2,7 @@
 
 ## Qué es este proyecto
 
-CI Shard Advisor: lee los reports de la última ejecución E2E (Playwright o Cypress) de una pipeline shardeada en CI y devuelve la situación actual medida más escenarios de mejora con su coste (reequilibrar, misma espera más barato, mismo coste más rápido, por objetivo).
+CI Shard Advisor: herramienta **para equipos Cypress**. Lee los reports de la última ejecución (uno por contenedor) y devuelve la situación actual medida más el movimiento elegido con su coste (reequilibrar gratis, misma espera más barato, el codo…), con las listas de specs por contenedor y el YAML de CI listos para aplicar — sin Cypress Cloud.
 
 ## Fuente de verdad
 
@@ -13,7 +13,7 @@ CI Shard Advisor: lee los reports de la última ejecución E2E (Playwright o Cyp
 1. Hexagonal: nada de `packages/core` importa de `apps/` ni de frameworks (React, Fastify, Commander, `fs`). Los adaptadores importan del core, nunca al revés.
 2. El scheduler trabaja con `readonly number[]` y asignaciones por índice. La traducción desde tareas es del normalizer.
 3. El motor nunca miente: sin óptimo certificado → `optimal: false` + lower bound + gap. Ninguna cota inferior puede superar al óptimo.
-4. Los lectores soportados en el pitch son Playwright y Cypress/mochawesome. El lector JUnit se queda en el código pero no se documenta ni se amplía.
+4. El lector soportado en el pitch es Cypress (Module API y mochawesome). Los lectores Playwright y JUnit, y el modelo de workers, se quedan en el código (con sus tests) pero no se documentan ni se amplían.
 5. La web procesa todo en cliente. Ninguna petición de red con el contenido del report, nunca.
 
 ## Convenciones de código y tests

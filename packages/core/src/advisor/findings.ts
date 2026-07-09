@@ -3,7 +3,8 @@ import { groupByFile } from '../report/normalizer';
 import type { FileGroup } from '../report/normalizer';
 import type { ConfigPoint } from '../recommender/frontier';
 import type { AtomicTask } from '../types/domain';
-import type { CostModel, Findings, MeasuredCurrent } from './types';
+import { unitOf } from '../exporters/advisor';
+import type { CostModel, Findings, MeasuredCurrent, Runner } from './types';
 
 /** Below this relative feedback spread, more shards no longer help. */
 const NEGLIGIBLE = 0.02;
@@ -38,7 +39,9 @@ export function computeFindings(
   tasks: AtomicTask[],
   cost: CostModel,
   workersUpgrade?: WorkersUpgrade,
+  runner: Runner = 'playwright',
 ): Findings {
+  const unit = unitOf(runner);
   const warnings: string[] = [];
   const saturationN = saturationPoint(frontier);
   // The floor is the heaviest spec FILE (invariant 11.7): a file is indivisible,
@@ -55,7 +58,7 @@ export function computeFindings(
     const timeSaved = current.feedbackTimeMs - plateau.feedbackTimeMs;
     const gain = timeSaved > 0 ? `−${formatDuration(timeSaved)}` : 'no faster';
     warnings.push(
-      `You run ${current.shardCount} shards, but past ${saturationN} you only pay more: +${costPct}% cost for ${gain}.`,
+      `You run ${current.shardCount} ${unit}s, but past ${saturationN} you only pay more: +${costPct}% cost for ${gain}.`,
     );
   }
 
@@ -68,14 +71,14 @@ export function computeFindings(
         : 0;
     if (pct >= 5) {
       const costStr = money(target.costMs - current.costMs, cost) ?? formatDuration(target.costMs - current.costMs);
-      warnings.push(`With ${saturationN} shards you would cut the wait by ${pct}% for +${costStr} per run.`);
+      warnings.push(`With ${saturationN} ${unit}s you would cut the wait by ${pct}% for +${costStr} per run.`);
     }
   }
 
   // Floor / bottleneck: a single spec file gates the wait past the plateau.
   if (saturationN < frontier.length && longest && longest.durationMs > 0) {
     warnings.push(
-      `Past ${saturationN} shards the wait stops dropping: '${longest.file}' (${formatDuration(longest.durationMs)}) sets the floor. Consider splitting it.`,
+      `Past ${saturationN} ${unit}s the wait stops dropping: '${longest.file}' (${formatDuration(longest.durationMs)}) sets the floor. Consider splitting it.`,
     );
   }
 
@@ -92,7 +95,7 @@ export function computeFindings(
   // Imbalance (measured mode only): paying for idle machines.
   if (current.measured && current.imbalanceMs > 0) {
     warnings.push(
-      `Your fastest shard finishes ${formatDuration(current.imbalanceMs)} before the slowest — you are paying for idle machines.`,
+      `Your fastest ${unit} finishes ${formatDuration(current.imbalanceMs)} before the slowest — you are paying for idle machines.`,
     );
   }
 
