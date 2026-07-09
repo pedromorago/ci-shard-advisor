@@ -5,7 +5,7 @@ describe('demo analysis', () => {
 
   it('loads a preloaded current situation and moves without any input', () => {
     cy.contains('h1', 'CI Shard Advisor').should('be.visible');
-    cy.contains(/demo.*4 shards/i).should('be.visible');
+    cy.contains(/demo.*3 containers/i).should('be.visible');
     cy.contains(/rebalance/i).should('be.visible');
     // The frontier chart lives in a collapsible section; expand it.
     cy.contains(/show the full cost \/ time frontier/i).click();
