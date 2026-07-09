@@ -6,7 +6,9 @@
 
 ## 1. Caso de uso
 
-Una empresa ejecuta pipelines E2E con **Playwright o Cypress** en un CI en la nube (Jenkins, GitHub Actions, Bitbucket Pipelines, GitLab CI — la plataforma es indiferente: el report lo genera el runner, no el CI). Para paralelizar, la pipeline levanta **varios contenedores (shards)**. Cada contenedor tiene un **tiempo de setup** (arranque, instalación, navegadores) que se suma a la factura por cada contenedor adicional.
+Una empresa ejecuta pipelines E2E con **Cypress** en un CI en la nube (Jenkins, GitHub Actions, Bitbucket Pipelines, GitLab CI — la plataforma es indiferente: el report lo genera el runner, no el CI). Para paralelizar, la pipeline levanta **varios contenedores** que se reparten las specs. Cada contenedor tiene un **tiempo de setup** (arranque, instalación, navegador) que se suma a la factura por cada contenedor adicional.
+
+El balanceo "oficial" de Cypress (Cypress Cloud) es un servicio **de pago y online**. El hueco de esta herramienta: decidir cuántos contenedores y qué spec va en cada uno **sin Cypress Cloud** — gratis, local y con el coste como ciudadano de primera.
 
 La empresa recoge los datos de su **última ejecución** y la herramienta le devuelve:
 
@@ -17,15 +19,17 @@ La voz del producto no es "el óptimo matemático es 5", sino: **"estás aquí; 
 
 ## 2. Alcance
 
-**Dentro:** reports de Playwright (JSON) y Cypress (resultado de `cypress run` / mochawesome). Salida para GitHub Actions y Bitbucket Pipelines. Web estática, CLI y API local.
+**Dentro:** reports de **Cypress** (resultado de `cypress run` / Module API y **mochawesome**). Salida para GitHub Actions y Bitbucket Pipelines. Web estática, CLI y API local.
 
-**Fuera (v1):** otros runners en el pitch (el lector JUnit permanece en el código como extra no documentado), lectura automática de APIs de CI, GitLab/Jenkins como exportadores de config.
+**Fuera:** otros runners en el pitch — los lectores de **Playwright** y **JUnit** permanecen en el código como extras no documentados, igual que el modelo de workers (concepto Playwright: en Cypress no existe). Lectura automática de APIs de CI y exportadores GitLab/Jenkins quedan para v3.
+
+**Terminología:** de cara al usuario se habla de **contenedores** (como habla el ecosistema Cypress); el contrato TypeScript conserva los nombres internos (`shardCount`, `ShardPlan`) por estabilidad de API.
 
 ## 3. Entrada
 
 ### 3.1 Modo preferente: un report por shard
 
-Cada contenedor de la pipeline ya produce su propio report (Playwright: un JSON/blob por job del matrix, subido como artifact; Cypress: un mochawesome por contenedor). La herramienta acepta **N ficheros a la vez** y de ahí deduce:
+Cada contenedor de la pipeline ya produce su propio report (un mochawesome JSON — o el resultado del Module API — por contenedor, subido como artifact). La herramienta acepta **N ficheros a la vez** y de ahí deduce:
 
 - `N` actual = número de ficheros.
 - Tiempo real de cada shard = contenido de cada fichero.
@@ -39,7 +43,7 @@ Un único report + `N` declarado por el usuario. La configuración actual se **m
 
 - **Setup por shard** (obligatorio para hablar de coste; default sugerido en UI: 30–60 s). En v2 podrá medirse desde la API del CI (duración del job − tiempo de tests).
 - **Precio por minuto de máquina** (opcional; activa € en todas las salidas).
-- Workers por shard, `maxShards`, objetivo (sección 5.4).
+- `maxShards`, objetivo (sección 5.4). (Workers no: en Cypress cada contenedor ejecuta sus specs en serie.)
 
 ### 3.4 Casos límite
 
@@ -63,7 +67,9 @@ Consecuencias útiles (deben aparecer como mensajes cuando apliquen):
 - **Reequilibrar con el mismo N y los mismos workers no cambia el coste** (mismo trabajo, mismos setups); solo reduce la espera. Es gratis.
 - **Los workers son gratis en la factura**: misma máquina, menos tiempo de pared, menos minutos facturados. Los shards, en cambio, añaden setup. "Más workers antes que más máquinas" es un consejo válido, con la letra pequeña de 4.1.
 
-### 4.1 Modelo de workers (Playwright)
+### 4.1 Modelo de workers (aparcado — concepto Playwright)
+
+**Cypress no tiene workers**: un navegador por contenedor, specs en serie — `workers` se fuerza siempre a 1 y nada del producto visible lo expone. El simulador de workers permanece en el código (extra no documentado, junto al lector Playwright) por si se reactiva. Lo que sigue documenta ese modelo aparcado.
 
 Dos niveles de paralelismo distintos: los **shards** deciden qué tests van a cada máquina; los **workers** deciden cómo se consumen dentro de ella.
 
@@ -125,7 +131,7 @@ Frases, no solo números. Obligatorias cuando aplican:
 
 - **Sobrefragmentación:** "Usas 10 shards, pero a partir de 6 solo pagas más: +31 % de coste por −35 s."
 - **Infrafragmentación:** "Con 5 shards reducirías la espera un 42 % por +€0.12 por ejecución."
-- **Workers antes que máquinas** (solo Playwright): "Con 2 workers por shard tu espera bajaría a 8m 40s sin coste extra — misma factura, mismas máquinas. Valídalo con una ejecución: en runners pequeños el escalado no es perfecto."
+- **Workers antes que máquinas** *(aparcado con el modelo de workers, 4.1 — no aplica a Cypress)*.
 - **Suelo / cuello de botella (FR-10 clásico):** "A partir de N=3 la espera no baja: 'checkout.spec.ts' (8m 51s) marca el suelo. Considera trocearlo (granularidad / fullyParallel)."
 - **Desequilibrio actual** (solo modo por-shard): ver 5.1.
 - **Flaky:** tests con retries y su coste ("3 tests flaky quemaron 1m 54s de máquina en esta ejecución").
@@ -211,7 +217,6 @@ ci-shard-advisor <reports...> [options]
 
   --setup <duration>       setup por shard (ej: 45s)          [requerido para coste]
   --price <num>            €/minuto de máquina                [opcional, activa €]
-  --workers <n>            workers por shard (default 1)
   --shards <n>             solo en modo fusionado (degradado)
   --objective <recommended|fastest>   (default: recommended, el codo)
   --max-feedback <dur>     objetivo: el más barato dentro del SLA
@@ -235,31 +240,30 @@ $ ci-shard-advisor artifacts/shard-*.json --setup 45s --price 0.08
 CI Shard Advisor
 ================
 
-Suite: 214 tests, 38m 12s of test time (Playwright, 4 shard reports)
+Suite: 214 tests, 38m 12s of test time (Cypress, 4 container reports)
 
 Your current setup (measured)
-  4 shards × 1 worker
+  4 containers
   Feedback time: 14m 15s   (slowest shard: #3)
   Billed cost:   41m 12s  →  €3.30 per run
   ⚠ Imbalance: shard #4 finishes 5m 48s before shard #3.
     You are paying for idle machines.
 
 Your moves
-  Free) Rebalance your 4 shards     feedback 10m 25s (−3m 50s)   cost €3.30 (±0)
-     Same machines, tests redistributed by duration. Rebalancing is free.
-     Apply (each machine runs its own list):
-       shard 1: npx playwright test checkout.spec.ts
-       shard 2: npx playwright test cart.spec.ts search.spec.ts
+  Free) Rebalance your 4 containers   feedback 10m 25s (−3m 50s)   cost €3.30 (±0)
+     Same machines, specs redistributed by duration. Rebalancing is free.
+     Apply (each container runs its own list):
+       container 1: npx cypress run --spec "checkout.cy.ts"
+       container 2: npx cypress run --spec "cart.cy.ts,search.cy.ts"
        ...
      (--format github emits the full workflow)
 
-  Recommended) 5 shards             feedback 9m 02s (−5m 13s)   cost €3.28 (−€0.02)
-     The knee of the cost/time frontier — past it, shards stop paying off.
-     Apply (each machine runs its own list): ...
+  Recommended) 5 containers           feedback 9m 02s (−5m 13s)   cost €3.28 (−€0.02)
+     The knee of the cost/time frontier — past it, containers stop paying off.
+     Apply (each container runs its own list): ...
 
 (el segundo bloque cambia con --objective/--max-feedback/--budget; si el
-movimiento elegido coincide con el rebalance, se emite una sola entrada;
-con reports de Cypress el comando es `npx cypress run --spec "..."`)
+movimiento elegido coincide con el rebalance, se emite una sola entrada)
 
 Warnings
   • Past 6 shards feedback stops improving: 'checkout.spec.ts' (8m 51s)
@@ -276,11 +280,11 @@ Frontier (shards · feedback · billed · price)
 ## 8. Web
 
 - Demo precargada al abrir (se mantiene), mostrando: card de situación actual + card de **rebalance** (siempre visible) + **una card del movimiento elegido** + findings + gráfica de frontera con € en tooltip.
-- **Dos demos**, una por runner: Playwright (per-shard, datos reales) y Cypress (per-shard, con retries para mostrar el finding de flaky y el comando `--spec`). Un botón por demo.
+- **Demo Cypress** (per-contenedor, con retries para mostrar el finding de flaky y el comando `--spec`).
 - Selector de objetivo (5.4): `Recommended` (default) · `Fastest` · `Espera máxima` (campo prellenado con la espera actual) · `Presupuesto` (campo prellenado con el coste actual). Cambiar el selector cambia la card del movimiento y el marcador *recommended* de la gráfica.
 - Si el movimiento elegido coincide con el rebalance, se muestra una sola card que lo indica.
 - Upload **múltiple** (N ficheros a la vez) además de único.
-- Inputs: setup, precio/min, workers, objetivo.
+- Inputs: setup, precio/min, contenedores (solo en modo fusionado), objetivo.
 - Todo en cliente (privacidad intacta).
 - **Desplegada** en GitHub Pages o Vercel, con enlace en la cabecera del README. Sin esto, la fase no está terminada.
 
@@ -298,7 +302,7 @@ Frontier (shards · feedback · billed · price)
 - **FR-10 Flaky:** lista con retries y `wastedMs = Σ duración de intentos extra`.
 - **FR-11 Exporters:** text/json/markdown consistentes entre sí (mismo summary); github/bitbucket generan el YAML del escenario elegido con la **lista exacta de specs por job** (5.3), con el comando del runner detectado.
 - **FR-12 Web:** criterios de la sección 8, cubiertos por E2E (Playwright) incluida la subida múltiple y la privacidad (sin peticiones de red con el report).
-- **FR-13 Modelo de workers:** con W=1, `wall_i` = suma exacta del shard; con W>1, `wall_i` nunca es menor que `max(pmax, Σt/W)` (tests de propiedad); con W>1 la granularidad por defecto es fichero (test solo con fullyParallel confirmado); con reports de Cypress, W se fuerza a 1; el finding "workers antes que máquinas" se emite exactamente cuando simular W+1 con el N actual mejora el feedback por encima del umbral.
+- **FR-13 Workers forzados a 1:** con reports de Cypress, `workers` es siempre 1 (specs en serie por contenedor); pedir otro valor no cambia nada. El modelo de workers y su finding quedan aparcados en el código (4.1), cubiertos por sus tests.
 
 ## 10. Qué se conserva, qué cambia, qué se aparca
 
@@ -306,7 +310,7 @@ Frontier (shards · feedback · billed · price)
 
 **Cambia:** puerta pública (`advise()` con `AnalyzeInput`), `recommend()` se convierte en la capa de escenarios, exporters ganan € y findings, CLI (flags de la sección 7), web (cards y upload múltiple).
 
-**Se aparca:** lector JUnit (código se queda, fuera del README/pitch), medición de setup vía APIs de CI (v2), exportadores GitLab/Jenkins (v2).
+**Se aparca:** lectores JUnit y **Playwright** (código y tests se quedan, fuera del README/pitch), **modelo de workers** y su finding (4.1), medición de setup vía APIs de CI (v3), exportadores GitLab/Jenkins (v3).
 
 ## 11. Invariantes del motor (no negociables)
 
