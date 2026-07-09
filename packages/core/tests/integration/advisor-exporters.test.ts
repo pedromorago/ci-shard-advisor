@@ -17,22 +17,27 @@ const input = {
 const cost = { startupOverheadMs: 30000, pricePerMinute: 0.1, currency: '$' };
 
 describe('advisor exporters', () => {
-  it('text output shows current, moves, a shard-weights apply line and the frontier', () => {
+  it('text output shows current, moves, runnable apply commands and the frontier', () => {
     const text = toAdvisorText(advise(input, cost), cost);
     expect(text).toContain('Your current setup (measured)');
     expect(text).toContain('Your moves');
     expect(text).toMatch(/Rebalance your 2 shards/);
-    expect(text).toMatch(/--shard-weights=/);
+    // The apply block is a real command per shard, not a made-up flag.
+    expect(text).toMatch(/shard 1: npx playwright test .*\.spec\.ts/);
+    expect(text).not.toMatch(/--shard-weights/);
     expect(text).toContain('Frontier');
     expect(text).toMatch(/\$\d+\.\d\d/); // money shown
   });
 
-  it('json output is stable and carries scenarios and findings', () => {
+  it('json output is stable and carries scenarios, specs and the runner', () => {
     const json = toAdvisorJson(advise(input, cost), cost);
     expect(toAdvisorJson(advise(input, cost), cost)).toBe(json);
     const parsed = JSON.parse(json);
     expect(parsed.current.measured).toBe(true);
-    expect(parsed.scenarios.find((s: { id: string }) => s.id === 'rebalance').shardWeights).toBe('60,60');
+    expect(parsed.runner).toBe('playwright');
+    const rebalance = parsed.scenarios.find((s: { id: string }) => s.id === 'rebalance');
+    // Both shard reports reuse the same file names → the plan groups per file.
+    expect(rebalance.specs.flat().sort()).toEqual(['t0.spec.ts', 't1.spec.ts']);
     expect(parsed.frontier[0].price).toMatch(/^\$/);
   });
 

@@ -40,6 +40,7 @@ export type {
   Scenario,
   Findings,
   AdvisorResult,
+  Runner,
 } from './advisor/types';
 export { summarize, formatDuration } from './exporters/summary';
 export type { AnalysisSummary, BlockSummary } from './exporters/summary';
@@ -52,4 +53,5 @@ export {
   toAdvisorJson,
   toAdvisorObject,
   toAdvisorMarkdown,
+  applyCommand,
 } from './exporters/advisor';

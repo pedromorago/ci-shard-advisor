@@ -174,9 +174,14 @@ export function run(argv: string[], io: CliIO): number {
   if (format in REPORT_FORMATS) {
     io.stdout(REPORT_FORMATS[format as keyof typeof REPORT_FORMATS](result, cost));
   } else {
-    // CI config for the chosen (objective) scenario.
+    // CI config for the chosen (objective) scenario: one job per shard, each
+    // running exactly its spec list (the applicable plan, spec §5.3).
     const chosen = result.scenarios.find((s) => s.id === 'objective') ?? result.scenarios[0];
-    io.stdout(CI_FORMATS[format as keyof typeof CI_FORMATS](chosen.config.shardCount));
+    if (!chosen.plan) {
+      io.stderr('error: the chosen scenario has no applicable plan');
+      return 2;
+    }
+    io.stdout(CI_FORMATS[format as keyof typeof CI_FORMATS](chosen.plan.specs, result.runner));
   }
 
   return evaluateGates(result, { gateFeedbackMs, gateCostWastePct }, io);
