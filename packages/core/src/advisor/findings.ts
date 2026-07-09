@@ -22,6 +22,12 @@ function saturationPoint(frontier: ConfigPoint[]): number {
   return reached ? reached.shardCount : frontier.length;
 }
 
+/** What the same machines would give with more workers each (FR-13). */
+export interface WorkersUpgrade {
+  workers: number;
+  feedbackMs: number;
+}
+
 /**
  * The advisor's voice (spec §5.5): worded findings and the flaky breakdown.
  * Sentences are written here in the core so every adapter stays consistent.
@@ -31,6 +37,7 @@ export function computeFindings(
   current: MeasuredCurrent,
   tasks: AtomicTask[],
   cost: CostModel,
+  workersUpgrade?: WorkersUpgrade,
 ): Findings {
   const warnings: string[] = [];
   const saturationN = saturationPoint(frontier);
@@ -70,6 +77,16 @@ export function computeFindings(
     warnings.push(
       `Past ${saturationN} shards the wait stops dropping: '${longest.file}' (${formatDuration(longest.durationMs)}) sets the floor. Consider splitting it.`,
     );
+  }
+
+  // Workers before machines (FR-13): the same machines, one more worker each.
+  if (workersUpgrade && current.feedbackTimeMs > 0) {
+    const gain = (current.feedbackTimeMs - workersUpgrade.feedbackMs) / current.feedbackTimeMs;
+    if (gain >= 0.05) {
+      warnings.push(
+        `With ${workersUpgrade.workers} workers per shard your wait would drop to ${formatDuration(workersUpgrade.feedbackMs)} at no extra cost — same bill, same machines. Validate with one run: scaling is not perfect on small runners.`,
+      );
+    }
   }
 
   // Imbalance (measured mode only): paying for idle machines.
