@@ -38,13 +38,15 @@ Your current setup (measured)
   ⚠ Imbalance: shard #4 finishes 2m 0s before shard #1. You are paying for idle machines.
 
 Your moves
-  1) Rebalance your 4 shards   feedback 3m 45s (−20.0s)   cost €0.09 (±0)
+  Free) Rebalance your 4 shards   feedback 3m 45s (−20.0s)   cost €0.09 (±0)
      Same machines, tests redistributed by duration — rebalancing is free.
-     Apply: npx playwright test --shard-weights=180,110,90,90
-  2) Same wait, cheaper: 3 shards   feedback 3m 45s (−20.0s)   cost €0.08 (−€0.01)
-     3 shards still beat your current wait.
-  3) Same cost, faster: 3 shards — same as move #2.
-  4) By objective: 3 shards — same as move #2.
+     Apply (each machine runs its own list):
+       shard 1: npx playwright test checkout.spec.ts
+       shard 2: npx playwright test cart.spec.ts login.spec.ts settings.spec.ts
+       ...
+  Recommended) 3 shards   feedback 3m 45s (−20.0s)   cost €0.08 (−€0.01)
+     The knee of the cost/time frontier — past it, shards stop paying off.
+     (--format github or bitbucket emits the full, paste-ready CI config)
 
 Warnings
   • You run 4 shards, but past 3 you only pay more: +7% cost for −20.0s.

@@ -280,6 +280,24 @@ body {
   border-radius: 6px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.move__plan {
+  margin-top: 0.5rem;
+}
+
+.move__plan > summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.move__plan-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.3rem;
 }
 
 .findings {

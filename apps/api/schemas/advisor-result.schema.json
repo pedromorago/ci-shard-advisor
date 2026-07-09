@@ -3,11 +3,12 @@
   "title": "AdvisorResult",
   "description": "Response contract for POST /advise",
   "type": "object",
-  "required": ["totalTests", "testTimeMs", "current", "scenarios", "findings", "frontier"],
+  "required": ["totalTests", "testTimeMs", "runner", "current", "scenarios", "findings", "frontier"],
   "additionalProperties": false,
   "properties": {
     "totalTests": { "type": "integer", "minimum": 0 },
     "testTimeMs": { "type": "number", "minimum": 0 },
+    "runner": { "enum": ["playwright", "cypress"] },
     "current": { "$ref": "#/definitions/current" },
     "scenarios": {
       "type": "array",
@@ -47,7 +48,10 @@
         "costMs": { "type": "number", "minimum": 0 },
         "price": { "type": "string" },
         "reason": { "type": "string" },
-        "shardWeights": { "type": "string" },
+        "specs": {
+          "type": "array",
+          "items": { "type": "array", "items": { "type": "string" } }
+        },
         "sameAs": { "enum": ["rebalance", "same-feedback-cheaper", "same-cost-faster", "objective"] },
         "unavailable": { "type": "boolean" },
         "objective": {

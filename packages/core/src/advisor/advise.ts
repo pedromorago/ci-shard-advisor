@@ -22,7 +22,9 @@ export interface AdviseOptions {
  */
 export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOptions = {}): AdvisorResult {
   const workersPerShard = options.workersPerShard ?? 1;
-  const { perShardTasks, allTasks } = readReports(input);
+  const { perShardTasks, allTasks, format } = readReports(input);
+  // mochawesome is Cypress's reporter — the apply command is Cypress's.
+  const runner = format === 'cypress' || format === 'mochawesome' ? 'cypress' : 'playwright';
   const tasks = classify(allTasks);
   const durations = durationsOf(tasks);
 
@@ -56,5 +58,6 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
     frontier,
     findings: computeFindings(frontier, current, tasks, cost),
     tasks,
+    runner,
   };
 }

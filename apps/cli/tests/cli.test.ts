@@ -46,7 +46,8 @@ describe('cli', () => {
       expect(code).toBe(0);
       expect(out).toContain('Your current setup (measured)');
       expect(out).toContain('Your moves');
-      expect(out).toMatch(/--shard-weights=/);
+      // The apply block is a runnable command per shard.
+      expect(out).toMatch(/shard 1: npx playwright test /);
     });
 
     it('models a single merged report with --shards', () => {
@@ -68,8 +69,9 @@ describe('cli', () => {
 
     it('emits CI config for the chosen scenario with --format github', () => {
       const { out } = invoke(['s1.json', 's2.json', '--setup', '30s', '--format', 'github'], twoShards);
-      expect(out).toContain('strategy:');
-      expect(out).toMatch(/--shard=\$\{\{ matrix\.shard \}\}\/\d+/);
+      // One job per shard, each running exactly its spec list.
+      expect(out).toContain('name: Tests (optimal split)');
+      expect(out).toMatch(/npx playwright test .*\.spec\.ts.* > shard-1\.json/);
     });
   });
 

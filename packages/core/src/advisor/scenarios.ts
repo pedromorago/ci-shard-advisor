@@ -41,17 +41,32 @@ function deltas(config: ConfigPoint, current: MeasuredCurrent) {
   };
 }
 
-/** Build the applicable split plan (shard map + Playwright --shard-weights). */
+/**
+ * Build the applicable split plan. Scheduling happens at FILE granularity —
+ * you cannot route half a spec file to a shard — so tasks are grouped by file
+ * (falling back to the task id when the report carries no file) and the solver
+ * splits the files. `specs` is what each CI job actually runs.
+ */
 export function planFor(
   tasks: AtomicTask[],
   shardCount: number,
   workersPerShard: number,
 ): ShardPlan {
-  const plan = branchAndBound(durationsOf(tasks), shardCount, SOLVE);
-  const shards = plan.assignment.map((indices) => indices.map((i) => tasks[i].id));
-  // Weights proportional to each shard's total duration (seconds), as Playwright expects.
-  const shardWeights = plan.loads.map((load) => Math.max(1, Math.round(load / 1000))).join(',');
-  return { shards, shardWeights };
+  const byFile = new Map<string, { tasks: AtomicTask[]; durationMs: number }>();
+  for (const task of tasks) {
+    const key = task.file || task.id;
+    const group = byFile.get(key) ?? { tasks: [], durationMs: 0 };
+    group.tasks.push(task);
+    group.durationMs += task.durationMs;
+    byFile.set(key, group);
+  }
+  const files = [...byFile.keys()];
+  const plan = branchAndBound(files.map((f) => byFile.get(f)!.durationMs), shardCount, SOLVE);
+  const specs = plan.assignment.map((indices) => indices.map((i) => files[i]).sort());
+  const shards = plan.assignment.map((indices) =>
+    indices.flatMap((i) => byFile.get(files[i])!.tasks.map((t) => t.id)),
+  );
+  return { shards, specs };
 }
 
 /** Pick the frontier point for the "objective" scenario. */

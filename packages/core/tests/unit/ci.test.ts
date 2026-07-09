@@ -1,33 +1,42 @@
 import { describe, expect, it } from 'vitest';
 import { toGitHubActions, toBitbucketPipelines } from '../../src/exporters/ci';
 
+const SPECS = [['checkout.spec.ts'], ['cart.spec.ts', 'search.spec.ts'], ['login.spec.ts']];
+
 describe('toGitHubActions', () => {
-  it('builds a matrix of N shards feeding a merge job', () => {
-    const yaml = toGitHubActions(4);
-    expect(yaml).toContain('shard: [1, 2, 3, 4]');
-    expect(yaml).toContain('--shard=${{ matrix.shard }}/4');
-    expect(yaml).toContain('npx playwright merge-reports --reporter json');
-    expect(yaml).toContain('needs: [test]');
+  it('builds one job per shard, each running exactly its spec list', () => {
+    const yaml = toGitHubActions(SPECS, 'playwright');
+    expect(yaml).toContain('npx playwright test checkout.spec.ts --reporter=json > shard-1.json');
+    expect(yaml).toContain('npx playwright test cart.spec.ts search.spec.ts --reporter=json > shard-2.json');
+    expect(yaml).toContain('name: Shard 3/3 (optimal split)');
+    // One report per shard, ready to feed back to the advisor.
+    expect(yaml).toContain('name: shard-1');
+    expect(yaml).toContain('npx playwright install --with-deps');
   });
 
-  it('rejects an invalid shard count', () => {
-    expect(() => toGitHubActions(0)).toThrow(RangeError);
-    expect(() => toGitHubActions(2.5)).toThrow(RangeError);
+  it('uses the Cypress command for Cypress reports', () => {
+    const yaml = toGitHubActions([['a.cy.ts', 'b.cy.ts']], 'cypress');
+    expect(yaml).toContain('npx cypress run --reporter mochawesome');
+    expect(yaml).toContain('--spec "a.cy.ts,b.cy.ts"');
+    expect(yaml).not.toContain('playwright');
+  });
+
+  it('rejects empty spec lists', () => {
+    expect(() => toGitHubActions([], 'playwright')).toThrow(RangeError);
+    expect(() => toGitHubActions([['a.spec.ts'], []], 'playwright')).toThrow(RangeError);
   });
 });
 
 describe('toBitbucketPipelines', () => {
-  it('builds N parallel steps plus a merge step', () => {
-    const yaml = toBitbucketPipelines(3);
+  it('builds one parallel step per shard, each running exactly its spec list', () => {
+    const yaml = toBitbucketPipelines(SPECS, 'playwright');
     expect(yaml).toContain('- parallel:');
-    expect(yaml).toContain('npx playwright test --shard=1/3 --reporter=blob');
-    expect(yaml).toContain('npx playwright test --shard=3/3 --reporter=blob');
-    expect(yaml).toContain('merge-reports --reporter json');
-    // One shard step per shard.
-    expect(yaml.match(/- step:/g)).toHaveLength(3 + 1); // 3 shards + merge
+    expect(yaml).toContain('npx playwright test checkout.spec.ts --reporter=json > shard-1.json');
+    expect(yaml).toContain('npx playwright test login.spec.ts --reporter=json > shard-3.json');
+    expect(yaml.match(/- step:/g)).toHaveLength(3); // one per shard, no merge step
   });
 
-  it('rejects an invalid shard count', () => {
-    expect(() => toBitbucketPipelines(-1)).toThrow(RangeError);
+  it('rejects empty spec lists', () => {
+    expect(() => toBitbucketPipelines([], 'cypress')).toThrow(RangeError);
   });
 });
