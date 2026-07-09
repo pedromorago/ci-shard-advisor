@@ -35,3 +35,46 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ci-shard-advisor/web exec playwright install --with-deps chromium
       - run: pnpm --filter @ci-shard-advisor/web e2e
+
+  # Dogfooding: the Cypress E2E runs sharded (one spec per container), each
+  # container keeps its own mochawesome JSON — download both artifacts and feed
+  # them to CI Shard Advisor for a measured per-shard analysis of this very CI.
+  e2e-cypress:
+    name: Web end-to-end (Cypress, shard ${{ matrix.shard }}/2)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: 1
+            spec: demo
+          - shard: 2
+            spec: upload
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache the Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      # The binary is installed on demand (allowBuilds blocks it in pnpm install).
+      - run: pnpm --filter @ci-shard-advisor/web exec cypress install
+      - run: pnpm --filter @ci-shard-advisor/web build
+      - name: Run this shard's spec with a mochawesome report
+        run: >-
+          pnpm --filter @ci-shard-advisor/web exec start-server-and-test
+          'vite preview --port 4173 --strictPort' http://localhost:4173
+          'cypress run --spec cypress/e2e/${{ matrix.spec }}.cy.ts --reporter mochawesome --reporter-options reportDir=reports/cypress,overwrite=false,html=false,json=true'
+      - name: Upload this shard's report (feed both to CI Shard Advisor)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-report-shard-${{ matrix.shard }}
+          path: apps/web/reports/cypress/*.json
+          retention-days: 7
