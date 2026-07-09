@@ -62,13 +62,14 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
     tasks,
     workersPerShard,
     options.objective ?? { kind: 'balanced' },
+    runner,
   );
 
   return {
     current,
     scenarios,
     frontier,
-    findings: computeFindings(frontier, current, tasks, cost, workersUpgrade),
+    findings: computeFindings(frontier, current, tasks, cost, workersUpgrade, runner),
     tasks,
     runner,
   };

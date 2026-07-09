@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 import { formatDuration } from '@ci-shard-advisor/core';
 import type { ReportFile } from '@ci-shard-advisor/core';
-import { adviseFrom, DEFAULT_SETTINGS, DEMO_PLAYWRIGHT, DEMO_CYPRESS } from './analysis';
+import { adviseFrom, DEFAULT_SETTINGS, DEMO_REPORTS } from './analysis';
 import type { AnalysisSettings } from './analysis';
 import { ReportInput } from './ReportInput';
-import type { DemoKind } from './ReportInput';
 import { ReportHelp } from './ReportHelp';
 import { Controls } from './Controls';
 import { ObjectivePicker } from './ObjectivePicker';
@@ -14,8 +13,8 @@ import { FindingsCard } from './FindingsCard';
 import { FrontierChart } from './FrontierChart';
 
 export function App() {
-  const [reports, setReports] = useState<ReportFile[]>(DEMO_PLAYWRIGHT);
-  const [source, setSource] = useState('demo · playwright.dev (4 shards)');
+  const [reports, setReports] = useState<ReportFile[]>(DEMO_REPORTS);
+  const [source, setSource] = useState('demo (3 containers)');
   const [settings, setSettings] = useState<AnalysisSettings>(DEFAULT_SETTINGS);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,11 +50,9 @@ export function App() {
     }
   }
 
-  function handleLoadDemo(kind: DemoKind) {
-    setReports(kind === 'playwright' ? DEMO_PLAYWRIGHT : DEMO_CYPRESS);
-    setSource(
-      kind === 'playwright' ? 'demo · playwright.dev (4 shards)' : 'demo · Cypress (3 containers)',
-    );
+  function handleLoadDemo() {
+    setReports(DEMO_REPORTS);
+    setSource('demo (3 containers)');
     setError(null);
   }
 
@@ -64,7 +61,8 @@ export function App() {
       <header className="app__header">
         <h1>CI Shard Advisor</h1>
         <p className="app__tagline">
-          You are here — these are your moves and what each one costs or saves.
+          Parallelize Cypress with your head: you are here — these are your moves
+          and what each one costs or saves. No Cypress Cloud needed.
         </p>
       </header>
 
@@ -84,11 +82,7 @@ export function App() {
 
       <Controls settings={settings} merged={reports.length < 2} onChange={setSettings} />
 
-      <CurrentCard
-        current={result.current}
-        workersPerShard={settings.workersPerShard}
-        pricePerMinute={settings.pricePerMinute}
-      />
+      <CurrentCard current={result.current} pricePerMinute={settings.pricePerMinute} />
 
       <section className="card" aria-labelledby="moves-heading">
         <h2 id="moves-heading">Your moves</h2>
@@ -102,7 +96,7 @@ export function App() {
           {merged ? (
             <MoveCard
               tag={chosenLabel}
-              title={`Rebalance your ${result.current.shardCount} shards — your best move is free`}
+              title={`Rebalance your ${result.current.shardCount} containers — your best move is free`}
               scenario={chosen}
               pricePerMinute={settings.pricePerMinute}
               runner={result.runner}
@@ -111,14 +105,14 @@ export function App() {
             <>
               <MoveCard
                 tag="Free"
-                title={`Rebalance your ${result.current.shardCount} shards`}
+                title={`Rebalance your ${result.current.shardCount} containers`}
                 scenario={rebalance}
                 pricePerMinute={settings.pricePerMinute}
                 runner={result.runner}
               />
               <MoveCard
                 tag={chosenLabel}
-                title={`${chosen.config.shardCount} shards`}
+                title={`${chosen.config.shardCount} containers`}
                 scenario={chosen}
                 pricePerMinute={settings.pricePerMinute}
                 runner={result.runner}

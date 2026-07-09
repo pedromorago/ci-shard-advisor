@@ -1,4 +1,5 @@
 import type { Runner } from '../advisor/types';
+import { unitOf } from './advisor';
 
 /**
  * Generate ready-to-paste CI config that applies an optimal split: one
@@ -30,8 +31,9 @@ export function toGitHubActions(specs: string[][], runner: Runner): string {
     .map((list, i) => {
       const shard = i + 1;
       const reportPath = runner === 'cypress' ? 'reports/' : `shard-${shard}.json`;
+      const unit = unitOf(runner);
       return `  shard-${shard}:
-    name: Shard ${shard}/${n} (optimal split)
+    name: ${unit[0].toUpperCase() + unit.slice(1)} ${shard}/${n} (optimal split)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,8 +72,9 @@ export function toBitbucketPipelines(specs: string[][], runner: Runner): string 
     .map((list, i) => {
       const shard = i + 1;
       const artifact = runner === 'cypress' ? 'reports/**' : `shard-${shard}.json`;
+      const unit = unitOf(runner);
       return `        - step:
-            name: Shard ${shard}/${n} (optimal split)
+            name: ${unit[0].toUpperCase() + unit.slice(1)} ${shard}/${n} (optimal split)
             script:
               - npm ci${runner === 'playwright' ? '\n              - npx playwright install --with-deps' : ''}
               - ${runCommand(runner, list, shard)}

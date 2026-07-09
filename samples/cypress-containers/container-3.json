@@ -1,0 +1,62 @@
+{
+  "runs": [
+    {
+      "spec": {
+        "name": "profile.cy.ts",
+        "relative": "cypress/e2e/profile.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Profile",
+            "updates the avatar"
+          ],
+          "state": "passed",
+          "duration": 16000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 16000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Profile",
+            "saves notification settings"
+          ],
+          "state": "passed",
+          "duration": 9000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 9000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "cart.cy.ts",
+        "relative": "cypress/e2e/cart.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Cart",
+            "adds and removes items"
+          ],
+          "state": "passed",
+          "duration": 20000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 20000
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

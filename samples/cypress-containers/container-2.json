@@ -1,0 +1,76 @@
+{
+  "runs": [
+    {
+      "spec": {
+        "name": "login.cy.ts",
+        "relative": "cypress/e2e/login.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Login",
+            "logs in with valid credentials @sanity"
+          ],
+          "state": "passed",
+          "duration": 18000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 18000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Login",
+            "shows an error for a wrong password"
+          ],
+          "state": "passed",
+          "duration": 12000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 12000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "search.cy.ts",
+        "relative": "cypress/e2e/search.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Search",
+            "returns relevant results"
+          ],
+          "state": "passed",
+          "duration": 22000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 22000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Search",
+            "filters by category"
+          ],
+          "state": "passed",
+          "duration": 14000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 14000
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

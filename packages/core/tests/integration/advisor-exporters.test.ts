@@ -44,7 +44,7 @@ describe('advisor exporters', () => {
   it('markdown output renders a moves table', () => {
     const md = toAdvisorMarkdown(advise(input, cost), cost);
     expect(md).toContain('## CI Shard Advisor');
-    expect(md).toContain('| Move | Shards | Feedback | Cost |');
+    expect(md).toContain('| Move | Machines | Feedback | Cost |');
   });
 
   it('omits money when no price is set', () => {

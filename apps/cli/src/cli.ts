@@ -18,7 +18,7 @@ export interface CliIO {
   stderr: (line: string) => void;
 }
 
-const USAGE = `ci-shard-advisor <reports...> [options]
+const USAGE = `ci-shard-advisor <reports...> [options]   # one Cypress report per container
 
 Analyze the reports of your last sharded run (one file per shard, or one merged
 report) and get your current situation plus the moves that improve it.
@@ -26,8 +26,7 @@ report) and get your current situation plus the moves that improve it.
 Options:
   --setup <duration>       per-shard startup overhead (e.g. 45s)  [needed for cost]
   --price <num>            machine price per minute               [optional, adds money]
-  --workers <n>            workers per shard (default: 1)
-  --shards <n>             declared shard count for a single merged report
+  --shards <n>             declared container count for a single merged report
   --objective <recommended|fastest>   the chosen move (default: recommended, the knee)
   --max-feedback <dur>     objective: cheapest within this feedback budget
   --budget <price|dur>     objective: fastest within this cost budget
