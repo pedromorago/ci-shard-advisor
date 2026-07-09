@@ -1,5 +1,5 @@
 import { classify } from '../report/classifier';
-import { durationsOf } from '../report/normalizer';
+import { groupByFile } from '../report/normalizer';
 import { buildFrontier } from '../recommender/frontier';
 import { readReports } from './reports';
 import { measureCurrent, modelCurrent } from './current';
@@ -26,7 +26,9 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
   // mochawesome is Cypress's reporter — the apply command is Cypress's.
   const runner = format === 'cypress' || format === 'mochawesome' ? 'cypress' : 'playwright';
   const tasks = classify(allTasks);
-  const durations = durationsOf(tasks);
+  // File granularity end-to-end (invariant 11.7): the frontier splits whole
+  // spec files, so every promised number is reachable by the emitted plan.
+  const durations = groupByFile(tasks).map((group) => group.durationMs);
 
   const current =
     input.kind === 'per-shard'
