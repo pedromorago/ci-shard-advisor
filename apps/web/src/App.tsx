@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { formatDuration } from '@ci-shard-advisor/core';
 import type { ReportFile } from '@ci-shard-advisor/core';
-import { adviseFrom, DEFAULT_SETTINGS, DEMO_REPORTS } from './analysis';
+import { adviseFrom, DEFAULT_SETTINGS, DEMO_PLAYWRIGHT, DEMO_CYPRESS } from './analysis';
 import type { AnalysisSettings } from './analysis';
 import { ReportInput } from './ReportInput';
+import type { DemoKind } from './ReportInput';
 import { ReportHelp } from './ReportHelp';
 import { Controls } from './Controls';
 import { ObjectivePicker } from './ObjectivePicker';
@@ -13,7 +14,7 @@ import { FindingsCard } from './FindingsCard';
 import { FrontierChart } from './FrontierChart';
 
 export function App() {
-  const [reports, setReports] = useState<ReportFile[]>(DEMO_REPORTS);
+  const [reports, setReports] = useState<ReportFile[]>(DEMO_PLAYWRIGHT);
   const [source, setSource] = useState('demo · playwright.dev (4 shards)');
   const [settings, setSettings] = useState<AnalysisSettings>(DEFAULT_SETTINGS);
   const [error, setError] = useState<string | null>(null);
@@ -50,9 +51,11 @@ export function App() {
     }
   }
 
-  function handleLoadDemo() {
-    setReports(DEMO_REPORTS);
-    setSource('demo · playwright.dev (4 shards)');
+  function handleLoadDemo(kind: DemoKind) {
+    setReports(kind === 'playwright' ? DEMO_PLAYWRIGHT : DEMO_CYPRESS);
+    setSource(
+      kind === 'playwright' ? 'demo · playwright.dev (4 shards)' : 'demo · Cypress (3 containers)',
+    );
     setError(null);
   }
 
