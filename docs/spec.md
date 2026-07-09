@@ -101,10 +101,12 @@ Si el movimiento elegido no existe (p. ej. nada cumple el presupuesto), se dice 
 
 ### 5.3 Plan aplicable (cerrar el hueco modelo-realidad)
 
-El tiempo prometido por un reparto óptimo **no** se consigue con `--shard=i/N` (que reparte por cantidad). Cada escenario con reparto óptimo incluye cómo aplicarlo:
+El tiempo prometido por un reparto óptimo **no** se consigue con `--shard=i/N` (que reparte por cantidad). El plan se materializa como algo **ejecutable hoy**: la lista de ficheros de spec de cada shard, con el comando del runner detectado —
 
-- **Playwright:** valor de `--shard-weights` y/o mapa de shards (qué specs van a cada shard).
-- **Cypress:** lista de specs por contenedor (compatible con `--spec` o cypress-split).
+- **Playwright:** `npx playwright test <specs del shard i>` por job.
+- **Cypress:** `npx cypress run --spec "<specs del shard i>"` por contenedor.
+
+El reparto se calcula a **granularidad de fichero** (no se puede rutar medio fichero a un shard). Y el cierre real del círculo: los exporters `github`/`bitbucket` generan el **YAML completo** donde cada job paralelo corre exactamente su lista — la salida del advisor se pega directamente en la config del CI. Nunca se emite un flag que el runner no soporte.
 
 ### 5.4 Objetivos
 
@@ -168,7 +170,7 @@ export interface MeasuredCurrent {
 
 export interface ShardPlan {
   shards: string[][];           // ids de tarea por shard (reparto óptimo)
-  shardWeights?: string;        // Playwright --shard-weights
+  specs: string[][];            // ficheros de spec por shard (lo aplicable: 5.3)
 }
 
 export interface Scenario {
@@ -192,6 +194,7 @@ export interface AdvisorResult {
   frontier: ConfigPoint[];
   findings: Findings;
   tasks: AtomicTask[];
+  runner: 'playwright' | 'cypress'; // detectado del report; decide el comando del plan (5.3)
 }
 
 export function advise(input: AnalyzeInput, cost: CostModel, options?: {
@@ -244,14 +247,19 @@ Your current setup (measured)
 Your moves
   Free) Rebalance your 4 shards     feedback 10m 25s (−3m 50s)   cost €3.30 (±0)
      Same machines, tests redistributed by duration. Rebalancing is free.
-     Apply: npx playwright test --shard-weights=31,27,22,20
+     Apply (each machine runs its own list):
+       shard 1: npx playwright test checkout.spec.ts
+       shard 2: npx playwright test cart.spec.ts search.spec.ts
+       ...
+     (--format github emits the full workflow)
 
   Recommended) 5 shards             feedback 9m 02s (−5m 13s)   cost €3.28 (−€0.02)
      The knee of the cost/time frontier — past it, shards stop paying off.
-     Apply: npx playwright test --shard-weights=25,22,20,18,17
+     Apply (each machine runs its own list): ...
 
 (el segundo bloque cambia con --objective/--max-feedback/--budget; si el
-movimiento elegido coincide con el rebalance, se emite una sola entrada)
+movimiento elegido coincide con el rebalance, se emite una sola entrada;
+con reports de Cypress el comando es `npx cypress run --spec "..."`)
 
 Warnings
   • Past 6 shards feedback stops improving: 'checkout.spec.ts' (8m 51s)
@@ -281,13 +289,13 @@ Frontier (shards · feedback · billed · price)
 - **FR-2 Modo degradado:** 1 report + `--shards N`; la salida marca la config actual como *modelada*.
 - **FR-3 Coste:** con `--price`, todos los outputs muestran €; sin él, tiempo de máquina. Fórmulas de la sección 4, con tests.
 - **FR-4 Actual medida:** feedback, coste, imbalance y shard más lento correctos contra fixtures. Si los reports de Playwright traen `config.workers`, se usa; si no, flag manual (default 1).
-- **FR-5 Escenario reequilibrio:** Δcoste = 0 exacto; incluye `ShardPlan`; el `--shard-weights` generado suma coherente con el reparto.
+- **FR-5 Escenario reequilibrio:** Δcoste = 0 exacto; incluye `ShardPlan`; las `specs` por shard cubren cada fichero exactamente una vez y el reparto es óptimo a granularidad de fichero.
 - **FR-6 Misma espera menor coste:** cumple su definición formal (tabla 5.2) contra la frontera; si no existe, lo dice.
 - **FR-7 Mismo coste menor espera:** ídem.
 - **FR-8 Objetivos:** los seis tipos de la 5.4; `max-feedback`/`budget` verificados con tests de frontera.
 - **FR-9 Findings:** cada frase de 5.5 se emite exactamente cuando su condición se cumple (tests con fixtures que disparan cada una, incluida `playwright-bottleneck.json`).
 - **FR-10 Flaky:** lista con retries y `wastedMs = Σ duración de intentos extra`.
-- **FR-11 Exporters:** text/json/markdown consistentes entre sí (mismo summary); github/bitbucket generan config del escenario elegido.
+- **FR-11 Exporters:** text/json/markdown consistentes entre sí (mismo summary); github/bitbucket generan el YAML del escenario elegido con la **lista exacta de specs por job** (5.3), con el comando del runner detectado.
 - **FR-12 Web:** criterios de la sección 8, cubiertos por E2E (Playwright) incluida la subida múltiple y la privacidad (sin peticiones de red con el report).
 - **FR-13 Modelo de workers:** con W=1, `wall_i` = suma exacta del shard; con W>1, `wall_i` nunca es menor que `max(pmax, Σt/W)` (tests de propiedad); con W>1 la granularidad por defecto es fichero (test solo con fullyParallel confirmado); con reports de Cypress, W se fuerza a 1; el finding "workers antes que máquinas" se emite exactamente cuando simular W+1 con el N actual mejora el feedback por encima del umbral.
 
