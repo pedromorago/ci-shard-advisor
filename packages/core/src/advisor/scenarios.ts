@@ -1,6 +1,6 @@
 import { branchAndBound } from '../scheduler/branch-and-bound';
 import { findElbow } from '../recommender/elbow';
-import { durationsOf } from '../report/normalizer';
+import { groupByFile } from '../report/normalizer';
 import type { ConfigPoint } from '../recommender/frontier';
 import type { AtomicTask } from '../types/domain';
 import type { CostModel, MeasuredCurrent, Objective, Scenario, ShardPlan } from './types';
@@ -52,19 +52,11 @@ export function planFor(
   shardCount: number,
   workersPerShard: number,
 ): ShardPlan {
-  const byFile = new Map<string, { tasks: AtomicTask[]; durationMs: number }>();
-  for (const task of tasks) {
-    const key = task.file || task.id;
-    const group = byFile.get(key) ?? { tasks: [], durationMs: 0 };
-    group.tasks.push(task);
-    group.durationMs += task.durationMs;
-    byFile.set(key, group);
-  }
-  const files = [...byFile.keys()];
-  const plan = branchAndBound(files.map((f) => byFile.get(f)!.durationMs), shardCount, SOLVE);
-  const specs = plan.assignment.map((indices) => indices.map((i) => files[i]).sort());
+  const groups = groupByFile(tasks);
+  const plan = branchAndBound(groups.map((g) => g.durationMs), shardCount, SOLVE);
+  const specs = plan.assignment.map((indices) => indices.map((i) => groups[i].file).sort());
   const shards = plan.assignment.map((indices) =>
-    indices.flatMap((i) => byFile.get(files[i])!.tasks.map((t) => t.id)),
+    indices.flatMap((i) => groups[i].tasks.map((t) => t.id)),
   );
   return { shards, specs };
 }

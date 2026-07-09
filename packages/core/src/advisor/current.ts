@@ -1,5 +1,5 @@
 import { simulateShard } from '../scheduler/workers';
-import { durationsOf } from '../report/normalizer';
+import { groupByFile } from '../report/normalizer';
 import type { AtomicTask } from '../types/domain';
 import type { CostModel, MeasuredCurrent } from './types';
 
@@ -19,19 +19,26 @@ function finalize(shardTimesMs: number[], cost: CostModel, measured: boolean): M
   };
 }
 
-/** Measure the current setup from one report per shard (real per-shard times). */
+/**
+ * Measure the current setup from one report per shard (real per-shard times).
+ * Workers queue whole spec files (invariant 11.7): a file's tests run together.
+ */
 export function measureCurrent(
   perShardTasks: AtomicTask[][],
   cost: CostModel,
   workersPerShard: number,
 ): MeasuredCurrent {
   const shardTimesMs = perShardTasks.map(
-    (tasks) => simulateShard(durationsOf(tasks), workersPerShard).makespan,
+    (tasks) => simulateShard(groupByFile(tasks).map((g) => g.durationMs), workersPerShard).makespan,
   );
   return finalize(shardTimesMs, cost, true);
 }
 
-/** Model the current setup from a merged report + a declared shard count (by-count split). */
+/**
+ * Model the current setup from a merged report + a declared shard count. The
+ * split is by-count over spec FILES (how `--shard=i/N` behaves: a file never
+ * straddles shards), round-robin.
+ */
 export function modelCurrent(
   allTasks: AtomicTask[],
   shardCount: number,
@@ -39,6 +46,6 @@ export function modelCurrent(
   workersPerShard: number,
 ): MeasuredCurrent {
   const shards: AtomicTask[][] = Array.from({ length: shardCount }, () => []);
-  allTasks.forEach((task, index) => shards[index % shardCount].push(task));
+  groupByFile(allTasks).forEach((group, index) => shards[index % shardCount].push(...group.tasks));
   return { ...measureCurrent(shards, cost, workersPerShard), measured: false };
 }

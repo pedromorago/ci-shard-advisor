@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { run } from '../src/cli';
 import type { CliIO } from '../src/cli';
 
-const pw = (durations: number[]): string =>
+const pw = (durations: number[], prefix = 't'): string =>
   JSON.stringify({
     suites: [
       {
         specs: durations.map((d, i) => ({
-          title: `t${i}`,
-          file: `t${i}.spec.ts`,
+          title: `${prefix}${i}`,
+          // Unique per shard: in a real sharded run a file runs on ONE shard.
+          file: `${prefix}${i}.spec.ts`,
           tests: [{ status: 'expected', results: [{ duration: d }] }],
         })),
       },
@@ -28,15 +29,15 @@ function invoke(args: string[], files: Record<string, string> = {}) {
 }
 
 // A shard that finishes early, and a shard with the slow work.
-const twoShards = { 's1.json': pw([50000, 50000]), 's2.json': pw([10000, 10000]) };
+const twoShards = { 's1.json': pw([50000, 50000], 'a'), 's2.json': pw([10000, 10000], 'b') };
 // 6 shards, one holding a 60s bottleneck — heavily over-provisioned.
 const overSharded: Record<string, string> = {
-  's1.json': pw([60000]),
-  's2.json': pw([5000]),
-  's3.json': pw([5000]),
-  's4.json': pw([5000]),
-  's5.json': pw([5000]),
-  's6.json': pw([5000]),
+  's1.json': pw([60000], 'a'),
+  's2.json': pw([5000], 'b'),
+  's3.json': pw([5000], 'c'),
+  's4.json': pw([5000], 'd'),
+  's5.json': pw([5000], 'e'),
+  's6.json': pw([5000], 'f'),
 };
 
 describe('cli', () => {
