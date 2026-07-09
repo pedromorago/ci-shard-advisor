@@ -1,4 +1,6 @@
 import { formatDuration } from '../exporters/summary';
+import { groupByFile } from '../report/normalizer';
+import type { FileGroup } from '../report/normalizer';
 import type { ConfigPoint } from '../recommender/frontier';
 import type { AtomicTask } from '../types/domain';
 import type { CostModel, Findings, MeasuredCurrent } from './types';
@@ -32,8 +34,10 @@ export function computeFindings(
 ): Findings {
   const warnings: string[] = [];
   const saturationN = saturationPoint(frontier);
-  const longest = tasks.reduce<AtomicTask | undefined>(
-    (best, task) => (!best || task.durationMs > best.durationMs ? task : best),
+  // The floor is the heaviest spec FILE (invariant 11.7): a file is indivisible,
+  // so its total duration is what no amount of sharding can beat.
+  const longest = groupByFile(tasks).reduce<FileGroup | undefined>(
+    (best, group) => (!best || group.durationMs > best.durationMs ? group : best),
     undefined,
   );
 
@@ -61,10 +65,10 @@ export function computeFindings(
     }
   }
 
-  // Floor / bottleneck: a single test gates the wait past the plateau.
+  // Floor / bottleneck: a single spec file gates the wait past the plateau.
   if (saturationN < frontier.length && longest && longest.durationMs > 0) {
     warnings.push(
-      `Past ${saturationN} shards the wait stops dropping: '${longest.file || longest.title}' (${formatDuration(longest.durationMs)}) sets the floor. Consider splitting it.`,
+      `Past ${saturationN} shards the wait stops dropping: '${longest.file}' (${formatDuration(longest.durationMs)}) sets the floor. Consider splitting it.`,
     );
   }
 

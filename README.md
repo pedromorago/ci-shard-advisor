@@ -43,7 +43,8 @@ Your moves
      Apply (each machine runs its own list):
        shard 1: npx playwright test checkout.spec.ts
        shard 2: npx playwright test cart.spec.ts login.spec.ts settings.spec.ts
-       ...
+       shard 3: npx playwright test filters.spec.ts search.spec.ts
+       shard 4: npx playwright test profile.spec.ts signup.spec.ts
   Recommended) 3 shards   feedback 3m 45s (−20.0s)   cost €0.08 (−€0.01)
      The knee of the cost/time frontier — past it, shards stop paying off.
      (--format github or bitbucket emits the full, paste-ready CI config)
