@@ -29,7 +29,7 @@ export type { AdviseOptions } from './advisor/advise';
 export { buildScenarios, chooseObjective, planFor } from './advisor/scenarios';
 export { computeFindings } from './advisor/findings';
 export { readReports } from './advisor/reports';
-export { measureCurrent, modelCurrent } from './advisor/current';
+export { measureCurrent, modelCurrent, splitByCount, feedbackAtWorkers } from './advisor/current';
 export type {
   ReportFile,
   AnalyzeInput,

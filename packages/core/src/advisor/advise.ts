@@ -2,7 +2,7 @@ import { classify } from '../report/classifier';
 import { groupByFile } from '../report/normalizer';
 import { buildFrontier } from '../recommender/frontier';
 import { readReports } from './reports';
-import { measureCurrent, modelCurrent } from './current';
+import { feedbackAtWorkers, measureCurrent, modelCurrent, splitByCount } from './current';
 import { buildScenarios } from './scenarios';
 import { computeFindings } from './findings';
 import type { AdvisorResult, AnalyzeInput, CostModel, Objective } from './types';
@@ -21,10 +21,11 @@ export interface AdviseOptions {
  * optimal frontier, and returns the four anchored scenarios plus findings.
  */
 export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOptions = {}): AdvisorResult {
-  const workersPerShard = options.workersPerShard ?? 1;
   const { perShardTasks, allTasks, format } = readReports(input);
   // mochawesome is Cypress's reporter — the apply command is Cypress's.
   const runner = format === 'cypress' || format === 'mochawesome' ? 'cypress' : 'playwright';
+  // Cypress runs the specs of a machine serially: workers are forced to 1 (FR-13).
+  const workersPerShard = runner === 'cypress' ? 1 : options.workersPerShard ?? 1;
   const tasks = classify(allTasks);
   // File granularity end-to-end (invariant 11.7): the frontier splits whole
   // spec files, so every promised number is reachable by the emitted plan.
@@ -34,6 +35,15 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
     input.kind === 'per-shard'
       ? measureCurrent(perShardTasks, cost, workersPerShard)
       : modelCurrent(tasks, input.currentShardCount ?? 1, cost, workersPerShard);
+
+  // "Workers before machines" (FR-13): what the SAME machines would give with
+  // one more worker each. Playwright-only — Cypress has no in-machine workers.
+  const shardLayout =
+    input.kind === 'per-shard' ? perShardTasks : splitByCount(tasks, current.shardCount);
+  const workersUpgrade =
+    runner === 'playwright'
+      ? { workers: workersPerShard + 1, feedbackMs: feedbackAtWorkers(shardLayout, cost, workersPerShard + 1) }
+      : undefined;
 
   const maxShards = Math.max(
     options.maxShards ?? Math.max(1, durations.length),
@@ -58,7 +68,7 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
     current,
     scenarios,
     frontier,
-    findings: computeFindings(frontier, current, tasks, cost),
+    findings: computeFindings(frontier, current, tasks, cost, workersUpgrade),
     tasks,
     runner,
   };
