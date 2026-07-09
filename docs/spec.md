@@ -132,7 +132,7 @@ Frases, no solo números. Obligatorias cuando aplican:
 
 ### 5.6 Frontera
 
-Se mantiene tal cual para la gráfica (todas las N evaluadas), añadiendo € por punto cuando hay precio.
+Se mantiene para la gráfica (todas las N evaluadas), añadiendo € por punto cuando hay precio. **Toda la planificación opera a granularidad de fichero** — frontera, escenarios, modelo del actual en modo fusionado y el suelo de 5.5 — porque una spec es indivisible: no se puede rutar medio fichero a un shard. Así, cada número mostrado es **alcanzable por el plan emitido** (5.3); el motor nunca promete un tiempo que solo existiría troceando specs. (Corolario: el orden interno de una spec — p. ej. sanity antes que regression — se preserva siempre, porque la spec viaja entera a su shard.)
 
 ## 6. Contrato TypeScript (core)
 
@@ -316,3 +316,4 @@ Frontier (shards · feedback · billed · price)
 4. Salidas deterministas (sin locale, sin reloj) para que los snapshots sean estables.
 5. Los tests con aleatoriedad usan el PRNG con semilla (`mulberry32`), nunca `Math.random()`.
 6. La simulación de workers no reordena la cola (modelo fiel de Playwright, no optimizador). El feedback reportado sale siempre de la simulación, nunca de la partición teórica.
+7. **Granularidad de fichero end-to-end (5.6):** frontera, escenarios, modelo del actual y suelo se calculan sobre ficheros de spec, nunca sobre tests sueltos — todo número prometido es alcanzable por el plan emitido.
