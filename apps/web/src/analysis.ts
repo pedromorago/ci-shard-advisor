@@ -1,6 +1,6 @@
 import { advise } from '@ci-shard-advisor/core';
 import type { AdvisorResult, CostModel, Objective, ReportFile } from '@ci-shard-advisor/core';
-import { DEMO_REPORTS } from './demo';
+import { DEMO_PLAYWRIGHT, DEMO_CYPRESS } from './demo';
 
 /**
  * The objective the user picks in "Optimize for" (spec §5.4):
@@ -39,7 +39,7 @@ export const DEFAULT_SETTINGS: AnalysisSettings = {
   objective: { kind: 'recommended' },
 };
 
-export { DEMO_REPORTS };
+export { DEMO_PLAYWRIGHT, DEMO_CYPRESS };
 
 /** Map the UI objective onto the core Objective. */
 function toObjective(setting: ObjectiveSetting, pricePerMinute: number): Objective {

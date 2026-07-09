@@ -1,11 +1,13 @@
 import type { ChangeEvent } from 'react';
 import type { ReportFile } from '@ci-shard-advisor/core';
 
+export type DemoKind = 'playwright' | 'cypress';
+
 interface ReportInputProps {
   /** Called with every selected file (one per shard, or a single merged one). */
   onSelect: (reports: ReportFile[]) => void;
-  /** Called to restore the preloaded demo. */
-  onLoadDemo: () => void;
+  /** Called to load one of the preloaded demos. */
+  onLoadDemo: (kind: DemoKind) => void;
 }
 
 function readFileText(file: File): Promise<string> {
@@ -39,8 +41,11 @@ export function ReportInput({ onSelect, onLoadDemo }: ReportInputProps) {
           onChange={handleChange}
         />
       </label>
-      <button type="button" className="report-input__demo" onClick={onLoadDemo}>
-        Load demo
+      <button type="button" className="report-input__demo" onClick={() => onLoadDemo('playwright')}>
+        Demo: Playwright
+      </button>
+      <button type="button" className="report-input__demo" onClick={() => onLoadDemo('cypress')}>
+        Demo: Cypress
       </button>
       <p className="report-input__note">
         Processed entirely in your browser — your reports are never uploaded.

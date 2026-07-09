@@ -123,6 +123,22 @@ describe('App', () => {
     expect(await screen.findByRole('alert')).toBeInTheDocument();
   });
 
+  it('loads the Cypress demo: measured containers, flaky finding, --spec commands', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /demo: cypress/i }));
+
+    expect(screen.getByText(/demo · Cypress \(3 containers\)/i)).toBeInTheDocument();
+    const current = screen.getByRole('region', { name: /your setup today/i });
+    expect(within(current).getByText(/measured/i)).toBeInTheDocument();
+    // The flaky retry burns machine time → the flaky finding shows up.
+    const findings = screen.getByRole('region', { name: /findings/i });
+    expect(within(findings).getAllByText(/flaky test/i).length).toBeGreaterThanOrEqual(1);
+    // Apply commands are Cypress's, not Playwright's.
+    const moves = screen.getByRole('region', { name: /your moves/i });
+    expect(within(moves).getAllByText(/npx cypress run --spec/).length).toBeGreaterThanOrEqual(1);
+    expect(within(moves).queryByText(/npx playwright test/)).not.toBeInTheDocument();
+  });
+
   it('states that reports are processed in the browser', () => {
     render(<App />);
     expect(screen.getByText(/never uploaded/i)).toBeInTheDocument();
