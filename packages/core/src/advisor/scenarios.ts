@@ -3,7 +3,8 @@ import { findElbow } from '../recommender/elbow';
 import { groupByFile } from '../report/normalizer';
 import type { ConfigPoint } from '../recommender/frontier';
 import type { AtomicTask } from '../types/domain';
-import type { CostModel, MeasuredCurrent, Objective, Scenario, ShardPlan } from './types';
+import { unitOf } from '../exporters/advisor';
+import type { MeasuredCurrent, Objective, Runner, Scenario, ShardPlan } from './types';
 
 const SOLVE = { timeBudgetMs: 200 };
 
@@ -103,6 +104,7 @@ export function buildScenarios(
   tasks: AtomicTask[],
   workersPerShard: number,
   objective: Objective,
+  runner: Runner = 'playwright',
 ): Scenario[] {
   // 1) Rebalance: optimal split at the current shard count. Δcost = 0 by design.
   const rebalanceConfig = pointAt(frontier, current.shardCount);
@@ -163,7 +165,7 @@ export function buildScenarios(
     id: 'objective',
     config: objectiveConfig,
     vsCurrent: deltas(objectiveConfig, current),
-    reason: objectiveReason(objective),
+    reason: objectiveReason(objective, runner),
     plan: planFor(tasks, objectiveConfig.shardCount, workersPerShard),
     objective,
   };
@@ -172,10 +174,10 @@ export function buildScenarios(
   return flagCoincidences(scenarios);
 }
 
-function objectiveReason(objective: Objective): string {
+function objectiveReason(objective: Objective, runner: Runner): string {
   switch (objective.kind) {
     case 'balanced':
-      return 'The knee of the cost/time frontier — past it, shards stop paying off.';
+      return `The knee of the cost/time frontier — past it, ${unitOf(runner)}s stop paying off.`;
     case 'fastest':
       return 'The fastest feedback available.';
     case 'cheapest':

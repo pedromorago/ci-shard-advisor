@@ -71,18 +71,20 @@ Playwright JSON
 
 El motor es **agnóstico al framework**: lo único específico de cada herramienta es
 el *lector* de entrada (parser + normalizer) que traduce su report a `AtomicTask[]`.
-Los lectores soportados son **Playwright**, **Cypress** (Module API,
-[`cypress.ts`](../packages/core/src/report/cypress.ts)) y **mochawesome**
+Los lectores soportados en el pitch son los de **Cypress**: Module API
+([`cypress.ts`](../packages/core/src/report/cypress.ts)) y **mochawesome**
 ([`mochawesome.ts`](../packages/core/src/report/mochawesome.ts), el reporter JSON
 estándar de Cypress/Mocha). El formato se **detecta por la forma** del report:
-`runs` → Cypress, `results` → mochawesome, `suites` → Playwright. A partir de ahí
-(duraciones), scheduler, simulador, recommender y exporters no saben ni les importa
-el origen. Añadir otro runner es **un lector más**; nada del núcleo cambia. El
-formato puede forzarse desde el core, la CLI (`--input-format`) y `advise()`.
+`runs` → Cypress, `results` → mochawesome. A partir de ahí (duraciones), scheduler,
+recommender y exporters no saben ni les importa el origen. Añadir otro runner es
+**un lector más**; nada del núcleo cambia. El formato puede forzarse desde el core
+y la CLI (`--input-format`).
 
-> Existe además un lector de **JUnit XML** ([`junit.ts`](../packages/core/src/report/junit.ts))
-> escrito sin dependencias, que se conserva en el código como extra pero **queda
-> fuera del pitch**: no se documenta ni se amplía (ver `docs/CLAUDE.md`, regla 4).
+> Quedan **aparcados en el código** (testeados, fuera del pitch — `docs/CLAUDE.md`
+> regla 4): los lectores de **Playwright** ([`parser.ts`](../packages/core/src/report/parser.ts))
+> y **JUnit XML** ([`junit.ts`](../packages/core/src/report/junit.ts)), y el
+> **modelo de workers** (concepto Playwright: en Cypress cada contenedor ejecuta
+> sus specs en serie, `workers` se fuerza a 1).
 
 ## Decisiones de diseño del pipeline de datos (parser / normalizer / classifier)
 

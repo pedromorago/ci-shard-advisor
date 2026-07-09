@@ -6,7 +6,7 @@ test.describe('demo analysis', () => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { level: 1, name: /CI Shard Advisor/i })).toBeVisible();
-    await expect(page.getByText(/demo.*4 shards/i)).toBeVisible();
+    await expect(page.getByText(/demo.*3 containers/i)).toBeVisible();
 
     const current = page.getByRole('region', { name: /your setup today/i });
     await expect(current.getByText(/measured/i)).toBeVisible();

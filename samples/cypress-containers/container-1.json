@@ -1,0 +1,44 @@
+{
+  "runs": [
+    {
+      "spec": {
+        "name": "checkout.cy.ts",
+        "relative": "cypress/e2e/checkout.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Checkout",
+            "completes the full checkout journey"
+          ],
+          "state": "passed",
+          "duration": 95000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 95000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Checkout",
+            "applies a discount code"
+          ],
+          "state": "passed",
+          "duration": 40000,
+          "attempts": [
+            {
+              "state": "failed",
+              "duration": 21000
+            },
+            {
+              "state": "passed",
+              "duration": 19000
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

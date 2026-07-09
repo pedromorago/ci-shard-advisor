@@ -2,8 +2,8 @@ import type { AnalysisSettings } from './analysis';
 
 interface ControlsProps {
   settings: AnalysisSettings;
-  /** With one merged report the shard count must be declared; with one report
-   * per shard it is deduced from the file count, so the field disappears. */
+  /** With one merged report the container count must be declared; with one
+   * report per container it is deduced from the file count, so it disappears. */
   merged: boolean;
   onChange: (settings: AnalysisSettings) => void;
 }
@@ -41,19 +41,9 @@ export function Controls({ settings, merged, onChange }: ControlsProps) {
             onChange={(e) => update({ pricePerMinute: num(e.target.value, 0) })}
           />
         </label>
-        <label className="control">
-          <span>Workers per shard</span>
-          <input
-            type="number"
-            min={1}
-            step={1}
-            value={settings.workersPerShard}
-            onChange={(e) => update({ workersPerShard: Math.round(num(e.target.value, 1)) })}
-          />
-        </label>
         {merged ? (
           <label className="control">
-            <span>Shards you run today</span>
+            <span>Containers you run today</span>
             <input
               type="number"
               min={1}

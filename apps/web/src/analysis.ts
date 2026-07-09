@@ -1,6 +1,6 @@
 import { advise } from '@ci-shard-advisor/core';
 import type { AdvisorResult, CostModel, Objective, ReportFile } from '@ci-shard-advisor/core';
-import { DEMO_PLAYWRIGHT, DEMO_CYPRESS } from './demo';
+import { DEMO_REPORTS } from './demo';
 
 /**
  * The objective the user picks in "Optimize for" (spec §5.4):
@@ -23,9 +23,7 @@ export interface AnalysisSettings {
   startupOverheadSec: number;
   /** Machine price per minute; 0 means "show machine time, not money". */
   pricePerMinute: number;
-  /** Workers running in parallel inside each shard. */
-  workersPerShard: number;
-  /** Declared shard count when a single merged report is uploaded. */
+  /** Declared container count when a single merged report is uploaded. */
   currentShardCount: number;
   /** The chosen move. */
   objective: ObjectiveSetting;
@@ -34,12 +32,11 @@ export interface AnalysisSettings {
 export const DEFAULT_SETTINGS: AnalysisSettings = {
   startupOverheadSec: 45,
   pricePerMinute: 0.01,
-  workersPerShard: 1,
-  currentShardCount: 4,
+  currentShardCount: 3,
   objective: { kind: 'recommended' },
 };
 
-export { DEMO_PLAYWRIGHT, DEMO_CYPRESS };
+export { DEMO_REPORTS };
 
 /** Map the UI objective onto the core Objective. */
 function toObjective(setting: ObjectiveSetting, pricePerMinute: number): Objective {
@@ -69,9 +66,9 @@ export function adviseFrom(reports: ReportFile[], settings: AnalysisSettings): A
       ? { kind: 'per-shard' as const, reports }
       : { kind: 'merged' as const, report: reports[0], currentShardCount: settings.currentShardCount };
 
+  // No workers option: Cypress runs a container's specs serially.
   return advise(input, cost, {
     objective: toObjective(settings.objective, settings.pricePerMinute),
-    workersPerShard: settings.workersPerShard,
     maxShards: 16,
   });
 }
