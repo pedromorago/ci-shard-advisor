@@ -276,6 +276,7 @@ Frontier (shards · feedback · billed · price)
 ## 8. Web
 
 - Demo precargada al abrir (se mantiene), mostrando: card de situación actual + card de **rebalance** (siempre visible) + **una card del movimiento elegido** + findings + gráfica de frontera con € en tooltip.
+- **Dos demos**, una por runner: Playwright (per-shard, datos reales) y Cypress (per-shard, con retries para mostrar el finding de flaky y el comando `--spec`). Un botón por demo.
 - Selector de objetivo (5.4): `Recommended` (default) · `Fastest` · `Espera máxima` (campo prellenado con la espera actual) · `Presupuesto` (campo prellenado con el coste actual). Cambiar el selector cambia la card del movimiento y el marcador *recommended* de la gráfica.
 - Si el movimiento elegido coincide con el rebalance, se muestra una sola card que lo indica.
 - Upload **múltiple** (N ficheros a la vez) además de único.
