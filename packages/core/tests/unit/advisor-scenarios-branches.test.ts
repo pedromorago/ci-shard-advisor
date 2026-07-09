@@ -100,6 +100,7 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
     frontier: FRONTIER,
     findings: { warnings: [], flaky: [] },
     tasks: TASKS,
+    runner: 'playwright',
   };
 
   it('text merges the chosen move into the rebalance when they coincide', () => {

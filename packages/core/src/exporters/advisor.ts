@@ -1,5 +1,12 @@
 import { formatDuration } from './summary';
-import type { AdvisorResult, CostModel, Scenario } from '../advisor/types';
+import type { AdvisorResult, CostModel, Runner, Scenario } from '../advisor/types';
+
+/** The real, runnable command for one shard's spec list. */
+export function applyCommand(runner: Runner, specs: string[]): string {
+  return runner === 'cypress'
+    ? `npx cypress run --spec "${specs.join(',')}"`
+    : `npx playwright test ${specs.join(' ')}`;
+}
 
 /** Total test time (sum of task durations). */
 function testTimeMs(result: AdvisorResult): number {
@@ -99,8 +106,12 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
       : '';
     lines.push(`  ${tag}) ${title}   feedback ${feedback}${df}   cost ${c}${dc}`);
     lines.push(`     ${scenario.reason}`);
-    if (scenario.plan?.shardWeights) {
-      lines.push(`     Apply: npx playwright test --shard-weights=${scenario.plan.shardWeights}`);
+    if (scenario.plan) {
+      lines.push('     Apply (each machine runs its own list):');
+      scenario.plan.specs.forEach((specs, i) => {
+        lines.push(`       shard ${i + 1}: ${applyCommand(result.runner, specs)}`);
+      });
+      lines.push('     (--format github or bitbucket emits the full CI config)');
     }
   };
 
@@ -144,6 +155,7 @@ export function toAdvisorObject(result: AdvisorResult, cost: CostModel) {
   return {
     totalTests: result.tasks.length,
     testTimeMs: testTimeMs(result),
+    runner: result.runner,
     current: { ...result.current, price: withMoney(result.current.costMs) },
     scenarios: result.scenarios.map((s) => ({
       id: s.id,
@@ -153,7 +165,7 @@ export function toAdvisorObject(result: AdvisorResult, cost: CostModel) {
       price: withMoney(s.config.costMs),
       vsCurrent: s.vsCurrent,
       reason: s.reason,
-      shardWeights: s.plan?.shardWeights,
+      specs: s.plan?.specs,
       sameAs: s.sameAs,
       unavailable: s.unavailable,
       objective: s.objective,
