@@ -77,6 +77,38 @@ describe('advise — scenarios', () => {
     expect(obj.config.feedbackTimeMs).toBeLessThanOrEqual(100000);
   });
 
+  it('invariant 11.7: the frontier never promises below the heaviest spec file', () => {
+    // One 120s spec made of 12 short tests + three light specs. At test
+    // granularity more shards would split the big file; at file granularity
+    // (reality: a spec is indivisible) it sets the floor everywhere.
+    const bigFile = {
+      suites: [
+        {
+          specs: [
+            { title: 'big', file: 'big.spec.ts', tests: Array.from({ length: 12 }, () => ({ status: 'expected', results: [{ duration: 10000 }] })) },
+            { title: 'a', file: 'a.spec.ts', tests: [{ status: 'expected', results: [{ duration: 5000 }] }] },
+            { title: 'b', file: 'b.spec.ts', tests: [{ status: 'expected', results: [{ duration: 5000 }] }] },
+            { title: 'c', file: 'c.spec.ts', tests: [{ status: 'expected', results: [{ duration: 5000 }] }] },
+          ],
+        },
+      ],
+    };
+    const { frontier, scenarios, findings } = advise(
+      { kind: 'merged', report: file('all.json', bigFile), currentShardCount: 2 },
+      { startupOverheadMs: 10000 },
+      { maxShards: 8 },
+    );
+    // Every promised feedback is reachable by moving whole files: >= 120s + setup.
+    for (const point of frontier) {
+      expect(point.feedbackTimeMs).toBeGreaterThanOrEqual(120000 + 10000);
+    }
+    for (const s of scenarios) {
+      expect(s.config.feedbackTimeMs).toBeGreaterThanOrEqual(120000 + 10000);
+    }
+    // And the floor finding names the file with its SUMMED duration.
+    expect(findings.warnings.some((w) => w.includes("'big.spec.ts'") && w.includes('2m 0s'))).toBe(true);
+  });
+
   it('FR-2 merged mode models the current setup (measured=false)', () => {
     const { current } = advise(
       { kind: 'merged', report: file('all.json', pwReport([50000, 50000, 10000, 10000])), currentShardCount: 2 },

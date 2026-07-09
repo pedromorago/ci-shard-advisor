@@ -77,3 +77,29 @@ export function normalize(report: PlaywrightReport): AtomicTask[] {
 export function durationsOf(tasks: readonly AtomicTask[]): number[] {
   return tasks.map((task) => task.durationMs);
 }
+
+/** One schedulable unit: a spec file and everything that runs inside it. */
+export interface FileGroup {
+  /** The spec file (or the task id when the report carries no file). */
+  file: string;
+  tasks: AtomicTask[];
+  /** Total duration of the file (its tests run together, in order). */
+  durationMs: number;
+}
+
+/**
+ * Group tasks by spec file — the advisor's scheduling unit (spec §5.6,
+ * invariant 11.7): a file is indivisible, so every promised number must be
+ * reachable by moving whole files. Insertion order is the report order.
+ */
+export function groupByFile(tasks: readonly AtomicTask[]): FileGroup[] {
+  const byFile = new Map<string, FileGroup>();
+  for (const task of tasks) {
+    const file = task.file || task.id;
+    const group = byFile.get(file) ?? { file, tasks: [], durationMs: 0 };
+    group.tasks.push(task);
+    group.durationMs += task.durationMs;
+    byFile.set(file, group);
+  }
+  return [...byFile.values()];
+}

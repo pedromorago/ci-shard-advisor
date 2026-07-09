@@ -180,13 +180,12 @@ describe('computeFindings — worded findings across branches', () => {
     expect(warnings.some((w) => /cut the wait/.test(w) && /€/.test(w))).toBe(true);
   });
 
-  it('floor: names the bottleneck by title when the file is unknown', () => {
+  it('floor: falls back to the task id when the report carries no file', () => {
     const plateauNow = [point(1, 100000, 120000), point(2, 99000, 150000), point(3, 98500, 180000)];
     const tasks = [task('big', 50000)];
     tasks[0].file = '';
-    tasks[0].title = 'BigTest';
     const { warnings } = computeFindings(plateauNow, cur(1, 100000, 120000), tasks, cost);
-    expect(warnings.some((w) => /'BigTest'/.test(w) && /sets the floor/.test(w))).toBe(true);
+    expect(warnings.some((w) => /'big'/.test(w) && /sets the floor/.test(w))).toBe(true);
   });
 
   it('over-fragmentation tolerates a zero-cost plateau', () => {

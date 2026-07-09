@@ -6,13 +6,14 @@ function reportFile(json: string, name: string): File {
   return new File([json], name, { type: 'application/json' });
 }
 
-const pw = (durations: number[]): string =>
+const pw = (durations: number[], prefix = 't'): string =>
   JSON.stringify({
     suites: [
       {
         specs: durations.map((d, i) => ({
-          title: `t${i}`,
-          file: `t${i}.spec.ts`,
+          title: `${prefix}${i}`,
+          // Unique per shard: in a real sharded run a file runs on ONE shard.
+          file: `${prefix}${i}.spec.ts`,
           tests: [{ status: 'expected', results: [{ duration: d }] }],
         })),
       },
@@ -35,14 +36,28 @@ describe('App', () => {
     expect(within(current).getByText(/€\d+\.\d\d/)).toBeInTheDocument();
   });
 
-  it('shows the free rebalance and the chosen move (merged when they coincide)', () => {
+  it('shows the free rebalance and the recommended move for the demo', () => {
     render(<App />);
     const moves = screen.getByRole('region', { name: /your moves/i });
-    // With the real demo the recommended knee IS the rebalance point → one card.
+    // At file granularity the demo's knee (2 shards) differs from rebalance → two cards.
     expect(within(moves).getByText(/rebalance your 4 shards/i)).toBeInTheDocument();
+    expect(moves.querySelectorAll('.moves-list > li')).toHaveLength(2);
     // The apply block lists a runnable command per shard.
     expect(within(moves).getAllByText(/npx playwright test /).length).toBeGreaterThanOrEqual(1);
-    expect(moves.querySelectorAll('.moves-list > li')).toHaveLength(1); // merged card
+  });
+
+  it('merges into one card when the chosen move IS the rebalance', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    // Two equal one-file shards → fastest = 2 shards = the rebalance point.
+    await user.upload(screen.getByLabelText(/upload your shard reports/i), [
+      reportFile(pw([60000], 'a'), 'a.json'),
+      reportFile(pw([60000], 'b'), 'b.json'),
+    ]);
+    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'fastest' } });
+    const moves = screen.getByRole('region', { name: /your moves/i });
+    expect(moves.querySelectorAll('.moves-list > li')).toHaveLength(1);
+    expect(within(moves).getByText(/your best move is free/i)).toBeInTheDocument();
   });
 
   it('splits into two cards when the chosen move differs from rebalance', () => {
@@ -106,8 +121,8 @@ describe('App', () => {
     render(<App />);
     const input = screen.getByLabelText(/upload your shard reports/i);
     await user.upload(input, [
-      reportFile(pw([50000, 50000]), 'shard-1.json'),
-      reportFile(pw([10000, 10000]), 'shard-2.json'),
+      reportFile(pw([50000, 50000], 'a'), 'shard-1.json'),
+      reportFile(pw([10000, 10000], 'b'), 'shard-2.json'),
     ]);
 
     expect(await screen.findByText(/2 uploaded reports/i)).toBeInTheDocument();
