@@ -36,29 +36,45 @@ const pwReport = (durations: number[]): unknown => ({
 
 describe('chooseObjective — every objective kind', () => {
   it('fastest and cheapest hit the frontier extremes', () => {
-    expect(chooseObjective(FRONTIER, { kind: 'fastest' }).shardCount).toBe(3);
-    expect(chooseObjective(FRONTIER, { kind: 'cheapest' }).shardCount).toBe(1);
+    expect(chooseObjective(FRONTIER, { kind: 'fastest' })?.shardCount).toBe(3);
+    expect(chooseObjective(FRONTIER, { kind: 'cheapest' })?.shardCount).toBe(1);
   });
 
   it('balanced returns a frontier point', () => {
     expect(FRONTIER).toContain(chooseObjective(FRONTIER, { kind: 'balanced' }));
   });
 
-  it('max-feedback picks the cheapest within budget, else the fastest', () => {
-    expect(chooseObjective(FRONTIER, { kind: 'max-feedback', feedbackMs: 100000 }).shardCount).toBe(2);
-    // Nothing meets a 50s wait → fall back to the fastest available.
-    expect(chooseObjective(FRONTIER, { kind: 'max-feedback', feedbackMs: 50000 }).shardCount).toBe(3);
+  it('max-feedback picks the cheapest within the limit, else says so (never invents)', () => {
+    expect(chooseObjective(FRONTIER, { kind: 'max-feedback', feedbackMs: 100000 })?.shardCount).toBe(2);
+    // Nothing meets a 50s wait → no feasible point, never a made-up one (spec §5.2).
+    expect(chooseObjective(FRONTIER, { kind: 'max-feedback', feedbackMs: 50000 })).toBeUndefined();
   });
 
-  it('budget picks the fastest within budget, else the cheapest', () => {
-    expect(chooseObjective(FRONTIER, { kind: 'budget', costMs: 160000 }).shardCount).toBe(2);
-    // Nothing fits a tiny budget → fall back to the cheapest.
-    expect(chooseObjective(FRONTIER, { kind: 'budget', costMs: 100000 }).shardCount).toBe(1);
+  it('budget picks the fastest within budget, else says so (never invents)', () => {
+    expect(chooseObjective(FRONTIER, { kind: 'budget', costMs: 160000 })?.shardCount).toBe(2);
+    // Nothing fits a tiny budget → no feasible point, never a made-up one (spec §5.2).
+    expect(chooseObjective(FRONTIER, { kind: 'budget', costMs: 100000 })).toBeUndefined();
   });
 
   it('weight trades cost against feedback', () => {
-    expect(chooseObjective(FRONTIER, { kind: 'weight', costPerFeedbackMinute: 0 }).shardCount).toBe(1); // cost only
-    expect(chooseObjective(FRONTIER, { kind: 'weight', costPerFeedbackMinute: 1e9 }).shardCount).toBe(3); // feedback only
+    expect(chooseObjective(FRONTIER, { kind: 'weight', costPerFeedbackMinute: 0 })?.shardCount).toBe(1); // cost only
+    expect(chooseObjective(FRONTIER, { kind: 'weight', costPerFeedbackMinute: 1e9 })?.shardCount).toBe(3); // feedback only
+  });
+
+  it('an infeasible parameterized objective becomes an unavailable scenario', () => {
+    const current: MeasuredCurrent = {
+      shardCount: 2,
+      shardTimesMs: [90000, 60000],
+      feedbackTimeMs: 120000,
+      costMs: 210000,
+      imbalanceMs: 30000,
+      measured: true,
+    };
+    const scenarios = buildScenarios(FRONTIER, current, TASKS, 1, { kind: 'budget', costMs: 100000 }, 'cypress');
+    const objective = scenarios.find((s) => s.id === 'objective')!;
+    expect(objective.unavailable).toBe(true);
+    expect(objective.reason).toMatch(/No configuration fits your cost budget/);
+    expect(objective.plan).toBeUndefined();
   });
 });
 
@@ -209,7 +225,7 @@ describe('computeFindings — worded findings across branches', () => {
     expect(warnings.every((w) => !/cut the wait/.test(w))).toBe(true);
   });
 
-  it('imbalance and a single flaky test are both reported', () => {
+  it('reports a single flaky test; imbalance lives in the current block, not here', () => {
     const flakyTask: AtomicTask = { ...task('f', 20000), retries: 1, status: 'flaky', wastedMs: 8000 };
     const { warnings, flaky } = computeFindings(
       FRONTIER,
@@ -217,9 +233,23 @@ describe('computeFindings — worded findings across branches', () => {
       [flakyTask],
       cost,
     );
-    expect(warnings.some((w) => /paying for idle machines/.test(w))).toBe(true);
+    // Imbalance is part of the current situation (spec §5.1/§7.1) — every
+    // adapter renders it inline there, so findings must not duplicate it.
+    expect(warnings.some((w) => /idle machines/.test(w))).toBe(false);
     expect(warnings.some((w) => /1 flaky test wasted/.test(w))).toBe(true);
     expect(flaky).toHaveLength(1);
+  });
+
+  it('a test that failed every attempt is broken, not flaky', () => {
+    const brokenTask: AtomicTask = { ...task('b', 20000), retries: 2, status: 'failed', wastedMs: 12000 };
+    const { warnings, flaky } = computeFindings(
+      FRONTIER,
+      cur(2, 90000, 150000, { measured: true }),
+      [brokenTask],
+      cost,
+    );
+    expect(flaky).toHaveLength(0);
+    expect(warnings.some((w) => /flaky/.test(w))).toBe(false);
   });
 });
 
