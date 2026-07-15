@@ -31,6 +31,22 @@ describe('uploading a report', () => {
     cy.contains(/2 tests/i).should('be.visible');
   });
 
+  it('analyzes one report per container as a measured setup (multi-upload)', () => {
+    // The product's preferred input (spec §3.1): N files at once → measured.
+    cy.get('input[type=file]').selectFile(
+      [
+        { contents: Cypress.Buffer.from(reportWithCanary('slow container')), fileName: 'container-1.json', mimeType: 'application/json' },
+        { contents: Cypress.Buffer.from(reportWithCanary('fast container')), fileName: 'container-2.json', mimeType: 'application/json' },
+      ],
+      { force: true },
+    );
+    cy.contains(/2 uploaded reports/i).should('be.visible');
+    cy.get('section[aria-labelledby="current-heading"]').within(() => {
+      cy.contains(/measured/i).should('be.visible');
+      cy.contains(/2 containers/i).should('be.visible');
+    });
+  });
+
   it('surfaces a clear error for a malformed report', () => {
     upload('{ not valid json', 'broken.json');
     cy.get('[role="alert"]').should('be.visible');

@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { formatDuration } from '@ci-shard-advisor/core';
 import type { ReportFile } from '@ci-shard-advisor/core';
-import { adviseFrom, DEFAULT_SETTINGS, DEMO_REPORTS } from './analysis';
+import { adviseFrom, DEFAULT_SETTINGS, DEMO_REPORTS, prefillBudget, prefillWaitSec } from './analysis';
 import type { AnalysisSettings } from './analysis';
 import { ReportInput } from './ReportInput';
 import { ReportHelp } from './ReportHelp';
@@ -19,6 +19,23 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
 
   const result = useMemo(() => adviseFrom(reports, settings), [reports, settings]);
+
+  // Keep the parameterized prefills anchored to the CURRENT measured situation
+  // (spec §5.4): when new reports or a new price move the anchor, re-seed the
+  // limit. Editing the limit itself never changes the anchor, so typing is safe.
+  const anchoredWaitSec = prefillWaitSec(result.current);
+  const anchoredBudget = prefillBudget(result.current, settings.pricePerMinute);
+  useEffect(() => {
+    setSettings((s) => {
+      if (s.objective.kind === 'max-wait' && s.objective.seconds !== anchoredWaitSec) {
+        return { ...s, objective: { kind: 'max-wait', seconds: anchoredWaitSec } };
+      }
+      if (s.objective.kind === 'budget' && s.objective.euros !== anchoredBudget) {
+        return { ...s, objective: { kind: 'budget', euros: anchoredBudget } };
+      }
+      return s;
+    });
+  }, [anchoredWaitSec, anchoredBudget]);
   const testTimeMs = useMemo(
     () => result.tasks.reduce((sum, task) => sum + task.durationMs, 0),
     [result],
