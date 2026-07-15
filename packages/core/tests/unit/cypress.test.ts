@@ -49,6 +49,30 @@ describe('normalizeCypress', () => {
     expect(discount).toMatchObject({ durationMs: 40800, retries: 1, status: 'flaky' });
   });
 
+  it('durationMs counts every attempt even when test.duration only covers the last one', () => {
+    // Machine time = all attempts (spec §4): durationMs must share the base
+    // wastedMs is computed from, not trust a final-attempt-only duration.
+    const raw = {
+      runs: [
+        {
+          spec: { relative: 'retry.cy.ts' },
+          tests: [
+            {
+              title: ['retry', 'passes on the second try'],
+              state: 'passed',
+              duration: 15000, // final attempt only
+              attempts: [{ duration: 15000, state: 'failed' }, { duration: 15000, state: 'passed' }],
+            },
+          ],
+        },
+      ],
+    };
+    const [task] = tasksFrom(raw);
+    expect(task.durationMs).toBe(30000);
+    expect(task.wastedMs).toBe(15000);
+    expect(task.durationMs).toBeGreaterThanOrEqual(task.wastedMs ?? 0);
+  });
+
   it('maps failed and pending states', () => {
     const tasks = tasksFrom(cypressReport);
     expect(tasks.find((t) => t.title === 'rejects an expired code')).toMatchObject({
