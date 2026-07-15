@@ -1,21 +1,24 @@
+const UNIT_MS: Record<string, number> = { ms: 1, s: 1_000, m: 60_000 };
+
 /**
- * Parse a human duration into milliseconds. Accepts a bare number (ms) or a
- * value suffixed with ms, s or m. Examples: "500", "500ms", "90s", "2m".
+ * Parse a human duration into milliseconds. Accepts a bare number (ms), a
+ * value suffixed with ms, s or m, or a compound of unit-suffixed parts — the
+ * exact form the advisor's own output prints, so values can be fed back in.
+ * Examples: "500", "500ms", "90s", "2m", "9m 30s".
  */
 export function parseDuration(input: string): number {
-  const match = /^(\d+(?:\.\d+)?)(ms|s|m)?$/.exec(input.trim());
-  if (!match) {
-    throw new Error(`invalid duration '${input}' (use e.g. 500ms, 90s, 2m)`);
+  const parts = input.trim().split(/\s+/);
+  if (parts.length === 1) {
+    const single = /^(\d+(?:\.\d+)?)(ms|s|m)?$/.exec(parts[0]);
+    if (single) return Number(single[1]) * UNIT_MS[single[2] ?? 'ms'];
+  } else if (parts.every((part) => /^\d+(?:\.\d+)?(ms|s|m)$/.test(part))) {
+    // Compound parts need an explicit unit each ("9m 30s", never "9m 30").
+    return parts.reduce((total, part) => {
+      const [, value, unit] = /^(\d+(?:\.\d+)?)(ms|s|m)$/.exec(part)!;
+      return total + Number(value) * UNIT_MS[unit];
+    }, 0);
   }
-  const value = Number(match[1]);
-  switch (match[2]) {
-    case 'm':
-      return value * 60_000;
-    case 's':
-      return value * 1_000;
-    default:
-      return value;
-  }
+  throw new Error(`invalid duration '${input}' (use e.g. 500ms, 90s, 2m, 9m 30s)`);
 }
 
 /** Parse a positive integer option, throwing a clear error otherwise. */

@@ -101,6 +101,44 @@ describe('cli', () => {
       expect(code).toBe(2);
       expect(err).toMatch(/--objective must be/);
     });
+
+    it('rejects an unknown --workers flag (parked concept, spec FR-13)', () => {
+      const { code, err } = invoke(['s1.json', 's2.json', '--workers', '4'], twoShards);
+      expect(code).toBe(2);
+      expect(err).toMatch(/workers/);
+    });
+
+    it('errors on a non-numeric --gate-cost-waste instead of silently passing', () => {
+      const { code, err } = invoke(['s1.json', 's2.json', '--setup', '30s', '--gate-cost-waste', 'lots'], twoShards);
+      expect(code).toBe(2);
+      expect(err).toMatch(/--gate-cost-waste must be a percentage/);
+    });
+
+    it('errors on an invalid --input-format', () => {
+      const { code, err } = invoke(['s1.json', 's2.json', '--input-format', 'junit'], twoShards);
+      expect(code).toBe(2);
+      expect(err).toMatch(/--input-format must be/);
+    });
+  });
+
+  describe('input format & mode flags', () => {
+    it('honors --input-format instead of auto-detecting', () => {
+      // Forcing cypress on a Playwright report must fail in the Cypress reader.
+      const { code, err } = invoke(['s1.json', 's2.json', '--input-format', 'cypress'], twoShards);
+      expect(code).toBe(2);
+      expect(err).toMatch(/report\.runs/);
+    });
+
+    it('warns that --shards is ignored when one report per shard is given', () => {
+      const { code, err } = invoke(['s1.json', 's2.json', '--setup', '30s', '--shards', '4'], twoShards);
+      expect(code).toBe(0);
+      expect(err).toMatch(/--shards only applies to a single merged report/);
+    });
+
+    it('parses compound durations exactly as the output prints them', () => {
+      const { code } = invoke(['s1.json', 's2.json', '--setup', '1m 30s', '--gate-feedback', '9m 30s'], twoShards);
+      expect(code).toBe(0);
+    });
   });
 
   describe('quality gates (exit 1)', () => {

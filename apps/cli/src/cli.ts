@@ -8,7 +8,7 @@ import {
   toGitHubActions,
   toBitbucketPipelines,
 } from '@ci-shard-advisor/core';
-import type { AnalyzeInput, CostModel, Objective, ReportFile, AdvisorResult } from '@ci-shard-advisor/core';
+import type { AnalyzeInput, CostModel, Objective, ReportFile, ReportFormat, AdvisorResult } from '@ci-shard-advisor/core';
 import { parseDuration, parseIntOption } from './duration';
 
 /** Injected I/O so the CLI is testable without a process or the filesystem. */
@@ -72,7 +72,6 @@ export function run(argv: string[], io: CliIO): number {
       options: {
         setup: { type: 'string' },
         price: { type: 'string' },
-        workers: { type: 'string' },
         shards: { type: 'string' },
         objective: { type: 'string' },
         'max-feedback': { type: 'string' },
@@ -110,9 +109,9 @@ export function run(argv: string[], io: CliIO): number {
 
   // Options and the cost model.
   const cost: CostModel = { startupOverheadMs: 0 };
-  let workersPerShard = 1;
   let maxShards: number | undefined;
   let currentShardCount: number | undefined;
+  let inputFormat: ReportFormat | undefined;
   let objective: Objective | undefined;
   let gateFeedbackMs: number | undefined;
   let gateCostWastePct: number | undefined;
@@ -123,11 +122,22 @@ export function run(argv: string[], io: CliIO): number {
       if (!Number.isFinite(price) || price < 0) throw new Error('--price must be a number >= 0');
       cost.pricePerMinute = price;
     }
-    if (values.workers) workersPerShard = parseIntOption(values.workers, 'workers');
     if (values['max-shards']) maxShards = parseIntOption(values['max-shards'], 'max-shards');
     if (values.shards) currentShardCount = parseIntOption(values.shards, 'shards');
     if (values['gate-feedback']) gateFeedbackMs = parseDuration(values['gate-feedback']);
-    if (values['gate-cost-waste']) gateCostWastePct = Number(values['gate-cost-waste']);
+    if (values['gate-cost-waste']) {
+      gateCostWastePct = Number(values['gate-cost-waste']);
+      if (!Number.isFinite(gateCostWastePct) || gateCostWastePct < 0) {
+        throw new Error(`--gate-cost-waste must be a percentage >= 0, got '${values['gate-cost-waste']}'`);
+      }
+    }
+    if (values['input-format'] && values['input-format'] !== 'auto') {
+      const forced = values['input-format'];
+      if (forced !== 'playwright' && forced !== 'cypress' && forced !== 'mochawesome') {
+        throw new Error(`--input-format must be auto, playwright, cypress or mochawesome`);
+      }
+      inputFormat = forced;
+    }
 
     if (values['max-feedback']) {
       objective = { kind: 'max-feedback', feedbackMs: parseDuration(values['max-feedback']) };
@@ -157,6 +167,10 @@ export function run(argv: string[], io: CliIO): number {
     }
   }
 
+  if (currentShardCount !== undefined && reports.length >= 2) {
+    io.stderr('warning: --shards only applies to a single merged report; ignored (you passed one report per shard)');
+  }
+
   const input: AnalyzeInput =
     reports.length >= 2
       ? { kind: 'per-shard', reports }
@@ -164,7 +178,7 @@ export function run(argv: string[], io: CliIO): number {
 
   let result: AdvisorResult;
   try {
-    result = advise(input, cost, { objective, workersPerShard, maxShards });
+    result = advise(input, cost, { objective, maxShards, inputFormat });
   } catch (error) {
     io.stderr(`error: ${(error as Error).message}`);
     return 2;
