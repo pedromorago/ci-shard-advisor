@@ -36,6 +36,11 @@ then shows your moves and what each one costs or saves:
 ```text
 $ ci-shard-advisor container-*.json --setup 45s --price 0.008
 
+CI Shard Advisor
+================
+
+Suite: 9 tests, 4m 6s of test time (Cypress, 3 container reports)
+
 Your current setup (measured)
   3 containers
   Feedback time: 3m 0s   (slowest container: #1)
@@ -44,7 +49,7 @@ Your current setup (measured)
 
 Your moves
   Free) Rebalance your 3 containers   feedback 3m 0s (±0)   cost €0.05 (±0)
-     Same machines, tests redistributed by duration — rebalancing is free.
+     Same machines, specs redistributed by duration — rebalancing is free.
      Apply (each machine runs its own list):
        container 1: npx cypress run --spec "cypress/e2e/checkout.cy.ts"
        container 2: npx cypress run --spec "cypress/e2e/cart.cy.ts,cypress/e2e/search.cy.ts"
@@ -56,9 +61,17 @@ Your moves
 Warnings
   • You run 3 containers, but past 2 you only pay more: +13% cost for no faster.
   • Past 2 containers the wait stops dropping: 'cypress/e2e/checkout.cy.ts' (2m 15s) sets the floor. Consider splitting it.
-  • Your fastest container finishes 1m 30s before the slowest — you are paying for idle machines.
   • 1 flaky test wasted 21.0s of machine time in retries this run.
+
+Frontier (containers · feedback · billed · price)
+   1  4m 51s   4m 51s    €0.04
+   2  3m 0s    5m 36s    €0.04
+   3  3m 0s    6m 21s    €0.05
+   ...
 ```
+
+This is the tool's real output for [`samples/cypress-containers/`](samples/cypress-containers),
+with the second move's apply block and the frontier tail elided for brevity.
 
 Your third container buys nothing, one slow spec sets the floor, and a flaky
 test is quietly billing you retries. The web demo shows the same analysis as an
@@ -75,12 +88,12 @@ the command line.
           \                 |                 /
            v                v                v
                      packages/core
-   parser → normalizer → classifier → scheduler → workers → recommender → exporters
+   parser → normalizer → classifier → scheduler → recommender → exporters
 ```
 
 | Package | What it is |
 | --- | --- |
-| [`packages/core`](packages/core) | Pure engine: parser, scheduler (branch & bound), worker simulator, recommender, exporters |
+| [`packages/core`](packages/core) | Pure engine: parser, scheduler (branch & bound), recommender, exporters |
 | [`apps/web`](apps/web) | Static React + Vite demo — analysis runs 100% in the browser |
 | [`apps/cli`](apps/cli) | Node CLI with a CI quality-gate mode |
 | [`apps/api`](apps/api) | Local Fastify API + a Java REST Assured suite |
@@ -90,12 +103,13 @@ See [docs/architecture.md](docs/architecture.md) and the
 
 ## Engineering highlights
 
-- **Exact scheduler.** A hand-written branch & bound solver partitions tasks
+- **Exact scheduler.** A hand-written branch & bound solver partitions specs
   across containers to minimize makespan, with symmetry breaking, bound-based
-  pruning and a time budget. It never lies: if it can't certify the optimum in
-  time, it says so and reports the gap.
-- **Faithful simulation.** The worker simulator models the runner's real queue
-  (greedy, no reordering), so estimates reflect the tool, not an ideal.
+  pruning and a deterministic search budget. It never lies: if it can't certify
+  the optimum within the budget, it says so and reports the gap.
+- **Runnable numbers.** Everything is planned at spec-file granularity — a spec
+  never straddles containers — so every promised time is achievable by the
+  exact `--spec` lists the tool emits.
 - **Framework-agnostic engine, Cypress-first product.** Only the input reader is
   tool-specific: it reads Cypress run results (Module API or **mochawesome**),
   auto-detected. The engine itself never changes — other readers stay parked in

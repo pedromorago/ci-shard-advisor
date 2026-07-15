@@ -21,6 +21,18 @@ jobs:
       - run: pnpm test
       - run: pnpm --filter @ci-shard-advisor/core test:coverage
       - run: pnpm --filter @ci-shard-advisor/web build
+      # JUnit XML for test-management import (Jira/Xray) — see docs/xray.md.
+      - name: Emit JUnit XML for every vitest suite
+        run: pnpm test:junit
+      - name: Upload the JUnit XML (import into Xray from here)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-xml
+          path: |
+            packages/*/reports/junit/*.xml
+            apps/*/reports/junit/*.xml
+          retention-days: 7
 
   e2e:
     name: Web end-to-end (Playwright)
