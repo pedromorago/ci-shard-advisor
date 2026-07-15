@@ -113,11 +113,23 @@ describe('API', () => {
   it('rejects an invalid query parameter with 400', async () => {
     const response = await app.inject({
       method: 'POST',
-      url: '/advise?workers=lots',
+      url: '/advise?maxShards=lots',
       payload: report,
     });
     expect(response.statusCode).toBe(400);
-    expect(response.json().error).toMatch(/workers/);
+    expect(response.json().error).toMatch(/maxShards/);
+  });
+
+  it('ignores the parked workers concept: no workers query parameter exists', async () => {
+    // FR-13: Cypress containers run specs serially; the visible product never
+    // exposes workers. An unknown param is simply not part of the contract.
+    const response = await app.inject({
+      method: 'POST',
+      url: '/advise?workers=4&shards=2&setupMs=30000',
+      payload: report,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(JSON.stringify(response.json())).not.toMatch(/"workersPerShard":[^1]/);
   });
 
   it('rejects a non-JSON body with 400', async () => {
