@@ -83,13 +83,18 @@ function titleParts(test: CypressTest): string[] {
   return Array.isArray(test.title) ? test.title : [test.title];
 }
 
-/** Duration = the test's own duration, or the sum of its attempts. */
+/**
+ * Duration = the sum of ALL attempts when the report carries them (that is the
+ * machine time the test really occupied, retries included — the same base
+ * `wastedMs` is computed from), falling back to the test's own duration.
+ */
 function testDuration(test: CypressTest): number {
-  if (typeof test.duration === 'number') return test.duration;
-  return (test.attempts ?? []).reduce(
+  const fromAttempts = (test.attempts ?? []).reduce(
     (sum, attempt) => sum + (attempt.duration ?? attempt.wallClockDuration ?? 0),
     0,
   );
+  if (fromAttempts > 0) return fromAttempts;
+  return typeof test.duration === 'number' ? test.duration : 0;
 }
 
 function toTaskStatus(state: string | undefined, retries: number): TaskStatus {

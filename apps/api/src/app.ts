@@ -41,7 +41,6 @@ function objectiveParam(query: AdviseQuery): Objective | undefined {
 
 interface AdviseQuery {
   shards?: string;
-  workers?: string;
   maxShards?: string;
   setupMs?: string;
   pricePerMinute?: string;
@@ -87,7 +86,6 @@ export function buildApp(): FastifyInstance {
     let shards: number | undefined;
     try {
       const query = request.query;
-      const workers = positiveInt(query.workers, 'workers');
       const maxShards = positiveInt(query.maxShards, 'maxShards');
       shards = positiveInt(query.shards, 'shards');
       const setupMs = nonNegative(query.setupMs, 'setupMs') ?? DEFAULT_SETUP_MS;
@@ -98,8 +96,9 @@ export function buildApp(): FastifyInstance {
       if (pricePerMinute !== undefined) cost.pricePerMinute = pricePerMinute;
       if (query.currency) cost.currency = query.currency;
 
+      // No workers param: a parked Playwright concept — Cypress containers
+      // run their specs serially and the visible product never exposes it (FR-13).
       options = {};
-      if (workers !== undefined) options.workersPerShard = workers;
       if (maxShards !== undefined) options.maxShards = maxShards;
       if (objective !== undefined) options.objective = objective;
     } catch (error) {

@@ -119,12 +119,12 @@ class AnalyzeApiTest {
     void invalidQueryParamIsRejected() {
         given()
             .contentType(ContentType.JSON)
-            .queryParam("workers", "lots")
+            .queryParam("maxShards", "lots")
             .body(REPORT)
         .when()
             .post("/advise")
         .then()
             .statusCode(400)
-            .body("error", containsString("workers"));
+            .body("error", containsString("maxShards"));
     }
 }

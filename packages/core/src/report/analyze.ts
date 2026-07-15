@@ -75,9 +75,10 @@ export interface AnalysisResult {
 }
 
 /**
- * The whole pipeline in one call: parse a Playwright JSON report, normalize it
- * into tasks, classify them into blocks, and recommend a sharding strategy.
- * This is the single entry point the web, CLI and API adapters build on.
+ * The whole pipeline in one call: parse a test report (auto-detected: Cypress
+ * Module API, mochawesome, Playwright or JUnit), normalize it into tasks,
+ * classify them into blocks, and recommend a sharding strategy. Kept as the
+ * internal v1 layer; adapters consume `advise()`.
  */
 export function analyze(input: string | unknown, options: AnalyzeOptions = {}): AnalysisResult {
   const requested = options.format ?? 'auto';

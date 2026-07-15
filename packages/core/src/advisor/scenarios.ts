@@ -6,7 +6,8 @@ import type { AtomicTask } from '../types/domain';
 import { unitOf } from '../exporters/advisor';
 import type { MeasuredCurrent, Objective, Runner, Scenario, ShardPlan } from './types';
 
-const SOLVE = { timeBudgetMs: 200 };
+// Deterministic solver budget — see the twin constant in advise.ts (invariant 4).
+const SOLVE = { maxNodes: 200_000 };
 
 /** Lexicographic tuple comparison (a < b). */
 function tupleLess(a: number[], b: number[]): boolean {
@@ -54,16 +55,24 @@ export function planFor(
   workersPerShard: number,
 ): ShardPlan {
   const groups = groupByFile(tasks);
-  const plan = branchAndBound(groups.map((g) => g.durationMs), shardCount, SOLVE);
-  const specs = plan.assignment.map((indices) => indices.map((i) => groups[i].file).sort());
-  const shards = plan.assignment.map((indices) =>
+  // A shard with no spec cannot exist in a runnable plan (`--spec ""` is not a
+  // real command), so never split across more shards than there are files.
+  const solvableShards = Math.max(1, Math.min(shardCount, groups.length));
+  const plan = branchAndBound(groups.map((g) => g.durationMs), solvableShards, SOLVE);
+  const assignment = plan.assignment.filter((indices) => indices.length > 0);
+  const specs = assignment.map((indices) => indices.map((i) => groups[i].file).sort());
+  const shards = assignment.map((indices) =>
     indices.flatMap((i) => groups[i].tasks.map((t) => t.id)),
   );
   return { shards, specs };
 }
 
-/** Pick the frontier point for the "objective" scenario. */
-export function chooseObjective(frontier: ConfigPoint[], objective: Objective): ConfigPoint {
+/**
+ * Pick the frontier point for the "objective" scenario, or `undefined` when a
+ * parameterized objective (max-feedback/budget) has no feasible point — the
+ * engine never invents an answer that violates the constraint (spec §5.2).
+ */
+export function chooseObjective(frontier: ConfigPoint[], objective: Objective): ConfigPoint | undefined {
   switch (objective.kind) {
     case 'balanced':
       return findElbow(frontier);
@@ -73,17 +82,11 @@ export function chooseObjective(frontier: ConfigPoint[], objective: Objective): 
       return minBy(frontier, (p) => [p.costMs, p.shardCount])!;
     case 'max-feedback': {
       const feasible = frontier.filter((p) => p.feedbackTimeMs <= objective.feedbackMs);
-      return (
-        minBy(feasible, (p) => [p.costMs, p.shardCount]) ??
-        minBy(frontier, (p) => [p.feedbackTimeMs, p.shardCount])!
-      );
+      return minBy(feasible, (p) => [p.costMs, p.shardCount]);
     }
     case 'budget': {
       const feasible = frontier.filter((p) => p.costMs <= objective.costMs);
-      return (
-        minBy(feasible, (p) => [p.feedbackTimeMs, p.shardCount]) ??
-        minBy(frontier, (p) => [p.costMs, p.shardCount])!
-      );
+      return minBy(feasible, (p) => [p.feedbackTimeMs, p.shardCount]);
     }
     case 'weight':
       return minBy(frontier, (p) => [
@@ -106,13 +109,15 @@ export function buildScenarios(
   objective: Objective,
   runner: Runner = 'playwright',
 ): Scenario[] {
+  const unit = unitOf(runner);
+
   // 1) Rebalance: optimal split at the current shard count. Δcost = 0 by design.
   const rebalanceConfig = pointAt(frontier, current.shardCount);
   const rebalance: Scenario = {
     id: 'rebalance',
     config: rebalanceConfig,
     vsCurrent: deltas(rebalanceConfig, current),
-    reason: 'Same machines, tests redistributed by duration — rebalancing is free.',
+    reason: 'Same machines, specs redistributed by duration — rebalancing is free.',
     plan: planFor(tasks, current.shardCount, workersPerShard),
   };
 
@@ -128,7 +133,7 @@ export function buildScenarios(
         vsCurrent: deltas(cheaper, current),
         reason:
           cheaper.shardCount < current.shardCount
-            ? `${cheaper.shardCount} shards still beat your current wait.`
+            ? `${cheaper.shardCount} ${unit}s still beat your current wait.`
             : 'Keeps your wait at a lower cost.',
         plan: planFor(tasks, cheaper.shardCount, workersPerShard),
       }
@@ -159,16 +164,28 @@ export function buildScenarios(
         unavailable: true,
       };
 
-  // 4) By objective.
+  // 4) By objective. When a parameterized objective has no feasible point the
+  // scenario says so explicitly — it never invents an answer (spec §5.2).
   const objectiveConfig = chooseObjective(frontier, objective);
-  const objectiveScenario: Scenario = {
-    id: 'objective',
-    config: objectiveConfig,
-    vsCurrent: deltas(objectiveConfig, current),
-    reason: objectiveReason(objective, runner),
-    plan: planFor(tasks, objectiveConfig.shardCount, workersPerShard),
-    objective,
-  };
+  const objectiveScenario: Scenario = objectiveConfig
+    ? {
+        id: 'objective',
+        config: objectiveConfig,
+        vsCurrent: deltas(objectiveConfig, current),
+        reason: objectiveReason(objective, runner),
+        plan: planFor(tasks, objectiveConfig.shardCount, workersPerShard),
+        objective,
+      }
+    : {
+        id: 'objective',
+        config: rebalanceConfig,
+        reason:
+          objective.kind === 'max-feedback'
+            ? 'No configuration keeps the wait within your limit — not even the fastest split.'
+            : 'No configuration fits your cost budget — not even the cheapest split.',
+        unavailable: true,
+        objective,
+      };
 
   const scenarios = [rebalance, sameFeedbackCheaper, sameCostFaster, objectiveScenario];
   return flagCoincidences(scenarios);

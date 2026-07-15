@@ -5,14 +5,21 @@ import { readReports } from './reports';
 import { feedbackAtWorkers, measureCurrent, modelCurrent, splitByCount } from './current';
 import { buildScenarios } from './scenarios';
 import { computeFindings } from './findings';
+import type { ReportFormat } from '../report/analyze';
 import type { AdvisorResult, AnalyzeInput, CostModel, Objective } from './types';
 
-const SOLVE = { timeBudgetMs: 200 };
+// Deterministic solver budget (invariant 4: same input → same output on any
+// machine). A node is cheap, so this certifies every realistic suite while
+// still bounding worst-case latency; when exhausted the B&B stays honest
+// (optimal: false + gap).
+const SOLVE = { maxNodes: 200_000 };
 
 export interface AdviseOptions {
   objective?: Objective;
   workersPerShard?: number;
   maxShards?: number;
+  /** Force the report format instead of auto-detecting it (spec §3.4). */
+  inputFormat?: ReportFormat;
 }
 
 /**
@@ -21,7 +28,7 @@ export interface AdviseOptions {
  * optimal frontier, and returns the four anchored scenarios plus findings.
  */
 export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOptions = {}): AdvisorResult {
-  const { perShardTasks, allTasks, format } = readReports(input);
+  const { perShardTasks, allTasks, format } = readReports(input, options.inputFormat);
   // mochawesome is Cypress's reporter — the apply command is Cypress's.
   const runner = format === 'cypress' || format === 'mochawesome' ? 'cypress' : 'playwright';
   // Cypress runs the specs of a machine serially: workers are forced to 1 (FR-13).

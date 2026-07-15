@@ -1,4 +1,5 @@
 import type { MeasuredCurrent } from '@ci-shard-advisor/core';
+import { prefillBudget, prefillWaitSec } from './analysis';
 import type { ObjectiveKind, ObjectiveSetting } from './analysis';
 
 interface ObjectivePickerProps {
@@ -22,11 +23,8 @@ export function ObjectivePicker({ objective, current, pricePerMinute, onChange }
   // Defaults anchored to your measured situation (spec §5.4): the max-wait
   // objective starts at your current wait ("same wait, cheaper") and the
   // budget one at your current cost ("same cost, faster").
-  const currentWaitSec = Math.ceil(current.feedbackTimeMs / 1000);
-  const currentBudget =
-    pricePerMinute > 0
-      ? Number(((current.costMs / 60_000) * pricePerMinute).toFixed(2))
-      : Number((current.costMs / 60_000).toFixed(1));
+  const currentWaitSec = prefillWaitSec(current);
+  const currentBudget = prefillBudget(current, pricePerMinute);
 
   function select(kind: ObjectiveKind) {
     onChange(

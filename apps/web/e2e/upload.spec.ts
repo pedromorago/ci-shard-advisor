@@ -29,6 +29,30 @@ test.describe('uploading a report', () => {
     await expect(page.getByText(/2 tests/i)).toBeVisible();
   });
 
+  test('analyzes one report per container as a measured setup (multi-upload)', async ({ page }) => {
+    await page.goto('/');
+
+    // The product's preferred input (spec §3.1): N files at once → N is
+    // deduced and the current situation is MEASURED, imbalance included.
+    await page.getByLabel(/upload your cypress reports/i).setInputFiles([
+      {
+        name: 'container-1.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(reportWithCanary('slow container')),
+      },
+      {
+        name: 'container-2.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(reportWithCanary('fast container')),
+      },
+    ]);
+
+    await expect(page.getByText(/2 uploaded reports/i)).toBeVisible();
+    const current = page.getByRole('region', { name: /your setup today/i });
+    await expect(current.getByText(/measured/i)).toBeVisible();
+    await expect(current.getByText(/2 containers/i)).toBeVisible();
+  });
+
   test('surfaces a clear error for a malformed report', async ({ page }) => {
     await page.goto('/');
 
