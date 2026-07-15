@@ -16,11 +16,12 @@ export interface ReadReports {
 /**
  * Read the input reports into tasks. In per-shard mode every file is one shard
  * and all files must share a format (mixed → clear error). In merged mode there
- * is a single report.
+ * is a single report. `forceFormat` skips auto-detection (spec §3.4,
+ * `--input-format`) and applies to every file.
  */
-export function readReports(input: AnalyzeInput): ReadReports {
+export function readReports(input: AnalyzeInput, forceFormat?: ReportFormat): ReadReports {
   if (input.kind === 'merged') {
-    const format = detectFormat(input.report.content);
+    const format = forceFormat ?? detectFormat(input.report.content);
     const tasks = readReport(input.report.content, format);
     return { perShardTasks: [tasks], allTasks: tasks, format };
   }
@@ -29,9 +30,9 @@ export function readReports(input: AnalyzeInput): ReadReports {
     throw new ReportParseError('at least one report is required');
   }
 
-  let format: ReportFormat | undefined;
+  let format: ReportFormat | undefined = forceFormat;
   const perShardTasks = input.reports.map((file) => {
-    const detected = detectFormat(file.content);
+    const detected = forceFormat ?? detectFormat(file.content);
     if (format !== undefined && detected !== format) {
       throw new ReportParseError(
         `mixed report formats: '${format}' and '${detected}' (${file.name})`,
