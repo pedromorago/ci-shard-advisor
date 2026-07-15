@@ -1,7 +1,7 @@
 # @ci-shard-advisor/web
 
 Static React + Vite web demo for CI Shard Advisor. It runs the whole analysis
-in the browser (ADR-002) — a Playwright JSON report is never uploaded anywhere.
+in the browser (ADR-002) — a Cypress report is never uploaded anywhere.
 
 ## Develop
 

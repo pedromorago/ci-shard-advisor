@@ -1,4 +1,7 @@
-# Real per-shard sample (Playwright)
+# Real per-shard sample (Playwright — parked reader)
+
+> The Playwright reader is parked: it stays in the code with its tests, but the
+> product pitch is Cypress-only. This sample remains as the reader's fixture.
 
 Four **real** Playwright JSON reports — one per shard — from a 14-test suite run
 against [playwright.dev](https://playwright.dev) with `--shard=i/4`. This is the
