@@ -14,16 +14,18 @@ Pass **one report per shard** (measured), or a **single merged report** with
 
 | Option | Description |
 | --- | --- |
-| `--setup <duration>` | Per-shard startup overhead, e.g. `45s` (needed for cost) |
+| `--setup <duration>` | Per-container startup overhead, e.g. `45s` or `1m 30s` (needed for cost) |
 | `--price <num>` | Machine price per minute (adds money to every output) |
-| `--workers <n>` | Workers per shard (default: 1) |
-| `--shards <n>` | Declared shard count for a single merged report |
-| `--objective <balanced\|fastest\|cheapest>` | The "by objective" move (default: `balanced`) |
+| `--shards <n>` | Declared container count for a single merged report |
+| `--objective <recommended\|fastest>` | The chosen move (default: `recommended`, the knee of the frontier) |
 | `--max-feedback <dur>` | Objective: cheapest within this feedback budget |
 | `--budget <price\|dur>` | Objective: fastest within this cost budget |
-| `--max-shards <n>` | Largest shard count to evaluate |
+| `--max-shards <n>` | Largest container count to evaluate |
 | `--format <text\|json\|markdown\|github\|bitbucket>` | Output (default: `text`) |
-| `--input-format <auto\|playwright\|cypress\|mochawesome>` | Report format (default: `auto`) |
+| `--input-format <auto\|playwright\|cypress\|mochawesome>` | Force the report format instead of auto-detecting (default: `auto`) |
+
+Durations accept `ms`, `s`, `m` and compounds exactly as the advisor prints
+them (`45s`, `2m`, `9m 30s` — quote compound values in the shell).
 
 Quality gates (non-zero exit):
 

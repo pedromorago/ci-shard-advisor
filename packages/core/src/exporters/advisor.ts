@@ -84,9 +84,15 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
   const lines: string[] = [];
 
   lines.push('CI Shard Advisor', '================', '');
-  lines.push(`Suite: ${result.tasks.length} tests, ${formatDuration(testTimeMs(result))} of test time`, '');
-
   const unit = unitOf(result.runner);
+  const runnerName = result.runner === 'cypress' ? 'Cypress' : 'Playwright';
+  const origin = current.measured
+    ? `${current.shardCount} ${unit} report${current.shardCount === 1 ? '' : 's'}`
+    : 'merged report';
+  lines.push(
+    `Suite: ${result.tasks.length} tests, ${formatDuration(testTimeMs(result))} of test time (${runnerName}, ${origin})`,
+    '',
+  );
   lines.push(`Your current setup (${current.measured ? 'measured' : 'modeled'})`);
   // Workers are a Playwright concept; Cypress containers run their specs serially.
   const machines = result.runner === 'cypress'

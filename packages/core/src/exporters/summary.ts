@@ -59,11 +59,13 @@ export function summarize(analysis: AnalysisResult): AnalysisSummary {
 export function formatDuration(ms: number): string {
   const totalSeconds = ms / 1000;
   if (totalSeconds < 60) {
-    return `${totalSeconds.toFixed(1)}s`;
+    const seconds = totalSeconds.toFixed(1);
+    // 59.96s would render as "60.0s" — carry it into the minute form instead.
+    if (seconds !== '60.0') return `${seconds}s`;
   }
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.round(totalSeconds % 60);
-  return `${minutes}m ${seconds}s`;
+  // Round to whole seconds BEFORE splitting so 119.6s is "2m 0s", never "1m 60s".
+  const rounded = Math.round(totalSeconds);
+  return `${Math.floor(rounded / 60)}m ${rounded % 60}s`;
 }
 
 /** Format a signed delta with an explicit + or - sign (for savings lines). */

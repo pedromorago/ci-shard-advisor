@@ -92,16 +92,14 @@ export function computeFindings(
     }
   }
 
-  // Imbalance (measured mode only): paying for idle machines.
-  if (current.measured && current.imbalanceMs > 0) {
-    warnings.push(
-      `Your fastest ${unit} finishes ${formatDuration(current.imbalanceMs)} before the slowest — you are paying for idle machines.`,
-    );
-  }
+  // Imbalance is part of the current situation (spec §5.1) and is rendered
+  // inline in the current-setup block by every adapter — not repeated here.
 
-  // Flaky: retried tests and the machine time they burned.
+  // Flaky: tests that only passed after a retry, and the machine time the
+  // failed attempts burned. A test that failed every attempt is broken, not
+  // flaky, so it stays out of this list.
   const flaky = tasks
-    .filter((task) => task.retries > 0)
+    .filter((task) => task.retries > 0 && task.status !== 'failed')
     .map((task) => ({ id: task.id, title: task.title, retries: task.retries, wastedMs: task.wastedMs ?? 0 }));
   const totalWasted = flaky.reduce((sum, f) => sum + f.wastedMs, 0);
   if (flaky.length > 0 && totalWasted > 0) {

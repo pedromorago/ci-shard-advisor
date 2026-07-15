@@ -20,14 +20,14 @@ pnpm --filter @ci-shard-advisor/api start   # http://127.0.0.1:3001 (PORT to ove
 The body is either a single report object (**merged** → the current setup is
 *modeled* by test count) or `{ "reports": [r1, r2, ...] }` — two or more reports
 make a **per-shard** setup, so the current situation is *measured* from real
-per-shard times. The report format (Playwright / Cypress / mochawesome / JUnit)
-is auto-detected.
+per-container times. The expected input is a Cypress report (Module API or
+mochawesome), auto-detected.
 
-`POST /advise` query parameters: `shards` (declared shard count for a merged
-report), `workers`, `setupMs` (per-shard startup overhead, default `30000`),
+`POST /advise` query parameters: `shards` (declared container count for a
+merged report), `setupMs` (per-container startup overhead, default `30000`),
 `maxShards`, `pricePerMinute` (enables euro prices), `currency` (default `€`),
-`objective` (`balanced` | `fastest` | `cheapest`). A malformed report or bad
-parameter returns `400` with `{ "error": "..." }`.
+`objective` (`recommended` | `fastest`), `maxFeedbackMs`, `budgetMs`. A
+malformed report or bad parameter returns `400` with `{ "error": "..." }`.
 
 ```bash
 # one merged report

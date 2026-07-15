@@ -44,9 +44,12 @@ describe('advise — findings (spec §5.5)', () => {
     expect(findings.warnings.some((w) => /sets the floor/i.test(w) && /checkout\.spec\.ts/.test(w))).toBe(true);
   });
 
-  it('FR-9 warns about imbalance in measured mode', () => {
-    const { findings } = advise(overSharded, cost);
-    expect(findings.warnings.some((w) => /idle machines/i.test(w))).toBe(true);
+  it('FR-9 exposes imbalance on the measured current, without duplicating it as a warning', () => {
+    const { current, findings } = advise(overSharded, cost);
+    // The imbalance belongs to the current-situation block (spec §5.1/§7.1);
+    // adapters render it inline there, so it must not repeat in the warnings.
+    expect(current.imbalanceMs).toBeGreaterThan(0);
+    expect(findings.warnings.some((w) => /idle machines/i.test(w))).toBe(false);
   });
 
   it('FR-10 lists flaky tests with retries and wasted machine time', () => {

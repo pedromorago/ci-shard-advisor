@@ -112,7 +112,7 @@ El tiempo prometido por un reparto óptimo **no** se consigue con `--shard=i/N` 
 - **Playwright:** `npx playwright test <specs del shard i>` por job.
 - **Cypress:** `npx cypress run --spec "<specs del shard i>"` por contenedor.
 
-El reparto se calcula a **granularidad de fichero** (no se puede rutar medio fichero a un shard). Y el cierre real del círculo: los exporters `github`/`bitbucket` generan el **YAML completo** donde cada job paralelo corre exactamente su lista — la salida del advisor se pega directamente en la config del CI. Nunca se emite un flag que el runner no soporte.
+El reparto se calcula a **granularidad de fichero** (no se puede rutar medio fichero a un shard). Corolario: un plan nunca contiene shards vacíos — si se piden más shards que ficheros de spec, el plan emite como máximo un shard por fichero (`--spec ""` no es un comando real). Y el cierre real del círculo: los exporters `github`/`bitbucket` generan el **YAML completo** donde cada job paralelo corre exactamente su lista — la salida del advisor se pega directamente en la config del CI. Nunca se emite un flag que el runner no soporte.
 
 ### 5.4 Objetivos
 
@@ -133,8 +133,8 @@ Frases, no solo números. Obligatorias cuando aplican:
 - **Infrafragmentación:** "Con 5 shards reducirías la espera un 42 % por +€0.12 por ejecución."
 - **Workers antes que máquinas** *(aparcado con el modelo de workers, 4.1 — no aplica a Cypress)*.
 - **Suelo / cuello de botella (FR-10 clásico):** "A partir de N=3 la espera no baja: 'checkout.spec.ts' (8m 51s) marca el suelo. Considera trocearlo (granularidad / fullyParallel)."
-- **Desequilibrio actual** (solo modo por-shard): ver 5.1.
-- **Flaky:** tests con retries y su coste ("3 tests flaky quemaron 1m 54s de máquina en esta ejecución").
+- **Desequilibrio actual** (solo modo por-shard): ver 5.1. Su casa es el bloque de situación actual (como muestra el mock de 7.1); no se repite en la lista de warnings.
+- **Flaky:** tests con retries **que acabaron pasando** y su coste ("3 tests flaky quemaron 1m 54s de máquina en esta ejecución"). Un test que falló todos sus intentos está roto, no es flaky. *Letra pequeña:* los retries solo viajan en el resultado del Module API; el JSON de mochawesome no los registra, así que con reports mochawesome este finding no puede dispararse.
 
 ### 5.6 Frontera
 
@@ -205,6 +205,7 @@ export interface AdvisorResult {
 
 export function advise(input: AnalyzeInput, cost: CostModel, options?: {
   objective?: Objective; workersPerShard?: number; maxShards?: number;
+  inputFormat?: ReportFormat; // fuerza el formato en vez de autodetectar (3.4)
 }): AdvisorResult;
 ```
 
