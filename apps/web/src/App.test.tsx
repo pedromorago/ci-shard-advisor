@@ -73,6 +73,31 @@ describe('App', () => {
     expect(Number(input.value)).toBeGreaterThan(0);
   });
 
+  it('re-anchors the wait-limit prefill when new reports change the measured wait', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'max-wait' } });
+    const before = Number((screen.getByLabelText(/wait limit/i) as HTMLInputElement).value);
+
+    // A much slower measured situation → the prefill must follow the new anchor
+    // (spec §5.4: prefilled with the CURRENT measured wait), not stay stale.
+    await user.upload(screen.getByLabelText(/upload your cypress reports/i), [
+      reportFile(cy([600000, 600000], 'a'), 'container-1.json'),
+      reportFile(cy([600000], 'b'), 'container-2.json'),
+    ]);
+    const after = Number((await screen.findByLabelText(/wait limit/i) as HTMLInputElement).value);
+    expect(after).toBeGreaterThan(before);
+  });
+
+  it('the prefilled budget always admits the current cost (never rounds it out)', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'budget' } });
+    // With the default budget (= current cost, rounded up) the chosen move must
+    // exist: at worst it coincides with the free rebalance — never "not available".
+    const moves = screen.getByRole('region', { name: /your moves/i });
+    expect(within(moves).queryByText(/not available/i)).not.toBeInTheDocument();
+  });
+
   it('merges into one card when the chosen move IS the rebalance', async () => {
     const user = userEvent.setup();
     render(<App />);

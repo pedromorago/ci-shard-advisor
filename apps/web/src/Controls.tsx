@@ -8,7 +8,7 @@ interface ControlsProps {
   onChange: (settings: AnalysisSettings) => void;
 }
 
-/** The knobs that are not in the reports: setup, price, workers, shard count. */
+/** The knobs that are not in the reports: setup, price, container count. */
 export function Controls({ settings, merged, onChange }: ControlsProps) {
   const update = (patch: Partial<AnalysisSettings>) => onChange({ ...settings, ...patch });
   const num = (raw: string, min: number) => {

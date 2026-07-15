@@ -1,5 +1,5 @@
 import { advise } from '@ci-shard-advisor/core';
-import type { AdvisorResult, CostModel, Objective, ReportFile } from '@ci-shard-advisor/core';
+import type { AdvisorResult, CostModel, MeasuredCurrent, Objective, ReportFile } from '@ci-shard-advisor/core';
 import { DEMO_REPORTS } from './demo';
 
 /**
@@ -77,4 +77,21 @@ export function adviseFrom(reports: ReportFile[], settings: AnalysisSettings): A
 export function formatMoney(costMs: number, pricePerMinute: number): string | null {
   if (!pricePerMinute) return null;
   return `€${((costMs / 60_000) * pricePerMinute).toFixed(2)}`;
+}
+
+/**
+ * Prefills for the parameterized objectives (spec §5.4): anchored to the
+ * measured current situation, rounded UP so the prefilled limit always
+ * contains the current value — "same wait, cheaper" / "same cost, faster"
+ * must be feasible at the moment they are offered.
+ */
+export function prefillWaitSec(current: MeasuredCurrent): number {
+  return Math.ceil(current.feedbackTimeMs / 1000);
+}
+
+export function prefillBudget(current: MeasuredCurrent, pricePerMinute: number): number {
+  const minutes = current.costMs / 60_000;
+  return pricePerMinute > 0
+    ? Math.ceil(minutes * pricePerMinute * 100) / 100 // euros, whole cents
+    : Math.ceil(minutes * 10) / 10; // machine minutes, one decimal
 }
