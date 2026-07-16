@@ -6,8 +6,13 @@ import type { AtomicTask } from '../types/domain';
 import { unitOf } from './vocabulary';
 import type { MeasuredCurrent, Objective, Runner, Scenario, ShardPlan } from './types';
 
-// Deterministic solver budget — see the twin constant in advise.ts (invariant 4).
-const SOLVE = { maxNodes: 200_000 };
+/**
+ * Deterministic solver budget (invariant 4: same input → same output on any
+ * machine). A node is cheap, so this certifies every realistic suite while
+ * still bounding worst-case latency; when exhausted the B&B stays honest
+ * (optimal: false + gap). Shared with advise()'s frontier build.
+ */
+export const SOLVE = { maxNodes: 200_000 };
 
 /** Lexicographic tuple comparison (a < b). */
 function tupleLess(a: number[], b: number[]): boolean {
@@ -49,11 +54,7 @@ function deltas(config: ConfigPoint, current: MeasuredCurrent) {
  * (falling back to the task id when the report carries no file) and the solver
  * splits the files. `specs` is what each CI job actually runs.
  */
-export function planFor(
-  tasks: AtomicTask[],
-  shardCount: number,
-  workersPerShard: number,
-): ShardPlan {
+export function planFor(tasks: AtomicTask[], shardCount: number): ShardPlan {
   const groups = groupByFile(tasks);
   // A shard with no spec cannot exist in a runnable plan (`--spec ""` is not a
   // real command), so never split across more shards than there are files.
@@ -97,6 +98,33 @@ export function chooseObjective(frontier: ConfigPoint[], objective: Objective): 
 }
 
 /**
+ * A constrained argmin over the frontier (the shape scenarios 2 and 3 share):
+ * the best feasible point becomes a full scenario with plan and deltas; an
+ * empty feasible set becomes an explicit `unavailable` — never an invention.
+ */
+function constrainedScenario(
+  id: Scenario['id'],
+  frontier: ConfigPoint[],
+  current: MeasuredCurrent,
+  tasks: AtomicTask[],
+  fallbackConfig: ConfigPoint,
+  feasible: (p: ConfigPoint) => boolean,
+  key: (p: ConfigPoint) => number[],
+  reasons: { available: (p: ConfigPoint) => string; unavailable: string },
+): Scenario {
+  const best = minBy(frontier.filter(feasible), key);
+  return best
+    ? {
+        id,
+        config: best,
+        vsCurrent: deltas(best, current),
+        reason: reasons.available(best),
+        plan: planFor(tasks, best.shardCount),
+      }
+    : { id, config: fallbackConfig, reason: reasons.unavailable, unavailable: true };
+}
+
+/**
  * Build the four scenarios anchored to the current situation (spec §5.2). Every
  * scenario is a query against the optimal frontier; coincidences are flagged
  * with `sameAs`, absent ones with `unavailable`.
@@ -105,7 +133,6 @@ export function buildScenarios(
   frontier: ConfigPoint[],
   current: MeasuredCurrent,
   tasks: AtomicTask[],
-  workersPerShard: number,
   objective: Objective,
   runner: Runner = 'playwright',
 ): Scenario[] {
@@ -118,51 +145,41 @@ export function buildScenarios(
     config: rebalanceConfig,
     vsCurrent: deltas(rebalanceConfig, current),
     reason: 'Same machines, specs redistributed by duration — rebalancing is free.',
-    plan: planFor(tasks, current.shardCount, workersPerShard),
+    plan: planFor(tasks, current.shardCount),
   };
 
   // 2) Same wait, cheaper: argmin cost s.t. feedback <= current feedback.
-  const cheaper = minBy(
-    frontier.filter((p) => p.feedbackTimeMs <= current.feedbackTimeMs),
+  const sameFeedbackCheaper = constrainedScenario(
+    'same-feedback-cheaper',
+    frontier,
+    current,
+    tasks,
+    rebalanceConfig,
+    (p) => p.feedbackTimeMs <= current.feedbackTimeMs,
     (p) => [p.costMs, p.shardCount],
+    {
+      available: (p) =>
+        p.shardCount < current.shardCount
+          ? `${p.shardCount} ${unit}s still beat your current wait.`
+          : 'Keeps your wait at a lower cost.',
+      unavailable: 'Nothing cheaper keeps your current wait.',
+    },
   );
-  const sameFeedbackCheaper: Scenario = cheaper
-    ? {
-        id: 'same-feedback-cheaper',
-        config: cheaper,
-        vsCurrent: deltas(cheaper, current),
-        reason:
-          cheaper.shardCount < current.shardCount
-            ? `${cheaper.shardCount} ${unit}s still beat your current wait.`
-            : 'Keeps your wait at a lower cost.',
-        plan: planFor(tasks, cheaper.shardCount, workersPerShard),
-      }
-    : {
-        id: 'same-feedback-cheaper',
-        config: rebalanceConfig,
-        reason: 'Nothing cheaper keeps your current wait.',
-        unavailable: true,
-      };
 
   // 3) Same cost, faster: argmin feedback s.t. cost <= current cost.
-  const faster = minBy(
-    frontier.filter((p) => p.costMs <= current.costMs),
+  const sameCostFaster = constrainedScenario(
+    'same-cost-faster',
+    frontier,
+    current,
+    tasks,
+    rebalanceConfig,
+    (p) => p.costMs <= current.costMs,
     (p) => [p.feedbackTimeMs, p.shardCount],
+    {
+      available: () => 'Your current budget buys a faster pipeline.',
+      unavailable: 'Nothing faster fits your current cost.',
+    },
   );
-  const sameCostFaster: Scenario = faster
-    ? {
-        id: 'same-cost-faster',
-        config: faster,
-        vsCurrent: deltas(faster, current),
-        reason: 'Your current budget buys a faster pipeline.',
-        plan: planFor(tasks, faster.shardCount, workersPerShard),
-      }
-    : {
-        id: 'same-cost-faster',
-        config: rebalanceConfig,
-        reason: 'Nothing faster fits your current cost.',
-        unavailable: true,
-      };
 
   // 4) By objective. When a parameterized objective has no feasible point the
   // scenario says so explicitly — it never invents an answer (spec §5.2).
@@ -173,7 +190,7 @@ export function buildScenarios(
         config: objectiveConfig,
         vsCurrent: deltas(objectiveConfig, current),
         reason: objectiveReason(objective, runner),
-        plan: planFor(tasks, objectiveConfig.shardCount, workersPerShard),
+        plan: planFor(tasks, objectiveConfig.shardCount),
         objective,
       }
     : {

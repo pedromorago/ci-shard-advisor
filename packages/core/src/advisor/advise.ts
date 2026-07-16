@@ -1,18 +1,11 @@
-import { classify } from '../report/classifier';
 import { groupByFile } from '../report/normalizer';
 import { buildFrontier } from '../recommender/frontier';
 import { readReports } from './reports';
 import { feedbackAtWorkers, measureCurrent, modelCurrent, splitByCount } from './current';
-import { buildScenarios } from './scenarios';
+import { buildScenarios, SOLVE } from './scenarios';
 import { computeFindings } from './findings';
 import type { ReportFormat } from '../report/analyze';
 import type { AdvisorResult, AnalyzeInput, CostModel, Objective } from './types';
-
-// Deterministic solver budget (invariant 4: same input → same output on any
-// machine). A node is cheap, so this certifies every realistic suite while
-// still bounding worst-case latency; when exhausted the B&B stays honest
-// (optimal: false + gap).
-const SOLVE = { maxNodes: 200_000 };
 
 export interface AdviseOptions {
   objective?: Objective;
@@ -33,20 +26,19 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
   const runner = format === 'cypress' || format === 'mochawesome' ? 'cypress' : 'playwright';
   // Cypress runs the specs of a machine serially: workers are forced to 1 (FR-13).
   const workersPerShard = runner === 'cypress' ? 1 : options.workersPerShard ?? 1;
-  const tasks = classify(allTasks);
   // File granularity end-to-end (invariant 11.7): the frontier splits whole
   // spec files, so every promised number is reachable by the emitted plan.
-  const durations = groupByFile(tasks).map((group) => group.durationMs);
+  const durations = groupByFile(allTasks).map((group) => group.durationMs);
 
   const current =
     input.kind === 'per-shard'
       ? measureCurrent(perShardTasks, cost, workersPerShard)
-      : modelCurrent(tasks, input.currentShardCount ?? 1, cost, workersPerShard);
+      : modelCurrent(allTasks, input.currentShardCount ?? 1, cost, workersPerShard);
 
   // "Workers before machines" (FR-13): what the SAME machines would give with
   // one more worker each. Playwright-only — Cypress has no in-machine workers.
   const shardLayout =
-    input.kind === 'per-shard' ? perShardTasks : splitByCount(tasks, current.shardCount);
+    input.kind === 'per-shard' ? perShardTasks : splitByCount(allTasks, current.shardCount);
   const workersUpgrade =
     runner === 'playwright'
       ? { workers: workersPerShard + 1, feedbackMs: feedbackAtWorkers(shardLayout, cost, workersPerShard + 1) }
@@ -66,8 +58,7 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
   const scenarios = buildScenarios(
     frontier,
     current,
-    tasks,
-    workersPerShard,
+    allTasks,
     options.objective ?? { kind: 'balanced' },
     runner,
   );
@@ -76,8 +67,8 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
     current,
     scenarios,
     frontier,
-    findings: computeFindings(frontier, current, tasks, cost, workersUpgrade, runner),
-    tasks,
+    findings: computeFindings(frontier, current, allTasks, cost, workersUpgrade, runner),
+    tasks: allTasks,
     runner,
   };
 }

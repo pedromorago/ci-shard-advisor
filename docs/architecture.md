@@ -111,11 +111,10 @@ y la CLI (`--input-format`).
 > **modelo de workers** (concepto Playwright: en Cypress cada contenedor ejecuta
 > sus specs en serie, `workers` se fuerza a 1).
 
-## Decisiones de diseño del pipeline de datos (parser / normalizer / classifier)
+## Decisiones de diseño del pipeline de datos (parser / normalizer)
 
 - **Parser** (`parseReport`): acepta el JSON como string o ya parseado (el core no toca `fs`; leer es cosa del adaptador), valida solo el subconjunto del report de Playwright que consumimos y tolera campos extra u opcionales ausentes, para no romperse entre versiones. Falla con `ReportParseError` indicando la **ruta del campo** culpable.
 - **Normalizer** (`normalize`): recorre las `suites` **recursivamente** (los `describe` anidan suites) y emite un `AtomicTask` por test (spec × proyecto). La duración es la **suma de todos los intentos**, porque los reintentos los re-ejecuta la máquina de CI y cuentan como carga. Mapea el estado de Playwright (`expected→passed`, `unexpected→failed`, `flaky`, `skipped`).
-- **Classifier** (`classify`): asigna un `block` por reglas ordenadas (tags o patrón sobre título/fichero, gana la primera) con bloque por defecto. Es puro (no muta la entrada).
 - **`readReport` / `detectFormat`**: la entrada de cada fichero — autodetección por forma del report (o formato forzado) y despacho al lector correcto. Sobre ellos, `readReports` (advisor) resuelve el modo per-shard/fusionado y el error de formatos mezclados. El punto de entrada del producto es `advise()`.
 - QA destacable: el parser se prueba con una batería de reports **malformados** (JSON inválido, tipos incorrectos, campos ausentes) verificando la ruta del error; el resto del pipeline con un **fixture realista** (suites anidadas, multi-proyecto, un flaky con reintentos, un skipped, tags) y tests **end-to-end** que van del JSON al `AdvisorResult`.
 
