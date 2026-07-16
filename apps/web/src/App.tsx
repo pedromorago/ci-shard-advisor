@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { formatDuration } from '@ci-shard-advisor/core';
+import { useMemo, useState } from 'react';
+import { formatDuration, objectiveLabel, presentedMoves, unitsOf } from '@ci-shard-advisor/core';
 import type { ReportFile } from '@ci-shard-advisor/core';
 import { adviseFrom, DEFAULT_SETTINGS, DEMO_REPORTS, prefillBudget, prefillWaitSec } from './analysis';
 import type { AnalysisSettings } from './analysis';
@@ -22,35 +22,28 @@ export function App() {
 
   // Keep the parameterized prefills anchored to the CURRENT measured situation
   // (spec §5.4): when new reports or a new price move the anchor, re-seed the
-  // limit. Editing the limit itself never changes the anchor, so typing is safe.
+  // limit. Editing the limit itself never moves the anchor, so typing is safe.
+  // Adjusted during render (the store-previous-value idiom) instead of in an
+  // effect: React re-renders immediately, with no committed stale frame.
   const anchoredWaitSec = prefillWaitSec(result.current);
   const anchoredBudget = prefillBudget(result.current, settings.pricePerMinute);
-  useEffect(() => {
-    setSettings((s) => {
-      if (s.objective.kind === 'max-wait' && s.objective.seconds !== anchoredWaitSec) {
-        return { ...s, objective: { kind: 'max-wait', seconds: anchoredWaitSec } };
-      }
-      if (s.objective.kind === 'budget' && s.objective.euros !== anchoredBudget) {
-        return { ...s, objective: { kind: 'budget', euros: anchoredBudget } };
-      }
-      return s;
-    });
-  }, [anchoredWaitSec, anchoredBudget]);
+  const [prevAnchor, setPrevAnchor] = useState({ waitSec: anchoredWaitSec, budget: anchoredBudget });
+  if (prevAnchor.waitSec !== anchoredWaitSec || prevAnchor.budget !== anchoredBudget) {
+    setPrevAnchor({ waitSec: anchoredWaitSec, budget: anchoredBudget });
+    if (settings.objective.kind === 'max-wait' && settings.objective.seconds !== anchoredWaitSec) {
+      setSettings({ ...settings, objective: { kind: 'max-wait', seconds: anchoredWaitSec } });
+    } else if (settings.objective.kind === 'budget' && settings.objective.euros !== anchoredBudget) {
+      setSettings({ ...settings, objective: { kind: 'budget', euros: anchoredBudget } });
+    }
+  }
   const testTimeMs = useMemo(
     () => result.tasks.reduce((sum, task) => sum + task.durationMs, 0),
     [result],
   );
-  // The presentation (spec §5.2): the free rebalance + the chosen move.
-  const rebalance = result.scenarios.find((s) => s.id === 'rebalance')!;
-  const chosen = result.scenarios.find((s) => s.id === 'objective')!;
-  const merged = !chosen.unavailable && chosen.config.shardCount === rebalance.config.shardCount;
-  const OBJECTIVE_LABEL: Record<AnalysisSettings['objective']['kind'], string> = {
-    recommended: 'Recommended',
-    fastest: 'Fastest',
-    'max-wait': 'Within your wait',
-    budget: 'Within your budget',
-  };
-  const chosenLabel = OBJECTIVE_LABEL[settings.objective.kind];
+  // The presentation decision (spec §5.2) is the core's, shared with the CLI:
+  // the free rebalance + the chosen move, merged into one card if they coincide.
+  const { rebalance, chosen, merged } = presentedMoves(result.scenarios);
+  const chosenLabel = objectiveLabel(chosen);
 
   function handleSelect(uploaded: ReportFile[]) {
     try {
@@ -99,7 +92,7 @@ export function App() {
 
       <Controls settings={settings} merged={reports.length < 2} onChange={setSettings} />
 
-      <CurrentCard current={result.current} pricePerMinute={settings.pricePerMinute} />
+      <CurrentCard current={result.current} pricePerMinute={settings.pricePerMinute} runner={result.runner} />
 
       <section className="card" aria-labelledby="moves-heading">
         <h2 id="moves-heading">Your moves</h2>
@@ -113,7 +106,7 @@ export function App() {
           {merged ? (
             <MoveCard
               tag={chosenLabel}
-              title={`Rebalance your ${result.current.shardCount} containers — your best move is free`}
+              title={`Rebalance your ${unitsOf(result.current.shardCount, result.runner)} — your best move is free`}
               scenario={chosen}
               pricePerMinute={settings.pricePerMinute}
               runner={result.runner}
@@ -122,14 +115,14 @@ export function App() {
             <>
               <MoveCard
                 tag="Free"
-                title={`Rebalance your ${result.current.shardCount} containers`}
+                title={`Rebalance your ${unitsOf(result.current.shardCount, result.runner)}`}
                 scenario={rebalance}
                 pricePerMinute={settings.pricePerMinute}
                 runner={result.runner}
               />
               <MoveCard
                 tag={chosenLabel}
-                title={`${chosen.config.shardCount} containers`}
+                title={unitsOf(chosen.config.shardCount, result.runner)}
                 scenario={chosen}
                 pricePerMinute={settings.pricePerMinute}
                 runner={result.runner}

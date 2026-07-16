@@ -56,4 +56,17 @@ describe('POST /advise contract', () => {
     expect(body.current.measured).toBe(true);
     expect(body.current.price).toMatch(/^€/);
   });
+
+  it('the REST Assured suite validates this exact schema (no silent drift)', async () => {
+    // The Java suite needs its own classpath copy of the schema. That copy is
+    // intentional — this guard is what keeps the two byte-identical, so the
+    // TS and Java suites can never validate different contracts.
+    const { readFile } = await import('node:fs/promises');
+    const here = new URL('../schemas/advisor-result.schema.json', import.meta.url);
+    const java = new URL(
+      '../rest-assured/src/test/resources/advisor-result.schema.json',
+      import.meta.url,
+    );
+    expect(await readFile(java, 'utf8')).toBe(await readFile(here, 'utf8'));
+  });
 });

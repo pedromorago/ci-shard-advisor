@@ -1,14 +1,15 @@
-import { formatDuration } from '@ci-shard-advisor/core';
-import type { MeasuredCurrent } from '@ci-shard-advisor/core';
-import { formatMoney } from './analysis';
+import { formatDuration, formatMoney, unitOf, unitsOf } from '@ci-shard-advisor/core';
+import type { MeasuredCurrent, Runner } from '@ci-shard-advisor/core';
 
 interface CurrentCardProps {
   current: MeasuredCurrent;
   pricePerMinute: number;
+  /** Decides the machine word (Cypress containers, Playwright shards). */
+  runner: Runner;
 }
 
 /** The team's situation today — measured from per-container reports, or modeled. */
-export function CurrentCard({ current, pricePerMinute }: CurrentCardProps) {
+export function CurrentCard({ current, pricePerMinute, runner }: CurrentCardProps) {
   const money = formatMoney(current.costMs, pricePerMinute);
   const slowestShard = current.shardTimesMs.indexOf(Math.max(...current.shardTimesMs)) + 1;
 
@@ -18,9 +19,7 @@ export function CurrentCard({ current, pricePerMinute }: CurrentCardProps) {
         Your setup today <span className="tag">{current.measured ? 'measured' : 'modeled'}</span>
       </h2>
       <p className="recommendation__headline">
-        <strong>
-          {current.shardCount} container{current.shardCount === 1 ? '' : 's'}
-        </strong>
+        <strong>{unitsOf(current.shardCount, runner)}</strong>
       </p>
       <dl className="stats">
         <div className="stat">
@@ -34,7 +33,7 @@ export function CurrentCard({ current, pricePerMinute }: CurrentCardProps) {
       </dl>
       {current.measured && current.imbalanceMs > 0 ? (
         <p className="current__imbalance">
-          ⚠ Imbalance: {formatDuration(current.imbalanceMs)} of idle machine time (slowest is container #{slowestShard}).
+          ⚠ Imbalance: {formatDuration(current.imbalanceMs)} of idle machine time (slowest is {unitOf(runner)} #{slowestShard}).
         </p>
       ) : null}
     </section>

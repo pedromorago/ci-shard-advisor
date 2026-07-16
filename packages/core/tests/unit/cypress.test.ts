@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseCypressReport, normalizeCypress } from '../../src/report/cypress';
 import { ReportParseError } from '../../src/report/parser';
-import { analyze, detectFormat } from '../../src/report/analyze';
+import { detectFormat, readReport } from '../../src/report/analyze';
 import cypressReport from '../fixtures/cypress-report.json';
 import playwrightReport from '../fixtures/demo-report.json';
 
@@ -83,17 +83,11 @@ describe('normalizeCypress', () => {
   });
 });
 
-describe('analyze with format: cypress', () => {
-  it('runs the whole pipeline on a Cypress report', () => {
-    const { tasks, recommendation } = analyze(cypressReport, {
-      format: 'cypress',
-      maxShards: 4,
-      startupOverheadMs: 30000,
-    });
-    expect(tasks).toHaveLength(5);
-    expect(tasks.filter((t) => t.block === 'sanity')).toHaveLength(1);
-    expect(recommendation.recommended.shardCount).toBeGreaterThanOrEqual(1);
-    expect(recommendation.frontier).toHaveLength(4);
+describe('readReport with format: cypress', () => {
+  it('routes the report through the Cypress reader', () => {
+    expect(readReport(cypressReport, 'cypress')).toHaveLength(5);
+    // Forcing the wrong reader fails loudly instead of misreading.
+    expect(() => readReport(playwrightReport, 'cypress')).toThrow(/report\.runs/);
   });
 });
 
@@ -105,9 +99,9 @@ describe('format auto-detection', () => {
     expect(detectFormat('{ not json')).toBe('playwright');
   });
 
-  it('analyze auto-detects the format when none is given', () => {
-    // No `format` option — the Cypress report is recognized from its shape.
-    expect(analyze(cypressReport, { maxShards: 4 }).tasks).toHaveLength(5);
-    expect(analyze(playwrightReport, { maxShards: 4 }).tasks).toHaveLength(12);
+  it('readReport auto-detects the format when none is given', () => {
+    // No format argument — the Cypress report is recognized from its shape.
+    expect(readReport(cypressReport)).toHaveLength(5);
+    expect(readReport(playwrightReport)).toHaveLength(12);
   });
 });

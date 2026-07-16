@@ -54,14 +54,14 @@ error señala la **ruta del campo** culpable.
 ### 6. Snapshot testing
 Las salidas de presentación (texto CLI, Markdown) se congelan con *inline
 snapshots*; cualquier cambio de formato salta como diff. Requiere determinismo
-total.
-→ [`exporters-text.test.ts`](../packages/core/tests/integration/exporters-text.test.ts),
-[`exporters-markdown.test.ts`](../packages/core/tests/integration/exporters-markdown.test.ts)
+total (sin locale, sin reloj, y solver con presupuesto de nodos).
+→ [`advisor-exporters.test.ts`](../packages/core/tests/integration/advisor-exporters.test.ts)
 
 ### 7. Tests de integración end-to-end (core)
-Del JSON crudo a la recomendación, pasando por parser → normalizer → classifier →
-recommend, sobre un fixture realista.
-→ [`analyze.test.ts`](../packages/core/tests/integration/analyze.test.ts)
+De los reports crudos al `AdvisorResult` y sus salidas renderizadas, pasando por
+readers → normalizer → scheduler → advisor, sobre entradas per-shard y fusionadas.
+→ [`advisor-exporters.test.ts`](../packages/core/tests/integration/advisor-exporters.test.ts),
+[`advisor-reports.test.ts`](../packages/core/tests/unit/advisor-reports.test.ts)
 
 ### 8. Component testing (Testing Library)
 Se consulta el DOM como un usuario: por **rol y nombre accesible**, nunca por

@@ -2,25 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readReports } from '../../src/advisor/reports';
 import { measureCurrent, modelCurrent } from '../../src/advisor/current';
 import { ReportParseError } from '../../src/report/parser';
-import type { ReportFile } from '../../src/advisor/types';
-
-/** A minimal Playwright report with the given per-test durations (ms). */
-function pwReport(durations: number[]): unknown {
-  return {
-    suites: [
-      {
-        specs: durations.map((duration, i) => ({
-          title: `t${i}`,
-          tests: [{ status: 'expected', results: [{ duration }] }],
-        })),
-      },
-    ],
-  };
-}
-
-function file(name: string, content: unknown): ReportFile {
-  return { name, content };
-}
+import { pwReportBare as pwReport, reportFile as file } from '../helpers/reports';
 
 const cost = { startupOverheadMs: 30000 };
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseJUnitReport, normalizeJUnit } from '../../src/report/junit';
 import { ReportParseError } from '../../src/report/parser';
-import { analyze, detectFormat } from '../../src/report/analyze';
+import { detectFormat, readReport } from '../../src/report/analyze';
 
 const JUNIT = `<?xml version="1.0" encoding="UTF-8"?>
 <testsuites name="run" tests="4">
@@ -58,16 +58,13 @@ describe('normalizeJUnit', () => {
   });
 });
 
-describe('JUnit format detection and analyze', () => {
+describe('JUnit format detection and reading', () => {
   it('detects XML input as JUnit', () => {
     expect(detectFormat(JUNIT)).toBe('junit');
     expect(detectFormat('  <testsuites/>')).toBe('junit');
   });
 
-  it('analyze auto-detects and runs on a JUnit report', () => {
-    const { tasks, recommendation } = analyze(JUNIT, { maxShards: 4, startupOverheadMs: 30000 });
-    expect(tasks).toHaveLength(4);
-    expect(tasks.filter((t) => t.block === 'sanity')).toHaveLength(1);
-    expect(recommendation.recommended.shardCount).toBeGreaterThanOrEqual(1);
+  it('readReport auto-detects and reads a JUnit report', () => {
+    expect(readReport(JUNIT)).toHaveLength(4);
   });
 });

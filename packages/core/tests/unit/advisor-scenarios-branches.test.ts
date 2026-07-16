@@ -6,6 +6,7 @@ import { toAdvisorText, toAdvisorMarkdown } from '../../src/exporters/advisor';
 import type { ConfigPoint } from '../../src/recommender/frontier';
 import type { AdvisorResult, CostModel, MeasuredCurrent, ReportFile } from '../../src/advisor/types';
 import type { AtomicTask } from '../../src/types/domain';
+import { pwReport, reportFile as file, task } from '../helpers/reports';
 
 /** A synthetic frontier: cost rises and feedback falls with more shards. */
 const point = (shardCount: number, feedbackTimeMs: number, costMs: number): ConfigPoint => ({
@@ -18,21 +19,9 @@ const point = (shardCount: number, feedbackTimeMs: number, costMs: number): Conf
 });
 const FRONTIER: ConfigPoint[] = [point(1, 150000, 120000), point(2, 90000, 150000), point(3, 70000, 180000)];
 
-const task = (id: string, durationMs: number): AtomicTask => ({
-  id,
-  title: id,
-  file: `${id}.spec.ts`,
-  durationMs,
-  status: 'passed',
-  retries: 0,
-});
 const TASKS: AtomicTask[] = [task('a', 40000), task('b', 30000), task('c', 20000), task('d', 10000)];
 
 const cost: CostModel = { startupOverheadMs: 30000, pricePerMinute: 0.1, currency: '€' };
-const file = (name: string, content: unknown): ReportFile => ({ name, content });
-const pwReport = (durations: number[]): unknown => ({
-  suites: [{ specs: durations.map((duration, i) => ({ title: `t${i}`, file: `t${i}.spec.ts`, tests: [{ status: 'expected', results: [{ duration }] }] })) }],
-});
 
 describe('chooseObjective — every objective kind', () => {
   it('fastest and cheapest hit the frontier extremes', () => {
@@ -70,7 +59,7 @@ describe('chooseObjective — every objective kind', () => {
       imbalanceMs: 30000,
       measured: true,
     };
-    const scenarios = buildScenarios(FRONTIER, current, TASKS, 1, { kind: 'budget', costMs: 100000 }, 'cypress');
+    const scenarios = buildScenarios(FRONTIER, current, TASKS, { kind: 'budget', costMs: 100000 }, 'cypress');
     const objective = scenarios.find((s) => s.id === 'objective')!;
     expect(objective.unavailable).toBe(true);
     expect(objective.reason).toMatch(/No configuration fits your cost budget/);
@@ -90,7 +79,7 @@ describe('buildScenarios — unavailable branches', () => {
   };
 
   it('marks same-feedback-cheaper and same-cost-faster unavailable', () => {
-    const scenarios = buildScenarios(FRONTIER, unbeatable, TASKS, 1, { kind: 'fastest' });
+    const scenarios = buildScenarios(FRONTIER, unbeatable, TASKS, { kind: 'fastest' });
     const cheaper = scenarios.find((s) => s.id === 'same-feedback-cheaper')!;
     const faster = scenarios.find((s) => s.id === 'same-cost-faster')!;
     expect(cheaper.unavailable).toBe(true);
@@ -101,9 +90,9 @@ describe('buildScenarios — unavailable branches', () => {
 
   it('words the budget and weight objective reasons', () => {
     const normal: MeasuredCurrent = { shardCount: 2, shardTimesMs: [90000, 90000], feedbackTimeMs: 120000, costMs: 200000, imbalanceMs: 0, measured: true };
-    const budget = buildScenarios(FRONTIER, normal, TASKS, 1, { kind: 'budget', costMs: 160000 });
+    const budget = buildScenarios(FRONTIER, normal, TASKS, { kind: 'budget', costMs: 160000 });
     expect(budget.find((s) => s.id === 'objective')!.reason).toMatch(/within your cost budget/);
-    const weight = buildScenarios(FRONTIER, normal, TASKS, 1, { kind: 'weight', costPerFeedbackMinute: 5 });
+    const weight = buildScenarios(FRONTIER, normal, TASKS, { kind: 'weight', costPerFeedbackMinute: 5 });
     expect(weight.find((s) => s.id === 'objective')!.reason).toMatch(/trade-off for your weighting/);
   });
 });
@@ -112,7 +101,7 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
   const unbeatable: MeasuredCurrent = { shardCount: 3, shardTimesMs: [1, 1, 1], feedbackTimeMs: 1, costMs: 1, imbalanceMs: 0, measured: true };
   const result: AdvisorResult = {
     current: unbeatable,
-    scenarios: buildScenarios(FRONTIER, unbeatable, TASKS, 1, { kind: 'fastest' }),
+    scenarios: buildScenarios(FRONTIER, unbeatable, TASKS, { kind: 'fastest' }),
     frontier: FRONTIER,
     findings: { warnings: [], flaky: [] },
     tasks: TASKS,
@@ -128,7 +117,7 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
 
   it('text shows rebalance + the unavailable chosen move separately', () => {
     // A budget nothing meets → the objective falls back to cheapest (1 shard ≠ 3).
-    const scenarios = buildScenarios(FRONTIER, unbeatable, TASKS, 1, { kind: 'budget', costMs: 100000 });
+    const scenarios = buildScenarios(FRONTIER, unbeatable, TASKS, { kind: 'budget', costMs: 100000 });
     const text = toAdvisorText({ ...result, scenarios }, cost);
     expect(text).toMatch(/Free\) Rebalance your 3 shards/);
     expect(text).toMatch(/Within your budget\)/);
@@ -140,8 +129,8 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
   });
 
   it('labels every objective kind on the chosen move', () => {
-    const labelFor = (objective: Parameters<typeof buildScenarios>[4]) =>
-      toAdvisorText({ ...result, scenarios: buildScenarios(FRONTIER, unbeatable, TASKS, 1, objective) }, cost);
+    const labelFor = (objective: Parameters<typeof buildScenarios>[3]) =>
+      toAdvisorText({ ...result, scenarios: buildScenarios(FRONTIER, unbeatable, TASKS, objective) }, cost);
     expect(labelFor({ kind: 'max-feedback', feedbackMs: 10_000_000 })).toMatch(/Within your wait\)/);
     expect(labelFor({ kind: 'cheapest' })).toMatch(/Cheapest\)/);
     expect(labelFor({ kind: 'weight', costPerFeedbackMinute: 0 })).toMatch(/Your weighting\)/);
@@ -149,7 +138,7 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
   });
 
   it('markdown renders rebalance + chosen as two rows when they differ', () => {
-    const scenarios = buildScenarios(FRONTIER, unbeatable, TASKS, 1, { kind: 'cheapest' }); // 1 shard ≠ 3
+    const scenarios = buildScenarios(FRONTIER, unbeatable, TASKS, { kind: 'cheapest' }); // 1 shard ≠ 3
     const md = toAdvisorMarkdown({ ...result, scenarios }, cost);
     expect(md).toMatch(/Rebalance your 3 shards \(free\)/);
     expect(md).toMatch(/\| Cheapest \| 1 \|/);
@@ -157,7 +146,7 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
 
   it('says the chosen move is not available instead of inventing one', () => {
     // Hand-built: an objective scenario flagged unavailable (defensive path).
-    const rebalance = buildScenarios(FRONTIER, unbeatable, TASKS, 1, { kind: 'fastest' }).find((s) => s.id === 'rebalance')!;
+    const rebalance = buildScenarios(FRONTIER, unbeatable, TASKS, { kind: 'fastest' }).find((s) => s.id === 'rebalance')!;
     const unavailable = {
       id: 'objective' as const,
       config: rebalance.config,

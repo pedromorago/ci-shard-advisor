@@ -110,13 +110,16 @@ body {
 
 .control input,
 .control select {
-  width: 11rem;
   padding: 0.4rem 0.5rem;
   font: inherit;
   color: var(--text);
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 8px;
+}
+
+.control select {
+  width: 11rem;
 }
 
 .control input {
@@ -182,11 +185,6 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.recommendation__savings {
-  margin: 1rem 0 0;
-  color: var(--muted);
-}
-
 .tag {
   font-size: 0.7rem;
   font-weight: 600;
@@ -232,19 +230,6 @@ body {
   gap: 0.6rem;
 }
 
-.move__num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
 .move__title strong {
   color: var(--accent);
 }
@@ -261,12 +246,6 @@ body {
 
 .move__reason {
   margin: 0.25rem 0;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.move__same {
-  margin: 0.4rem 0 0;
   color: var(--muted);
   font-size: 0.9rem;
 }
@@ -313,56 +292,6 @@ body {
   font-size: 0.95rem;
 }
 
-.current__note {
-  color: var(--muted);
-  font-weight: 400;
-  font-size: 0.85rem;
-}
-
-.modes {
-  display: inline-flex;
-  gap: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.mode {
-  padding: 0.45rem 0.9rem;
-  font: inherit;
-  color: var(--muted);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.mode + .mode {
-  border-left: 1px solid var(--border);
-}
-
-.mode--active {
-  background: var(--accent);
-  color: #fff;
-}
-
-.modes__hint {
-  margin: 0.5rem 0 1rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.explore__control {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
-}
-
-.explore__control input[type='range'] {
-  width: 100%;
-  accent-color: var(--accent);
-}
-
 .details {
   padding: 0;
 }
@@ -375,19 +304,6 @@ body {
 
 .details__body {
   padding: 0 1.5rem 1.5rem;
-}
-
-.ci__hint {
-  color: var(--muted);
-  margin: 0 0 0.9rem;
-}
-
-.ci__hint code {
-  color: var(--text);
-}
-
-.ci__copy {
-  margin-left: auto;
 }
 
 .ci__code,
