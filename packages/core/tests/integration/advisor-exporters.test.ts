@@ -51,4 +51,67 @@ describe('advisor exporters', () => {
     const text = toAdvisorText(advise(input, { startupOverheadMs: 30000 }), { startupOverheadMs: 30000 });
     expect(text).not.toMatch(/[$€]\d/);
   });
+
+  // Snapshot testing (docs/testing.md §6): the rendered text output is frozen
+  // verbatim — any formatting change surfaces as a diff. Possible only because
+  // the output is deterministic (no locale, no clock, node-budget solver).
+  it('text output is frozen as an inline snapshot', () => {
+    expect(toAdvisorText(advise(input, cost), cost)).toMatchInlineSnapshot(`
+      "CI Shard Advisor
+      ================
+
+      Suite: 4 tests, 2m 0s of test time (Playwright, 2 shard reports)
+
+      Your current setup (measured)
+        2 shards × 1 worker
+        Feedback time: 2m 10s   (slowest shard: #1)
+        Billed cost:   3m 0s  →  $0.30 per run
+        ⚠ Imbalance: shard #2 finishes 1m 20s before shard #1. You are paying for idle machines.
+
+      Your moves
+        Free) Rebalance your 2 shards   feedback 1m 30s (−40.0s)   cost $0.30 (±0)
+           Same machines, specs redistributed by duration — rebalancing is free.
+           Apply (each machine runs its own list):
+             shard 1: npx playwright test t0.spec.ts
+             shard 2: npx playwright test t1.spec.ts
+           (--format github or bitbucket emits the full CI config)
+        Recommended) 1 shards   feedback 2m 30s (+20.0s)   cost $0.25 (−$0.05)
+           The knee of the cost/time frontier — past it, shards stop paying off.
+           Apply (each machine runs its own list):
+             shard 1: npx playwright test t0.spec.ts t1.spec.ts
+           (--format github or bitbucket emits the full CI config)
+
+      Warnings
+        • With 2 workers per shard your wait would drop to 1m 20s at no extra cost — same bill, same machines. Validate with one run: scaling is not perfect on small runners.
+
+      Frontier (shards · feedback · billed · price)
+         1  2m 30s   2m 30s    $0.25
+         2  1m 30s   3m 0s     $0.30"
+    `);
+  });
+
+  it('markdown output is frozen as an inline snapshot', () => {
+    expect(toAdvisorMarkdown(advise(input, cost), cost)).toMatchInlineSnapshot(`
+      "## CI Shard Advisor
+
+      **4 tests · 2m 0s of test time**
+
+      ### Your setup today (measured)
+
+      **2 shards** — 2m 10s feedback, $0.30 cost.
+
+      Imbalance: 1m 20s of idle machine time.
+
+      ### Your moves
+
+      | Move | Machines | Feedback | Cost |
+      | --- | ---: | ---: | ---: |
+      | Rebalance your 2 shards (free) | 2 | 1m 30s | $0.30 |
+      | Recommended | 1 | 2m 30s | $0.25 |
+
+      ### Warnings
+
+      - With 2 workers per shard your wait would drop to 1m 20s at no extra cost — same bill, same machines. Validate with one run: scaling is not perfect on small runners."
+    `);
+  });
 });

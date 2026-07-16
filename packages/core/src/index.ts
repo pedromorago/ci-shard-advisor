@@ -1,35 +1,16 @@
-export type { TaskStatus, AtomicTask } from './types/domain';
-export { lpt } from './scheduler/lpt';
-export type { ScheduleResult } from './scheduler/lpt';
-export { avgBound, pmaxBound, lowerBound } from './scheduler/bounds';
-export { branchAndBound } from './scheduler/branch-and-bound';
-export type { SolveResult, SolveOptions } from './scheduler/branch-and-bound';
-export { simulateShard, simulateRun } from './scheduler/workers';
-export type { SimulationResult, RunSimulation } from './scheduler/workers';
-export { buildFrontier, evaluateConfig } from './recommender/frontier';
-export type { ConfigPoint, FrontierOptions } from './recommender/frontier';
-export { findElbow } from './recommender/elbow';
-export { recommend } from './recommender/recommend';
-export type { RecommendOptions, RecommendationResult, Savings, Priority } from './recommender/recommend';
-export { parseReport, ReportParseError } from './report/parser';
-export type { PlaywrightReport } from './report/playwright-report';
-export { normalize, durationsOf } from './report/normalizer';
-export { parseCypressReport, normalizeCypress } from './report/cypress';
-export type { CypressReport } from './report/cypress-report';
-export { parseJUnitReport, normalizeJUnit } from './report/junit';
-export type { JUnitReport, JUnitCase } from './report/junit';
-export { parseMochawesomeReport, normalizeMochawesome } from './report/mochawesome';
-export type { MochawesomeReport } from './report/mochawesome';
-export { classify } from './report/classifier';
-export type { ClassifyRule, ClassifyOptions } from './report/classifier';
-export { analyze, detectFormat, readReport } from './report/analyze';
-export type { AnalyzeOptions, AnalysisResult, ReportFormat } from './report/analyze';
+/**
+ * Public surface of @ci-shard-advisor/core.
+ *
+ * The PUBLIC GATE below is the whole contract the adapters (web, CLI, API)
+ * consume: `advise()` in, `toAdvisor*` / CI exporters out (spec §6). The
+ * ENGINE PRIMITIVES section exposes the underlying building blocks for
+ * library consumers who want the solver or a single reader without the
+ * advisor on top — the adapters never import them.
+ */
+
+// ─── Public gate ────────────────────────────────────────────────────────────
 export { advise } from './advisor/advise';
 export type { AdviseOptions } from './advisor/advise';
-export { buildScenarios, chooseObjective, planFor } from './advisor/scenarios';
-export { computeFindings } from './advisor/findings';
-export { readReports } from './advisor/reports';
-export { measureCurrent, modelCurrent, splitByCount, feedbackAtWorkers } from './advisor/current';
 export type {
   ReportFile,
   AnalyzeInput,
@@ -42,12 +23,10 @@ export type {
   AdvisorResult,
   Runner,
 } from './advisor/types';
-export { summarize, formatDuration } from './exporters/summary';
-export type { AnalysisSummary, BlockSummary } from './exporters/summary';
-export { toJson, toSummaryObject } from './exporters/json';
-export { toText } from './exporters/text';
-export { toMarkdown } from './exporters/markdown';
-export { toGitHubActions, toBitbucketPipelines } from './exporters/ci';
+export type { TaskStatus, AtomicTask } from './types/domain';
+export type { ReportFormat } from './report/analyze';
+export { ReportParseError } from './report/parser';
+
 export {
   toAdvisorText,
   toAdvisorJson,
@@ -55,3 +34,27 @@ export {
   toAdvisorMarkdown,
   applyCommand,
 } from './exporters/advisor';
+export { toGitHubActions, toBitbucketPipelines } from './exporters/ci';
+export { formatDuration, formatSignedDuration } from './exporters/summary';
+
+// ─── Engine primitives (library consumers; not used by the adapters) ───────
+export { lpt } from './scheduler/lpt';
+export type { ScheduleResult } from './scheduler/lpt';
+export { avgBound, pmaxBound, lowerBound } from './scheduler/bounds';
+export { branchAndBound } from './scheduler/branch-and-bound';
+export type { SolveResult, SolveOptions } from './scheduler/branch-and-bound';
+export { simulateShard, simulateRun } from './scheduler/workers';
+export type { SimulationResult, RunSimulation } from './scheduler/workers';
+export { buildFrontier, evaluateConfig } from './recommender/frontier';
+export type { ConfigPoint, FrontierOptions } from './recommender/frontier';
+export { findElbow } from './recommender/elbow';
+export { detectFormat, readReport } from './report/analyze';
+export { parseReport } from './report/parser';
+export type { PlaywrightReport } from './report/playwright-report';
+export { normalize } from './report/normalizer';
+export { parseCypressReport, normalizeCypress } from './report/cypress';
+export type { CypressReport } from './report/cypress-report';
+export { parseJUnitReport, normalizeJUnit } from './report/junit';
+export type { JUnitReport, JUnitCase } from './report/junit';
+export { parseMochawesomeReport, normalizeMochawesome } from './report/mochawesome';
+export type { MochawesomeReport } from './report/mochawesome';

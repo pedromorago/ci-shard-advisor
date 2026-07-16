@@ -1,4 +1,9 @@
-# CI Shard Advisor — Especificación v2
+# CI Shard Advisor — Especificación v2.2
+
+> **Historial:** v2 (advisor: situación medida + escenarios anclados) · v2.1
+> (pivot a Cypress-only; workers y lectores PW/JUnit aparcados) · v2.2 (bordes
+> endurecidos: planes sin shards vacíos, objetivo infactible = `unavailable`,
+> `inputFormat` en el contrato, flaky = reintentado y aprobado).
 
 > **Este documento es la fuente de verdad del producto.** Si el README, el código o cualquier conversación contradicen lo que dice aquí, gana este documento. Una feature está "terminada" cuando cumple sus criterios de aceptación (sección 9), tiene tests y no rompe los invariantes del motor (sección 12).
 
