@@ -1,17 +1,11 @@
-import { applyCommand, formatDuration } from '@ci-shard-advisor/core';
+import {
+  applyCommand,
+  formatDuration,
+  formatMoney,
+  signedDuration,
+  signedMoney,
+} from '@ci-shard-advisor/core';
 import type { Runner, Scenario } from '@ci-shard-advisor/core';
-import { formatMoney } from './analysis';
-
-function signedDuration(ms: number): string {
-  if (ms === 0) return '±0';
-  return `${ms < 0 ? '−' : '+'}${formatDuration(Math.abs(ms))}`;
-}
-
-function signedMoney(ms: number, pricePerMinute: number): string | null {
-  if (!pricePerMinute) return null;
-  if (ms === 0) return '±0';
-  return `${ms < 0 ? '−' : '+'}${formatMoney(Math.abs(ms), pricePerMinute)}`;
-}
 
 interface MoveCardProps {
   /** Short pill: "Free", "Recommended", "Fastest", … */
@@ -28,7 +22,7 @@ interface MoveCardProps {
 export function MoveCard({ tag, title, scenario, pricePerMinute, runner }: MoveCardProps) {
   if (scenario.unavailable) {
     return (
-      <li className="move move--muted">
+      <li className="move move--muted" aria-label={`${tag}: not available`}>
         <div className="move__head">
           <span className="tag">{tag}</span>
           <span className="move__title">Not available</span>
@@ -44,7 +38,9 @@ export function MoveCard({ tag, title, scenario, pricePerMinute, runner }: MoveC
     : null;
 
   return (
-    <li className="move">
+    // The label makes each move card addressable by name (screen readers and
+    // role-based tests alike): plan list items inside stay unnamed.
+    <li className="move" aria-label={`${tag}: ${title}`}>
       <div className="move__head">
         <span className="tag">{tag}</span>
         <span className="move__title">{title}</span>

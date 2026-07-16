@@ -2,22 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { advise } from '../../src/advisor/advise';
 import type { ReportFile } from '../../src/advisor/types';
 
-const file = (name: string, content: unknown): ReportFile => ({ name, content });
-
-/** Playwright report from spec entries: [title, file, durationMs]. */
-function pwReport(specs: Array<[string, string, number]>): unknown {
-  return {
-    suites: [
-      {
-        specs: specs.map(([title, f, duration]) => ({
-          title,
-          file: f,
-          tests: [{ status: 'expected', results: [{ duration }] }],
-        })),
-      },
-    ],
-  };
-}
+import { pwReportSpecs as pwReport, reportFile as file } from '../helpers/reports';
 
 // One shard holds a 60s bottleneck; five hold a 5s test each. 6 shards total.
 const overSharded = {

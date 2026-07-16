@@ -1,6 +1,5 @@
-import { formatDuration } from '@ci-shard-advisor/core';
+import { formatDuration, formatMoney } from '@ci-shard-advisor/core';
 import type { ConfigPoint } from '@ci-shard-advisor/core';
-import { formatMoney } from './analysis';
 
 /** The chart only needs a point's cost, feedback and shard count. */
 type ChartPoint = { costMs: number; feedbackTimeMs: number; shardCount: number };

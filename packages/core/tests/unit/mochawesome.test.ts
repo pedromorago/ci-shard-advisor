@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseMochawesomeReport, normalizeMochawesome } from '../../src/report/mochawesome';
 import { ReportParseError } from '../../src/report/parser';
-import { analyze, detectFormat } from '../../src/report/analyze';
+import { detectFormat, readReport } from '../../src/report/analyze';
 import mochawesomeReport from '../fixtures/mochawesome-report.json';
 
 function tasksFrom(raw: unknown) {
@@ -76,16 +76,13 @@ describe('normalizeMochawesome', () => {
   });
 });
 
-describe('mochawesome format detection and analyze', () => {
+describe('mochawesome format detection and reading', () => {
   it('detects a top-level results array as mochawesome', () => {
     expect(detectFormat(mochawesomeReport)).toBe('mochawesome');
     expect(detectFormat(JSON.stringify(mochawesomeReport))).toBe('mochawesome');
   });
 
-  it('analyze auto-detects and runs on a mochawesome report', () => {
-    const { tasks, recommendation } = analyze(mochawesomeReport, { maxShards: 4, startupOverheadMs: 30000 });
-    expect(tasks).toHaveLength(4);
-    expect(tasks.filter((t) => t.block === 'sanity')).toHaveLength(1);
-    expect(recommendation.recommended.shardCount).toBeGreaterThanOrEqual(1);
+  it('readReport auto-detects and reads a mochawesome report', () => {
+    expect(readReport(mochawesomeReport)).toHaveLength(4);
   });
 });

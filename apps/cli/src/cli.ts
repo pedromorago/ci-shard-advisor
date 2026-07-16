@@ -7,6 +7,9 @@ import {
   toAdvisorMarkdown,
   toGitHubActions,
   toBitbucketPipelines,
+  objectiveFor,
+  maxFeedbackObjective,
+  budgetObjective,
 } from '@ci-shard-advisor/core';
 import type { AnalyzeInput, CostModel, Objective, ReportFile, ReportFormat, AdvisorResult } from '@ci-shard-advisor/core';
 import { parseDuration, parseIntOption } from './duration';
@@ -56,7 +59,8 @@ function parseBudget(raw: string, pricePerMinute: number | undefined): Objective
   if (pricePerMinute === undefined) {
     throw new Error('--budget as a price needs --price to be set');
   }
-  return { kind: 'budget', costMs: (amount / pricePerMinute) * 60_000 };
+  // The money→ms conversion lives in the core, next to the cost model.
+  return budgetObjective(amount, pricePerMinute);
 }
 
 /**
@@ -107,7 +111,9 @@ export function run(argv: string[], io: CliIO): number {
     return 2;
   }
 
-  // Options and the cost model.
+  // Options and the cost model. The CLI defaults setup to 0 on purpose:
+  // without --setup there is no cost story to tell (the API and web are
+  // interactive surfaces and suggest 30-60s instead — spec §3.3).
   const cost: CostModel = { startupOverheadMs: 0 };
   let maxShards: number | undefined;
   let currentShardCount: number | undefined;
@@ -140,7 +146,7 @@ export function run(argv: string[], io: CliIO): number {
     }
 
     if (values['max-feedback']) {
-      objective = { kind: 'max-feedback', feedbackMs: parseDuration(values['max-feedback']) };
+      objective = maxFeedbackObjective(parseDuration(values['max-feedback']));
     } else if (values.budget) {
       objective = parseBudget(values.budget, cost.pricePerMinute);
     } else if (values.objective) {
@@ -148,8 +154,7 @@ export function run(argv: string[], io: CliIO): number {
       if (o !== 'recommended' && o !== 'fastest') {
         throw new Error(`--objective must be recommended or fastest`);
       }
-      // 'recommended' is the knee criterion — the core's 'balanced' objective.
-      objective = { kind: o === 'recommended' ? 'balanced' : o };
+      objective = objectiveFor(o);
     }
   } catch (error) {
     io.stderr(`error: ${(error as Error).message}`);

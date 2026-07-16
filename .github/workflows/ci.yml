@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# A newer push supersedes the runs of the old commit — don't pay for both.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-test:
     name: Typecheck, test & build
@@ -18,12 +23,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm --filter @ci-shard-advisor/core test:coverage
+      # Each suite runs exactly once: the adapters emit their JUnit XML while
+      # testing, and the core runs under its coverage gate (JUnit included).
+      - name: Test the adapters (JUnit XML for Xray — see docs/xray.md)
+        run: pnpm --filter '!@ci-shard-advisor/core' test:junit
+      - name: Test the core under the coverage gate (JUnit XML included)
+        run: pnpm --filter @ci-shard-advisor/core test:coverage
       - run: pnpm --filter @ci-shard-advisor/web build
-      # JUnit XML for test-management import (Jira/Xray) — see docs/xray.md.
-      - name: Emit JUnit XML for every vitest suite
-        run: pnpm test:junit
       - name: Upload the JUnit XML (import into Xray from here)
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
@@ -75,6 +81,9 @@ jobs:
         with:
           path: ~/.cache/Cypress
           key: cypress-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          # A lockfile bump still restores the previous binary; the install
+          # step below then only downloads when the version really changed.
+          restore-keys: cypress-${{ runner.os }}-
       # The binary is installed on demand (allowBuilds blocks it in pnpm install).
       - run: pnpm --filter @ci-shard-advisor/web exec cypress install
       - run: pnpm --filter @ci-shard-advisor/web build

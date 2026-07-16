@@ -1,20 +1,13 @@
-import { formatDuration } from '../exporters/summary';
+import { formatDuration, formatMoney } from '../exporters/format';
 import { groupByFile } from '../report/normalizer';
 import type { FileGroup } from '../report/normalizer';
 import type { ConfigPoint } from '../recommender/frontier';
 import type { AtomicTask } from '../types/domain';
-import { unitOf } from '../exporters/advisor';
+import { unitOf } from './vocabulary';
 import type { CostModel, Findings, MeasuredCurrent, Runner } from './types';
 
 /** Below this relative feedback spread, more shards no longer help. */
 const NEGLIGIBLE = 0.02;
-
-/** Format billed ms as money, or null when no price is set. */
-function money(costMs: number, cost: CostModel): string | null {
-  if (cost.pricePerMinute === undefined) return null;
-  const value = (costMs / 60_000) * cost.pricePerMinute;
-  return `${cost.currency ?? '€'}${value.toFixed(2)}`;
-}
 
 /** The smallest shard count that already reaches (within ε) the fastest feedback. */
 function saturationPoint(frontier: ConfigPoint[]): number {
@@ -70,7 +63,9 @@ export function computeFindings(
         ? Math.round(((current.feedbackTimeMs - target.feedbackTimeMs) / current.feedbackTimeMs) * 100)
         : 0;
     if (pct >= 5) {
-      const costStr = money(target.costMs - current.costMs, cost) ?? formatDuration(target.costMs - current.costMs);
+      const costStr =
+        formatMoney(target.costMs - current.costMs, cost.pricePerMinute, cost.currency) ??
+        formatDuration(target.costMs - current.costMs);
       warnings.push(`With ${saturationN} ${unit}s you would cut the wait by ${pct}% for +${costStr} per run.`);
     }
   }
