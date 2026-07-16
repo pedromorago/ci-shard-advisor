@@ -75,7 +75,7 @@ describe('advisor exporters', () => {
              shard 1: npx playwright test t0.spec.ts
              shard 2: npx playwright test t1.spec.ts
            (--format github or bitbucket emits the full CI config)
-        Recommended) 1 shards   feedback 2m 30s (+20.0s)   cost $0.25 (−$0.05)
+        Recommended) 1 shard   feedback 2m 30s (+20.0s)   cost $0.25 (−$0.05)
            The knee of the cost/time frontier — past it, shards stop paying off.
            Apply (each machine runs its own list):
              shard 1: npx playwright test t0.spec.ts t1.spec.ts

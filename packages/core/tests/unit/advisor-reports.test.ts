@@ -29,7 +29,7 @@ const cypressReport = (durations: number[]): unknown => ({
 describe('planFor — plans are always runnable (spec §5.3)', () => {
   it('never emits an empty shard when asked for more shards than spec files', () => {
     const tasks = [task('a', 40000), task('b', 30000), task('c', 20000)];
-    const plan = planFor(tasks, 8, 1);
+    const plan = planFor(tasks, 8);
     expect(plan.specs.length).toBeLessThanOrEqual(3);
     expect(plan.specs.every((list) => list.length > 0)).toBe(true);
     expect(plan.shards.every((list) => list.length > 0)).toBe(true);

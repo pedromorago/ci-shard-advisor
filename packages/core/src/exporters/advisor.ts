@@ -1,6 +1,6 @@
 import { formatDuration, formatMoney, signedDuration, signedMoney } from './format';
-import { applyCommand, unitOf } from '../advisor/vocabulary';
-import type { AdvisorResult, CostModel, Scenario } from '../advisor/types';
+import { applyCommand, unitOf, unitsOf } from '../advisor/vocabulary';
+import type { AdvisorResult, CostModel, MeasuredCurrent, Runner, Scenario } from '../advisor/types';
 
 /** Total test time (sum of task durations). */
 function testTimeMs(result: AdvisorResult): number {
@@ -57,27 +57,24 @@ export function presentedMoves(scenarios: Scenario[]): {
   return { rebalance, chosen, merged };
 }
 
-/** Render an AdvisorResult as a plain-text report (spec §7.1). Deterministic. */
-export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
-  const { current, scenarios, findings, frontier } = result;
-  const workers = frontier[0]?.workersPerShard ?? 1;
-  const lines: string[] = [];
-
-  lines.push('CI Shard Advisor', '================', '');
-  const unit = unitOf(result.runner);
+/** The "Suite: …" header line: totals, runner and report origin (spec §7.1). */
+function renderSuiteLine(result: AdvisorResult): string {
   const runnerName = result.runner === 'cypress' ? 'Cypress' : 'Playwright';
-  const origin = current.measured
-    ? `${current.shardCount} ${unit} report${current.shardCount === 1 ? '' : 's'}`
+  const origin = result.current.measured
+    ? `${result.current.shardCount} ${unitOf(result.runner)} report${result.current.shardCount === 1 ? '' : 's'}`
     : 'merged report';
-  lines.push(
-    `Suite: ${result.tasks.length} tests, ${formatDuration(testTimeMs(result))} of test time (${runnerName}, ${origin})`,
-    '',
-  );
-  lines.push(`Your current setup (${current.measured ? 'measured' : 'modeled'})`);
+  return `Suite: ${result.tasks.length} tests, ${formatDuration(testTimeMs(result))} of test time (${runnerName}, ${origin})`;
+}
+
+/** The current-situation block (spec §5.1), imbalance included — its only home. */
+function renderCurrent(current: MeasuredCurrent, runner: Runner, workers: number, cost: CostModel): string[] {
+  const unit = unitOf(runner);
+  const lines = [`Your current setup (${current.measured ? 'measured' : 'modeled'})`];
   // Workers are a Playwright concept; Cypress containers run their specs serially.
-  const machines = result.runner === 'cypress'
-    ? `${current.shardCount} ${unit}${current.shardCount === 1 ? '' : 's'}`
-    : `${current.shardCount} ${unit}s × ${workers} worker${workers === 1 ? '' : 's'}`;
+  const machines =
+    runner === 'cypress'
+      ? unitsOf(current.shardCount, runner)
+      : `${unitsOf(current.shardCount, runner)} × ${workers} worker${workers === 1 ? '' : 's'}`;
   lines.push(`  ${machines}`);
   const slowest = indexOfMax(current.shardTimesMs) + 1;
   lines.push(`  Feedback time: ${formatDuration(current.feedbackTimeMs)}   (slowest ${unit}: #${slowest})`);
@@ -89,10 +86,15 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
       `  ⚠ Imbalance: ${unit} #${fastIdx} finishes ${formatDuration(current.imbalanceMs)} before ${unit} #${slowest}. You are paying for idle machines.`,
     );
   }
-  lines.push('');
+  return lines;
+}
 
-  lines.push('Your moves');
+/** The moves block: the free rebalance + the chosen move (one entry if merged). */
+function renderMoves(result: AdvisorResult, cost: CostModel): string[] {
+  const { current, scenarios, runner } = result;
+  const lines = ['Your moves'];
   const { rebalance, chosen, merged } = presentedMoves(scenarios);
+
   const pushMove = (tag: string, scenario: Scenario, title: string) => {
     const feedback = formatDuration(scenario.config.feedbackTimeMs);
     const df = scenario.vsCurrent ? ` (${signedDuration(scenario.vsCurrent.feedbackDeltaMs)})` : '';
@@ -105,39 +107,53 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
     if (scenario.plan) {
       lines.push('     Apply (each machine runs its own list):');
       scenario.plan.specs.forEach((specs, i) => {
-        lines.push(`       ${unit} ${i + 1}: ${applyCommand(result.runner, specs)}`);
+        lines.push(`       ${unitOf(runner)} ${i + 1}: ${applyCommand(runner, specs)}`);
       });
       lines.push('     (--format github or bitbucket emits the full CI config)');
     }
   };
 
   if (merged) {
-    // One entry: the chosen move IS the rebalance of your current shards.
-    pushMove(objectiveLabel(chosen), chosen, `Rebalance your ${current.shardCount} ${unit}s — your best move is free`);
+    // One entry: the chosen move IS the rebalance of your current machines.
+    pushMove(objectiveLabel(chosen), chosen, `Rebalance your ${unitsOf(current.shardCount, runner)} — your best move is free`);
   } else {
-    pushMove('Free', rebalance, `Rebalance your ${current.shardCount} ${unit}s`);
+    pushMove('Free', rebalance, `Rebalance your ${unitsOf(current.shardCount, runner)}`);
     if (chosen.unavailable) {
       lines.push(`  ${objectiveLabel(chosen)}) not available: ${chosen.reason}`);
     } else {
-      pushMove(objectiveLabel(chosen), chosen, `${chosen.config.shardCount} ${unit}s`);
+      pushMove(objectiveLabel(chosen), chosen, unitsOf(chosen.config.shardCount, runner));
     }
   }
-  lines.push('');
+  return lines;
+}
 
-  if (findings.warnings.length > 0) {
-    lines.push('Warnings');
-    for (const warning of findings.warnings) lines.push(`  • ${warning}`);
-    lines.push('');
-  }
-
+/** The frontier table: every evaluated machine count with its cost/time point. */
+function renderFrontier(result: AdvisorResult, cost: CostModel): string[] {
   const hasPrice = cost.pricePerMinute !== undefined;
-  lines.push(`Frontier (${unit}s · feedback · billed${hasPrice ? ' · price' : ''})`);
-  for (const point of frontier) {
+  const lines = [`Frontier (${unitOf(result.runner)}s · feedback · billed${hasPrice ? ' · price' : ''})`];
+  for (const point of result.frontier) {
     const m = money(point.costMs, cost);
     lines.push(
       `  ${String(point.shardCount).padStart(2)}  ${formatDuration(point.feedbackTimeMs).padEnd(9)}${formatDuration(point.costMs).padEnd(9)}${m ? ` ${m}` : ''}`,
     );
   }
+  return lines;
+}
+
+/** Render an AdvisorResult as a plain-text report (spec §7.1). Deterministic. */
+export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
+  const workers = result.frontier[0]?.workersPerShard ?? 1;
+  const lines: string[] = ['CI Shard Advisor', '================', ''];
+
+  lines.push(renderSuiteLine(result), '');
+  lines.push(...renderCurrent(result.current, result.runner, workers, cost), '');
+  lines.push(...renderMoves(result, cost), '');
+  if (result.findings.warnings.length > 0) {
+    lines.push('Warnings');
+    for (const warning of result.findings.warnings) lines.push(`  • ${warning}`);
+    lines.push('');
+  }
+  lines.push(...renderFrontier(result, cost));
 
   return lines.join('\n');
 }
@@ -186,7 +202,7 @@ export function toAdvisorMarkdown(result: AdvisorResult, cost: CostModel): strin
   const curMoney = money(current.costMs, cost);
   md.push(`### Your setup today (${current.measured ? 'measured' : 'modeled'})`, '');
   md.push(
-    `**${current.shardCount} ${unitOf(result.runner)}s** — ${formatDuration(current.feedbackTimeMs)} feedback, ${curMoney ?? formatDuration(current.costMs)} cost.`,
+    `**${unitsOf(current.shardCount, result.runner)}** — ${formatDuration(current.feedbackTimeMs)} feedback, ${curMoney ?? formatDuration(current.costMs)} cost.`,
   );
   if (current.measured && current.imbalanceMs > 0) {
     md.push('', `Imbalance: ${formatDuration(current.imbalanceMs)} of idle machine time.`);
@@ -199,9 +215,9 @@ export function toAdvisorMarkdown(result: AdvisorResult, cost: CostModel): strin
     md.push(`| ${label} | ${s.config.shardCount} | ${formatDuration(s.config.feedbackTimeMs)} | ${c} |`);
   };
   if (merged) {
-    row(`${objectiveLabel(chosen)} — rebalance your ${current.shardCount} ${unitOf(result.runner)}s (free)`, chosen);
+    row(`${objectiveLabel(chosen)} — rebalance your ${unitsOf(current.shardCount, result.runner)} (free)`, chosen);
   } else {
-    row(`Rebalance your ${current.shardCount} ${unitOf(result.runner)}s (free)`, rebalance);
+    row(`Rebalance your ${unitsOf(current.shardCount, result.runner)} (free)`, rebalance);
     if (chosen.unavailable) {
       md.push(`| ${objectiveLabel(chosen)} | — | not available | |`);
     } else {

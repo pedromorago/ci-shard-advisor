@@ -88,7 +88,7 @@ the command line.
           \                 |                 /
            v                v                v
                      packages/core
-   parser → normalizer → classifier → scheduler → recommender → exporters
+   readers → normalizer → scheduler → frontier → advisor → exporters
 ```
 
 | Package | What it is |

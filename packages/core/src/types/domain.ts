@@ -22,10 +22,8 @@ export interface AtomicTask {
   retries: number;
   /** Machine time spent on extra (retried) attempts, in ms — for flaky findings. */
   wastedMs?: number;
-  /** Tags declared on the spec (e.g. '@sanity'); input to the classifier. */
+  /** Tags declared on the spec (e.g. '@sanity'). */
   tags?: string[];
-  /** Block assigned by the classifier (sanity, regression, ...). */
-  block?: string;
   /** Playwright project, when the report is multi-project. */
   project?: string;
 }
