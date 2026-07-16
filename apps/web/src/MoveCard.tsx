@@ -1,17 +1,11 @@
-import { applyCommand, formatDuration } from '@ci-shard-advisor/core';
+import {
+  applyCommand,
+  formatDuration,
+  formatMoney,
+  signedDuration,
+  signedMoney,
+} from '@ci-shard-advisor/core';
 import type { Runner, Scenario } from '@ci-shard-advisor/core';
-import { formatMoney } from './analysis';
-
-function signedDuration(ms: number): string {
-  if (ms === 0) return '±0';
-  return `${ms < 0 ? '−' : '+'}${formatDuration(Math.abs(ms))}`;
-}
-
-function signedMoney(ms: number, pricePerMinute: number): string | null {
-  if (!pricePerMinute) return null;
-  if (ms === 0) return '±0';
-  return `${ms < 0 ? '−' : '+'}${formatMoney(Math.abs(ms), pricePerMinute)}`;
-}
 
 interface MoveCardProps {
   /** Short pill: "Free", "Recommended", "Fastest", … */

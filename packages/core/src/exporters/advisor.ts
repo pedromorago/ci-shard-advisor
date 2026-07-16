@@ -1,39 +1,15 @@
-import { formatDuration } from './summary';
-import type { AdvisorResult, CostModel, Runner, Scenario } from '../advisor/types';
-
-/** The machine word each runner's users say: Cypress containers, Playwright shards. */
-export function unitOf(runner: Runner): string {
-  return runner === 'cypress' ? 'container' : 'shard';
-}
-
-/** The real, runnable command for one shard's spec list. */
-export function applyCommand(runner: Runner, specs: string[]): string {
-  return runner === 'cypress'
-    ? `npx cypress run --spec "${specs.join(',')}"`
-    : `npx playwright test ${specs.join(' ')}`;
-}
+import { formatDuration, formatMoney, signedDuration, signedMoney } from './format';
+import { applyCommand, unitOf } from '../advisor/vocabulary';
+import type { AdvisorResult, CostModel, Scenario } from '../advisor/types';
 
 /** Total test time (sum of task durations). */
 function testTimeMs(result: AdvisorResult): number {
   return result.tasks.reduce((sum, task) => sum + task.durationMs, 0);
 }
 
-/** Billed ms as money, or null when no price is set. */
+/** Billed ms as money under a cost model, or null when no price is set. */
 function money(costMs: number, cost: CostModel): string | null {
-  if (cost.pricePerMinute === undefined) return null;
-  return `${cost.currency ?? '€'}${((costMs / 60_000) * cost.pricePerMinute).toFixed(2)}`;
-}
-
-/** Signed duration; 0 → ±0, negative (faster/cheaper) shows a minus. */
-function signedDuration(ms: number): string {
-  if (ms === 0) return '±0';
-  return `${ms < 0 ? '−' : '+'}${formatDuration(Math.abs(ms))}`;
-}
-
-function signedMoney(ms: number, cost: CostModel): string | null {
-  if (cost.pricePerMinute === undefined) return null;
-  if (ms === 0) return '±0';
-  return `${ms < 0 ? '−' : '+'}${money(Math.abs(ms), cost)}`;
+  return formatMoney(costMs, cost.pricePerMinute, cost.currency);
 }
 
 function indexOfMax(values: number[]): number {
@@ -48,7 +24,7 @@ function indexOfMin(values: number[]): number {
 }
 
 /** The label of the chosen move, from the objective that produced it. */
-function objectiveLabel(scenario: Scenario): string {
+export function objectiveLabel(scenario: Scenario): string {
   switch (scenario.objective?.kind) {
     case 'fastest':
       return 'Fastest';
@@ -65,16 +41,20 @@ function objectiveLabel(scenario: Scenario): string {
   }
 }
 
-/** The two scenarios the presentation shows: the free rebalance + the chosen move. */
-function presentedMoves(scenarios: Scenario[]): { rebalance: Scenario; chosen: Scenario } {
+/**
+ * The presentation decision of spec §5.2, shared by every adapter: show the
+ * free rebalance plus the chosen move — and when the chosen move lands on the
+ * rebalance's config (`merged`), show a single card that says so.
+ */
+export function presentedMoves(scenarios: Scenario[]): {
+  rebalance: Scenario;
+  chosen: Scenario;
+  merged: boolean;
+} {
   const rebalance = scenarios.find((s) => s.id === 'rebalance')!;
   const chosen = scenarios.find((s) => s.id === 'objective')!;
-  return { rebalance, chosen };
-}
-
-/** True when the chosen move lands on the same config as the rebalance. */
-function coincides(chosen: Scenario, rebalance: Scenario): boolean {
-  return !chosen.unavailable && chosen.config.shardCount === rebalance.config.shardCount;
+  const merged = !chosen.unavailable && chosen.config.shardCount === rebalance.config.shardCount;
+  return { rebalance, chosen, merged };
 }
 
 /** Render an AdvisorResult as a plain-text report (spec §7.1). Deterministic. */
@@ -112,13 +92,13 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
   lines.push('');
 
   lines.push('Your moves');
-  const { rebalance, chosen } = presentedMoves(scenarios);
+  const { rebalance, chosen, merged } = presentedMoves(scenarios);
   const pushMove = (tag: string, scenario: Scenario, title: string) => {
     const feedback = formatDuration(scenario.config.feedbackTimeMs);
     const df = scenario.vsCurrent ? ` (${signedDuration(scenario.vsCurrent.feedbackDeltaMs)})` : '';
     const c = money(scenario.config.costMs, cost) ?? formatDuration(scenario.config.costMs);
     const dc = scenario.vsCurrent
-      ? ` (${signedMoney(scenario.vsCurrent.costDeltaMs, cost) ?? signedDuration(scenario.vsCurrent.costDeltaMs)})`
+      ? ` (${signedMoney(scenario.vsCurrent.costDeltaMs, cost.pricePerMinute, cost.currency) ?? signedDuration(scenario.vsCurrent.costDeltaMs)})`
       : '';
     lines.push(`  ${tag}) ${title}   feedback ${feedback}${df}   cost ${c}${dc}`);
     lines.push(`     ${scenario.reason}`);
@@ -131,7 +111,7 @@ export function toAdvisorText(result: AdvisorResult, cost: CostModel): string {
     }
   };
 
-  if (coincides(chosen, rebalance)) {
+  if (merged) {
     // One entry: the chosen move IS the rebalance of your current shards.
     pushMove(objectiveLabel(chosen), chosen, `Rebalance your ${current.shardCount} ${unit}s — your best move is free`);
   } else {
@@ -213,12 +193,12 @@ export function toAdvisorMarkdown(result: AdvisorResult, cost: CostModel): strin
   }
   md.push('', '### Your moves', '');
   md.push('| Move | Machines | Feedback | Cost |', '| --- | ---: | ---: | ---: |');
-  const { rebalance, chosen } = presentedMoves(scenarios);
+  const { rebalance, chosen, merged } = presentedMoves(scenarios);
   const row = (label: string, s: Scenario) => {
     const c = money(s.config.costMs, cost) ?? formatDuration(s.config.costMs);
     md.push(`| ${label} | ${s.config.shardCount} | ${formatDuration(s.config.feedbackTimeMs)} | ${c} |`);
   };
-  if (coincides(chosen, rebalance)) {
+  if (merged) {
     row(`${objectiveLabel(chosen)} — rebalance your ${current.shardCount} ${unitOf(result.runner)}s (free)`, chosen);
   } else {
     row(`Rebalance your ${current.shardCount} ${unitOf(result.runner)}s (free)`, rebalance);

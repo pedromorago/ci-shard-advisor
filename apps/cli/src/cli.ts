@@ -7,6 +7,9 @@ import {
   toAdvisorMarkdown,
   toGitHubActions,
   toBitbucketPipelines,
+  objectiveFor,
+  maxFeedbackObjective,
+  budgetObjective,
 } from '@ci-shard-advisor/core';
 import type { AnalyzeInput, CostModel, Objective, ReportFile, ReportFormat, AdvisorResult } from '@ci-shard-advisor/core';
 import { parseDuration, parseIntOption } from './duration';
@@ -56,7 +59,8 @@ function parseBudget(raw: string, pricePerMinute: number | undefined): Objective
   if (pricePerMinute === undefined) {
     throw new Error('--budget as a price needs --price to be set');
   }
-  return { kind: 'budget', costMs: (amount / pricePerMinute) * 60_000 };
+  // The money→ms conversion lives in the core, next to the cost model.
+  return budgetObjective(amount, pricePerMinute);
 }
 
 /**
@@ -140,7 +144,7 @@ export function run(argv: string[], io: CliIO): number {
     }
 
     if (values['max-feedback']) {
-      objective = { kind: 'max-feedback', feedbackMs: parseDuration(values['max-feedback']) };
+      objective = maxFeedbackObjective(parseDuration(values['max-feedback']));
     } else if (values.budget) {
       objective = parseBudget(values.budget, cost.pricePerMinute);
     } else if (values.objective) {
@@ -148,8 +152,7 @@ export function run(argv: string[], io: CliIO): number {
       if (o !== 'recommended' && o !== 'fastest') {
         throw new Error(`--objective must be recommended or fastest`);
       }
-      // 'recommended' is the knee criterion — the core's 'balanced' objective.
-      objective = { kind: o === 'recommended' ? 'balanced' : o };
+      objective = objectiveFor(o);
     }
   } catch (error) {
     io.stderr(`error: ${(error as Error).message}`);

@@ -1,5 +1,5 @@
 import type { Runner } from '../advisor/types';
-import { unitOf } from './advisor';
+import { unitOf } from '../advisor/vocabulary';
 
 /**
  * Generate ready-to-paste CI config that applies an optimal split: one

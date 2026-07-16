@@ -1,4 +1,4 @@
-import { advise } from '@ci-shard-advisor/core';
+import { advise, objectiveFor, maxFeedbackObjective, budgetObjective } from '@ci-shard-advisor/core';
 import type { AdvisorResult, CostModel, MeasuredCurrent, Objective, ReportFile } from '@ci-shard-advisor/core';
 import { DEMO_REPORTS } from './demo';
 
@@ -38,21 +38,17 @@ export const DEFAULT_SETTINGS: AnalysisSettings = {
 
 export { DEMO_REPORTS };
 
-/** Map the UI objective onto the core Objective. */
+/** Map the UI objective onto the core Objective (the conversions live in core). */
 function toObjective(setting: ObjectiveSetting, pricePerMinute: number): Objective {
   switch (setting.kind) {
     case 'recommended':
-      return { kind: 'balanced' };
     case 'fastest':
-      return { kind: 'fastest' };
+      return objectiveFor(setting.kind);
     case 'max-wait':
-      return { kind: 'max-feedback', feedbackMs: setting.seconds * 1000 };
+      return maxFeedbackObjective(setting.seconds * 1000);
     case 'budget':
       // With a price, the budget is euros; without one it is machine minutes.
-      return {
-        kind: 'budget',
-        costMs: pricePerMinute > 0 ? (setting.euros / pricePerMinute) * 60_000 : setting.euros * 60_000,
-      };
+      return budgetObjective(setting.euros, pricePerMinute > 0 ? pricePerMinute : undefined);
   }
 }
 
@@ -71,12 +67,6 @@ export function adviseFrom(reports: ReportFile[], settings: AnalysisSettings): A
     objective: toObjective(settings.objective, settings.pricePerMinute),
     maxShards: 16,
   });
-}
-
-/** Format billed ms as money at the given rate, or null when there is no price. */
-export function formatMoney(costMs: number, pricePerMinute: number): string | null {
-  if (!pricePerMinute) return null;
-  return `€${((costMs / 60_000) * pricePerMinute).toFixed(2)}`;
 }
 
 /**
