@@ -3,7 +3,7 @@ import { findElbow } from '../recommender/elbow';
 import { groupByFile } from '../report/normalizer';
 import type { ConfigPoint } from '../recommender/frontier';
 import type { AtomicTask } from '../types/domain';
-import { unitOf } from '../exporters/advisor';
+import { unitOf } from './vocabulary';
 import type { MeasuredCurrent, Objective, Runner, Scenario, ShardPlan } from './types';
 
 // Deterministic solver budget — see the twin constant in advise.ts (invariant 4).

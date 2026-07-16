@@ -32,10 +32,19 @@ export {
   toAdvisorJson,
   toAdvisorObject,
   toAdvisorMarkdown,
-  applyCommand,
+  presentedMoves,
+  objectiveLabel,
 } from './exporters/advisor';
 export { toGitHubActions, toBitbucketPipelines } from './exporters/ci';
-export { formatDuration, formatSignedDuration } from './exporters/summary';
+export { unitOf, unitsOf, applyCommand } from './advisor/vocabulary';
+export { objectiveFor, maxFeedbackObjective, budgetObjective } from './advisor/objectives';
+export {
+  formatDuration,
+  formatSignedDuration,
+  formatMoney,
+  signedDuration,
+  signedMoney,
+} from './exporters/format';
 
 // ─── Engine primitives (library consumers; not used by the adapters) ───────
 export { lpt } from './scheduler/lpt';
