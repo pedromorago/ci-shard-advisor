@@ -1,20 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { advise } from '../../src/advisor/advise';
-import type { ReportFile } from '../../src/advisor/types';
-
-function pwReport(durations: number[]): unknown {
-  return {
-    suites: [
-      {
-        specs: durations.map((duration, i) => ({
-          title: `t${i}`,
-          tests: [{ status: 'expected', results: [{ duration }] }],
-        })),
-      },
-    ],
-  };
-}
-const file = (name: string, content: unknown): ReportFile => ({ name, content });
+import { pwReportBare as pwReport, reportFile as file } from '../helpers/reports';
 
 // Two shards, badly balanced: one holds both slow tests.
 const unbalanced = {

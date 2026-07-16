@@ -7,24 +7,10 @@ import type { CostModel, ReportFile } from '../../src/advisor/types';
 import type { AtomicTask } from '../../src/types/domain';
 
 const cost: CostModel = { startupOverheadMs: 30000 };
-const file = (name: string, content: unknown): ReportFile => ({ name, content });
+import { cyReport as cypressReport, reportFile as file, task as baseTask } from '../helpers/reports';
 
-const task = (id: string, durationMs: number): AtomicTask => ({
-  id,
-  title: id,
-  file: `${id}.cy.ts`,
-  durationMs,
-  status: 'passed',
-  retries: 0,
-});
-
-/** A minimal Cypress Module API report with one spec per duration. */
-const cypressReport = (durations: number[]): unknown => ({
-  runs: durations.map((duration, i) => ({
-    spec: { relative: `spec-${i}.cy.ts` },
-    tests: [{ title: [`spec-${i}`, 'test'], state: 'passed', duration }],
-  })),
-});
+// These plans speak Cypress: the spec files are *.cy.ts.
+const task = (id: string, durationMs: number) => baseTask(id, durationMs, { file: `${id}.cy.ts` });
 
 describe('planFor — plans are always runnable (spec §5.3)', () => {
   it('never emits an empty shard when asked for more shards than spec files', () => {

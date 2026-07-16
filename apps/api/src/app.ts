@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { advise, toAdvisorObject, objectiveFor, maxFeedbackObjective } from '@ci-shard-advisor/core';
+import { advise, toAdvisorObject, objectiveFor, maxFeedbackObjective, ReportParseError } from '@ci-shard-advisor/core';
 import type { AdviseOptions, AnalyzeInput, CostModel, Objective, ReportFile } from '@ci-shard-advisor/core';
 
 /** Parse an optional positive-integer query param. */
@@ -51,7 +51,11 @@ interface AdviseQuery {
   budgetMs?: string;
 }
 
-/** Default per-shard startup overhead when the caller does not set one. */
+/**
+ * Default per-shard startup overhead when the caller does not set one —
+ * the low end of the 30-60s the spec suggests (§3.3). The CLI instead
+ * defaults to 0 (no cost story without --setup); the web suggests 45s.
+ */
 const DEFAULT_SETUP_MS = 30_000;
 
 /**
@@ -63,7 +67,7 @@ const DEFAULT_SETUP_MS = 30_000;
 function toInput(body: unknown, currentShardCount: number | undefined): AnalyzeInput {
   if (body && typeof body === 'object' && Array.isArray((body as { reports?: unknown }).reports)) {
     const raw = (body as { reports: unknown[] }).reports;
-    if (raw.length === 0) throw new Error('reports must not be empty');
+    if (raw.length === 0) throw new ReportParseError('reports must not be empty');
     const reports: ReportFile[] = raw.map((content, i) => ({ name: `shard-${i + 1}`, content }));
     if (reports.length >= 2) return { kind: 'per-shard', reports };
     return { kind: 'merged', report: reports[0], currentShardCount };
@@ -110,7 +114,13 @@ export function buildApp(): FastifyInstance {
       const result = advise(toInput(request.body, shards), cost, options);
       return toAdvisorObject(result, cost);
     } catch (error) {
-      return reply.code(400).send({ error: (error as Error).message });
+      // A malformed report (or invalid values inside it) is the client's
+      // fault → 400. Anything else is an internal bug and must surface as a
+      // 500 instead of being blamed on the request.
+      if (error instanceof ReportParseError || error instanceof RangeError) {
+        return reply.code(400).send({ error: (error as Error).message });
+      }
+      throw error;
     }
   });
 

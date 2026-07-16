@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { formatDuration, objectiveLabel, presentedMoves, unitsOf } from '@ci-shard-advisor/core';
 import type { ReportFile } from '@ci-shard-advisor/core';
 import { adviseFrom, DEFAULT_SETTINGS, DEMO_REPORTS, prefillBudget, prefillWaitSec } from './analysis';
@@ -22,20 +22,20 @@ export function App() {
 
   // Keep the parameterized prefills anchored to the CURRENT measured situation
   // (spec §5.4): when new reports or a new price move the anchor, re-seed the
-  // limit. Editing the limit itself never changes the anchor, so typing is safe.
+  // limit. Editing the limit itself never moves the anchor, so typing is safe.
+  // Adjusted during render (the store-previous-value idiom) instead of in an
+  // effect: React re-renders immediately, with no committed stale frame.
   const anchoredWaitSec = prefillWaitSec(result.current);
   const anchoredBudget = prefillBudget(result.current, settings.pricePerMinute);
-  useEffect(() => {
-    setSettings((s) => {
-      if (s.objective.kind === 'max-wait' && s.objective.seconds !== anchoredWaitSec) {
-        return { ...s, objective: { kind: 'max-wait', seconds: anchoredWaitSec } };
-      }
-      if (s.objective.kind === 'budget' && s.objective.euros !== anchoredBudget) {
-        return { ...s, objective: { kind: 'budget', euros: anchoredBudget } };
-      }
-      return s;
-    });
-  }, [anchoredWaitSec, anchoredBudget]);
+  const [prevAnchor, setPrevAnchor] = useState({ waitSec: anchoredWaitSec, budget: anchoredBudget });
+  if (prevAnchor.waitSec !== anchoredWaitSec || prevAnchor.budget !== anchoredBudget) {
+    setPrevAnchor({ waitSec: anchoredWaitSec, budget: anchoredBudget });
+    if (settings.objective.kind === 'max-wait' && settings.objective.seconds !== anchoredWaitSec) {
+      setSettings({ ...settings, objective: { kind: 'max-wait', seconds: anchoredWaitSec } });
+    } else if (settings.objective.kind === 'budget' && settings.objective.euros !== anchoredBudget) {
+      setSettings({ ...settings, objective: { kind: 'budget', euros: anchoredBudget } });
+    }
+  }
   const testTimeMs = useMemo(
     () => result.tasks.reduce((sum, task) => sum + task.durationMs, 0),
     [result],

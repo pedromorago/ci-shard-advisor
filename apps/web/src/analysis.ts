@@ -29,6 +29,8 @@ export interface AnalysisSettings {
   objective: ObjectiveSetting;
 }
 
+// 45s sits mid-range of the 30-60s the spec suggests for setup (§3.3); the
+// API defaults to 30s and the CLI to 0 (no cost story without --setup).
 export const DEFAULT_SETTINGS: AnalysisSettings = {
   startupOverheadSec: 45,
   pricePerMinute: 0.01,
