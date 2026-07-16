@@ -6,6 +6,7 @@ import { toAdvisorText, toAdvisorMarkdown } from '../../src/exporters/advisor';
 import type { ConfigPoint } from '../../src/recommender/frontier';
 import type { AdvisorResult, CostModel, MeasuredCurrent, ReportFile } from '../../src/advisor/types';
 import type { AtomicTask } from '../../src/types/domain';
+import { pwReport, reportFile as file, task } from '../helpers/reports';
 
 /** A synthetic frontier: cost rises and feedback falls with more shards. */
 const point = (shardCount: number, feedbackTimeMs: number, costMs: number): ConfigPoint => ({
@@ -18,21 +19,9 @@ const point = (shardCount: number, feedbackTimeMs: number, costMs: number): Conf
 });
 const FRONTIER: ConfigPoint[] = [point(1, 150000, 120000), point(2, 90000, 150000), point(3, 70000, 180000)];
 
-const task = (id: string, durationMs: number): AtomicTask => ({
-  id,
-  title: id,
-  file: `${id}.spec.ts`,
-  durationMs,
-  status: 'passed',
-  retries: 0,
-});
 const TASKS: AtomicTask[] = [task('a', 40000), task('b', 30000), task('c', 20000), task('d', 10000)];
 
 const cost: CostModel = { startupOverheadMs: 30000, pricePerMinute: 0.1, currency: '€' };
-const file = (name: string, content: unknown): ReportFile => ({ name, content });
-const pwReport = (durations: number[]): unknown => ({
-  suites: [{ specs: durations.map((duration, i) => ({ title: `t${i}`, file: `t${i}.spec.ts`, tests: [{ status: 'expected', results: [{ duration }] }] })) }],
-});
 
 describe('chooseObjective — every objective kind', () => {
   it('fastest and cheapest hit the frontier extremes', () => {

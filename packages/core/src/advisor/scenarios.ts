@@ -53,6 +53,10 @@ function deltas(config: ConfigPoint, current: MeasuredCurrent) {
  * you cannot route half a spec file to a shard — so tasks are grouped by file
  * (falling back to the task id when the report carries no file) and the solver
  * splits the files. `specs` is what each CI job actually runs.
+ *
+ * This re-solves instead of caching the frontier's assignment: ConfigPoint
+ * deliberately stays a plain (count, time, cost) record, and the same node
+ * budget over the same input reproduces the same split (invariant 4).
  */
 export function planFor(tasks: AtomicTask[], shardCount: number): ShardPlan {
   const groups = groupByFile(tasks);

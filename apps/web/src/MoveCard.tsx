@@ -22,7 +22,7 @@ interface MoveCardProps {
 export function MoveCard({ tag, title, scenario, pricePerMinute, runner }: MoveCardProps) {
   if (scenario.unavailable) {
     return (
-      <li className="move move--muted">
+      <li className="move move--muted" aria-label={`${tag}: not available`}>
         <div className="move__head">
           <span className="tag">{tag}</span>
           <span className="move__title">Not available</span>
@@ -38,7 +38,9 @@ export function MoveCard({ tag, title, scenario, pricePerMinute, runner }: MoveC
     : null;
 
   return (
-    <li className="move">
+    // The label makes each move card addressable by name (screen readers and
+    // role-based tests alike): plan list items inside stay unnamed.
+    <li className="move" aria-label={`${tag}: ${title}`}>
       <div className="move__head">
         <span className="tag">{tag}</span>
         <span className="move__title">{title}</span>

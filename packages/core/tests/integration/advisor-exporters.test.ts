@@ -3,12 +3,7 @@ import { advise } from '../../src/advisor/advise';
 import { toAdvisorText, toAdvisorJson, toAdvisorMarkdown } from '../../src/exporters/advisor';
 import type { ReportFile } from '../../src/advisor/types';
 
-const file = (name: string, content: unknown): ReportFile => ({ name, content });
-function pwReport(durations: number[]): unknown {
-  return {
-    suites: [{ specs: durations.map((duration, i) => ({ title: `t${i}`, file: `t${i}.spec.ts`, tests: [{ status: 'expected', results: [{ duration }] }] })) }],
-  };
-}
+import { pwReport, reportFile as file } from '../helpers/reports';
 
 const input = {
   kind: 'per-shard' as const,

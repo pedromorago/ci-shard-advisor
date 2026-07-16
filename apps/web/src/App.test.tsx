@@ -108,7 +108,8 @@ describe('App', () => {
     ]);
     fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'fastest' } });
     const moves = screen.getByRole('region', { name: /your moves/i });
-    expect(moves.querySelectorAll('.moves-list > li')).toHaveLength(1);
+    // Move cards are the named list items (plan entries inside carry no name).
+    expect(within(moves).getAllByRole('listitem', { name: /./ })).toHaveLength(1);
     expect(within(moves).getByText(/your best move is free/i)).toBeInTheDocument();
   });
 
