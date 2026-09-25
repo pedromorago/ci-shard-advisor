@@ -120,26 +120,30 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
         </g>
       </svg>
 
-      {/* Table view for accessibility (the same data, screen-reader friendly). */}
-      <table className="visually-hidden">
-        <caption>Cost/time frontier by container count</caption>
-        <thead>
-          <tr>
-            <th scope="col">Containers</th>
-            <th scope="col">Feedback time</th>
-            <th scope="col">Cost per run</th>
-          </tr>
-        </thead>
-        <tbody>
-          {frontier.map((p) => (
-            <tr key={p.shardCount}>
-              <td>{p.shardCount}</td>
-              <td>{formatDuration(p.feedbackTimeMs)}</td>
-              <td>{money(p.costMs)}</td>
+      {/* Table view for accessibility (the same data, screen-reader friendly).
+          Hidden through a wrapper: a table ignores the 1px width and would
+          widen the page on phones. */}
+      <div className="visually-hidden">
+        <table>
+          <caption>Cost/time frontier by container count</caption>
+          <thead>
+            <tr>
+              <th scope="col">Containers</th>
+              <th scope="col">Feedback time</th>
+              <th scope="col">Cost per run</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {frontier.map((p) => (
+              <tr key={p.shardCount}>
+                <td>{p.shardCount}</td>
+                <td>{formatDuration(p.feedbackTimeMs)}</td>
+                <td>{money(p.costMs)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }
