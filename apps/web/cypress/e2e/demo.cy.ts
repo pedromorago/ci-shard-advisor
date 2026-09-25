@@ -25,8 +25,10 @@ describe('demo analysis', () => {
       });
   });
 
-  it('has no serious or critical accessibility violations', () => {
+  it('has no accessibility violations, disclosures open', () => {
+    // Scan what the collapsible sections hide too (help, chart and split lists).
+    cy.get('details').invoke('attr', 'open', '');
     cy.injectAxe();
-    cy.checkA11y(undefined, { includedImpacts: ['serious', 'critical'] });
+    cy.checkA11y();
   });
 });

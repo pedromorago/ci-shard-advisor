@@ -6,7 +6,9 @@
 export function ReportHelp() {
   return (
     <details className="card details help">
-      <summary>Which file do I upload, and how do I get it?</summary>
+      <summary>
+        <h2>Which file do I upload, and how do I get it?</h2>
+      </summary>
       <div className="details__body">
         <p>
           Upload the <strong>JSON report</strong> of your last Cypress run — ideally{' '}
