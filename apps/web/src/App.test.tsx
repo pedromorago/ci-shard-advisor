@@ -53,6 +53,24 @@ describe('App', () => {
     expect(screen.queryByLabelText(/workers/i)).not.toBeInTheDocument();
   });
 
+  it('asks phones for a number pad on every number field', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(screen.getByLabelText(/startup overhead/i)).toHaveAttribute('inputmode', 'numeric');
+    expect(screen.getByLabelText(/cost per minute/i)).toHaveAttribute('inputmode', 'decimal');
+
+    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'max-wait' } });
+    expect(screen.getByLabelText(/wait limit/i)).toHaveAttribute('inputmode', 'numeric');
+    fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'budget' } });
+    expect(screen.getByLabelText(/budget per run/i)).toHaveAttribute('inputmode', 'decimal');
+
+    await user.upload(
+      screen.getByLabelText(/upload your cypress reports/i),
+      reportFile(cy([50000, 10000]), 'all.json'),
+    );
+    expect(await screen.findByLabelText(/containers you run today/i)).toHaveAttribute('inputmode', 'numeric');
+  });
+
   it('re-analyzes when the objective changes', () => {
     render(<App />);
     fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'fastest' } });
