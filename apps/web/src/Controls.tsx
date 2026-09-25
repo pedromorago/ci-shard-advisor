@@ -25,6 +25,7 @@ export function Controls({ settings, merged, onChange }: ControlsProps) {
           <span>Startup overhead (s)</span>
           <input
             type="number"
+            inputMode="numeric"
             min={0}
             step={5}
             value={settings.startupOverheadSec}
@@ -35,6 +36,7 @@ export function Controls({ settings, merged, onChange }: ControlsProps) {
           <span>Cost per minute (€)</span>
           <input
             type="number"
+            inputMode="decimal"
             min={0}
             step={0.01}
             value={settings.pricePerMinute}
@@ -46,6 +48,7 @@ export function Controls({ settings, merged, onChange }: ControlsProps) {
             <span>Containers you run today</span>
             <input
               type="number"
+              inputMode="numeric"
               min={1}
               step={1}
               value={settings.currentShardCount}
