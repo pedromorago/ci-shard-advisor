@@ -38,14 +38,17 @@ test.describe('demo analysis', () => {
     expect(axisLabel?.height).toBeGreaterThanOrEqual(12);
   });
 
-  test('has no serious or critical accessibility violations', async ({ page }) => {
+  test('has no accessibility violations, disclosures open', async ({ page }) => {
     await page.goto('/');
+    // Scan what the collapsible sections hide too (help, chart and split lists).
+    for (const disclosure of await page.locator('details').all()) {
+      await disclosure.evaluate((el) => el.setAttribute('open', ''));
+    }
 
     const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa'])
+      .withTags(['wcag2a', 'wcag2aa', 'best-practice'])
       .analyze();
 
-    const serious = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
-    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
   });
 });

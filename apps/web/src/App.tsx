@@ -135,7 +135,9 @@ export function App() {
       <FindingsCard findings={result.findings} />
 
       <details className="card details">
-        <summary>Show the full cost / time frontier</summary>
+        <summary>
+          <h2>Show the full cost / time frontier</h2>
+        </summary>
         <div className="details__body">
           <FrontierChart
             frontier={result.frontier}
