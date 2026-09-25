@@ -21,6 +21,23 @@ test.describe('demo analysis', () => {
     await expect(page.getByRole('img', { name: /feedback time versus billed cost/i })).toBeVisible();
   });
 
+  test('fits a phone screen: no sideways scroll and a legible chart', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    await page.getByText(/show the full cost \/ time frontier/i).click();
+    const chart = page.getByRole('img', { name: /feedback time versus billed cost/i });
+    await expect(chart).toBeVisible();
+
+    const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(pageWidth).toBeLessThanOrEqual(390);
+
+    // Axis labels are 13px. Drawn at the real width they stay that size; a
+    // scaled-down desktop drawing would shrink them to about 6px.
+    const axisLabel = await chart.getByText('Cost per run').boundingBox();
+    expect(axisLabel?.height).toBeGreaterThanOrEqual(12);
+  });
+
   test('has no serious or critical accessibility violations', async ({ page }) => {
     await page.goto('/');
 
