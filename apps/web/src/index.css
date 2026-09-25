@@ -764,6 +764,11 @@ summary::-webkit-details-marker {
     border-radius: 16px;
   }
 
+  /* Collapsible cards pad their summary and body instead. */
+  .details {
+    padding: 0;
+  }
+
   .details > summary {
     padding: 18px 20px;
     border-radius: 16px;
