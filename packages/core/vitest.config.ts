@@ -6,7 +6,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      // Type-only modules compile to nothing — there is no runtime to cover.
+      // Type-only modules compile to nothing: there is no runtime to cover.
       exclude: ['src/types/**', 'src/report/playwright-report.ts'],
       reporter: ['text', 'html'],
       thresholds: {

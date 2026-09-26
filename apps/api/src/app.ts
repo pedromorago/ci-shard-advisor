@@ -26,7 +26,7 @@ function nonNegative(raw: string | undefined, name: string): number | undefined 
 /**
  * Build the objective from the query. `maxFeedbackMs`/`budgetMs` are
  * parameterized objectives and take precedence; otherwise `objective` picks
- * recommended (the knee — the core's 'balanced') or fastest.
+ * recommended (the knee, the core's 'balanced') or fastest.
  */
 function objectiveParam(query: AdviseQuery): Objective | undefined {
   const maxFeedbackMs = nonNegative(query.maxFeedbackMs, 'maxFeedbackMs');
@@ -52,7 +52,7 @@ interface AdviseQuery {
 }
 
 /**
- * Default per-shard startup overhead when the caller does not set one —
+ * Default per-shard startup overhead when the caller does not set one:
  * the low end of the 30-60s the spec suggests (§3.3). The CLI instead
  * defaults to 0 (no cost story without --setup); the web suggests 45s.
  */
@@ -60,9 +60,9 @@ const DEFAULT_SETUP_MS = 30_000;
 
 /**
  * Build the AnalyzeInput from the posted body. Two shapes are accepted:
- * - `{ reports: [...] }` — one entry per shard; two or more become a *measured*
+ * - `{ reports: [...] }`: one entry per shard; two or more become a *measured*
  *   per-shard setup, a single one is *modeled* as merged.
- * - a bare report object — a single *modeled* merged report.
+ * - a bare report object: a single *modeled* merged report.
  */
 function toInput(body: unknown, currentShardCount: number | undefined): AnalyzeInput {
   if (body && typeof body === 'object' && Array.isArray((body as { reports?: unknown }).reports)) {
@@ -77,7 +77,7 @@ function toInput(body: unknown, currentShardCount: number | undefined): AnalyzeI
 
 /**
  * The local API that wraps the core. It never touches the filesystem or a
- * database — it validates HTTP and delegates to the v2 advisor gate `advise()`
+ * database. It validates HTTP and delegates to the v2 advisor gate `advise()`
  * (ADR-003). Returned as a factory so tests can drive it with `.inject()`.
  */
 export function buildApp(): FastifyInstance {
@@ -101,7 +101,7 @@ export function buildApp(): FastifyInstance {
       if (pricePerMinute !== undefined) cost.pricePerMinute = pricePerMinute;
       if (query.currency) cost.currency = query.currency;
 
-      // No workers param: a parked Playwright concept — Cypress containers
+      // No workers param: a parked Playwright concept: Cypress containers
       // run their specs serially and the visible product never exposes it (FR-13).
       options = {};
       if (maxShards !== undefined) options.maxShards = maxShards;

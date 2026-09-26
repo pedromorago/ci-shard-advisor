@@ -29,8 +29,8 @@ export function findElbow(frontier: readonly ConfigPoint[]): ConfigPoint {
   const costMin = Math.min(...costs);
   const costMax = Math.max(...costs);
 
-  // No meaningful trade-off on an axis — either flat, or a negligible relative
-  // spread — means there is nothing to balance, so optimize the other one and
+  // No meaningful trade-off on an axis (either flat, or a negligible relative
+  // spread) means there is nothing to balance, so optimize the other one and
   // take the FEWEST shards that reach it. This is what stops a 0.3s suite behind
   // a 30s startup from being told to add shards for a 0.1s "gain": the feedback
   // spread is a tiny fraction of the runtime, so we just minimize cost.

@@ -12,7 +12,7 @@ import { cyReport as cypressReport, reportFile as file, task as baseTask } from 
 // These plans speak Cypress: the spec files are *.cy.ts.
 const task = (id: string, durationMs: number) => baseTask(id, durationMs, { file: `${id}.cy.ts` });
 
-describe('planFor — plans are always runnable (spec §5.3)', () => {
+describe('planFor: plans are always runnable (spec §5.3)', () => {
   it('never emits an empty shard when asked for more shards than spec files', () => {
     const tasks = [task('a', 40000), task('b', 30000), task('c', 20000)];
     const plan = planFor(tasks, 8);
@@ -38,7 +38,7 @@ describe('planFor — plans are always runnable (spec §5.3)', () => {
   });
 });
 
-describe('advise — forced input format (spec §3.4)', () => {
+describe('advise: forced input format (spec §3.4)', () => {
   it('honors inputFormat instead of auto-detecting', () => {
     // A mochawesome-shaped report: auto-detection would classify it as
     // mochawesome; forcing 'cypress' must make the Cypress reader reject it.

@@ -3,8 +3,8 @@ import { ReportParseError } from './parser';
 
 /**
  * A single <testcase> extracted from a JUnit XML report.
- * JUnit XML is the universal test-result format — Playwright, Cypress, Jest,
- * pytest, Maven/Surefire and many more can emit it — so one reader unlocks
+ * JUnit XML is the universal test-result format. Playwright, Cypress, Jest,
+ * pytest, Maven/Surefire and many more can emit it, so one reader unlocks
  * almost any tool. `time` is in seconds (the JUnit convention).
  */
 export interface JUnitCase {

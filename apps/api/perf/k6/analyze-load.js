@@ -20,7 +20,7 @@ const REPORT = JSON.stringify({
 });
 
 // Ramp up to 20 virtual users, hold, then ramp down. Fail the run if the p95
-// latency or the error rate breach the SLOs — this is a pass/fail gate, not
+// latency or the error rate breach the SLOs: this is a pass/fail gate, not
 // just a report.
 export const options = {
   stages: [

@@ -9,7 +9,7 @@ const unbalanced = {
 };
 const cost = { startupOverheadMs: 30000 };
 
-describe('advise — scenarios', () => {
+describe('advise: scenarios', () => {
   it('measures the current situation and its imbalance', () => {
     const { current } = advise(unbalanced, cost);
     expect(current.measured).toBe(true);

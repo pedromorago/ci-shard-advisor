@@ -1,5 +1,5 @@
 /**
- * Minimal typing of Playwright's JSON reporter output — only the fields the
+ * Minimal typing of Playwright's JSON reporter output: only the fields the
  * pipeline actually consumes. Real reports carry much more (config, stats,
  * annotations, attachments); we intentionally ignore the rest so the parser
  * tolerates version differences.

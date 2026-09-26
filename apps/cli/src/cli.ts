@@ -113,7 +113,7 @@ export function run(argv: string[], io: CliIO): number {
 
   // Options and the cost model. The CLI defaults setup to 0 on purpose:
   // without --setup there is no cost story to tell (the API and web are
-  // interactive surfaces and suggest 30-60s instead — spec §3.3).
+  // interactive surfaces and suggest 30-60s instead, spec §3.3).
   const cost: CostModel = { startupOverheadMs: 0 };
   let maxShards: number | undefined;
   let currentShardCount: number | undefined;

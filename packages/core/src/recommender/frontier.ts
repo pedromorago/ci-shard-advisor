@@ -36,7 +36,7 @@ export interface FrontierOptions {
   /**
    * How to split tasks across shards:
    * - 'optimal' (default): the duration-balanced branch-and-bound split.
-   * - 'even': a round-robin split that balances test *count*, not duration —
+   * - 'even': a round-robin split that balances test *count*, not duration:
    *   a model of default sharding, used to estimate the *current* pipeline.
    */
   split?: 'optimal' | 'even';
@@ -93,7 +93,7 @@ export function evaluateConfig(
 
 /**
  * Build the cost/time frontier: for every shard count from 1 to maxShards,
- * evaluate the configuration. Adding shards trades money for speed — this is
+ * evaluate the configuration. Adding shards trades money for speed: this is
  * the curve the recommender searches for the sweet spot.
  */
 export function buildFrontier(

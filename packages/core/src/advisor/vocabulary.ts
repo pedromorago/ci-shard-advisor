@@ -3,7 +3,7 @@ import type { Runner } from './types';
 /**
  * Domain vocabulary shared by every layer that words a sentence or a command.
  * It lives in the advisor (domain), not in the exporters: presentation depends
- * on the domain, never the other way around — spec §5.5 puts the advisor's
+ * on the domain, never the other way around: spec §5.5 puts the advisor's
  * voice in the core precisely so all adapters say the same thing.
  */
 
