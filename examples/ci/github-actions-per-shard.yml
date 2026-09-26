@@ -1,5 +1,5 @@
 # Example: shard a Playwright suite across 4 jobs on GitHub Actions and keep
-# ONE JSON report per shard — the per-shard input CI Shard Advisor prefers.
+# ONE JSON report per shard, the per-shard input CI Shard Advisor prefers.
 #
 # With one report per shard the advisor *measures* your real situation (true
 # per-shard times, so it can see imbalance) instead of modelling it from a
