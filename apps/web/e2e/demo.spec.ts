@@ -36,6 +36,10 @@ test.describe('demo analysis', () => {
     // scaled-down desktop drawing would shrink them to about 6px.
     const axisLabel = await chart.getByText('Cost per run').boundingBox();
     expect(axisLabel?.height).toBeGreaterThanOrEqual(12);
+
+    // The split disclosures are tap targets: at least 44px tall, the iOS minimum.
+    const applySplit = await page.getByText(/apply this split/i).first().boundingBox();
+    expect(applySplit?.height).toBeGreaterThanOrEqual(44);
   });
 
   test('has no accessibility violations, disclosures open', async ({ page }) => {
