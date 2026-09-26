@@ -23,7 +23,7 @@ const TASKS: AtomicTask[] = [task('a', 40000), task('b', 30000), task('c', 20000
 
 const cost: CostModel = { startupOverheadMs: 30000, pricePerMinute: 0.1, currency: '€' };
 
-describe('chooseObjective — every objective kind', () => {
+describe('chooseObjective: every objective kind', () => {
   it('fastest and cheapest hit the frontier extremes', () => {
     expect(chooseObjective(FRONTIER, { kind: 'fastest' })?.shardCount).toBe(3);
     expect(chooseObjective(FRONTIER, { kind: 'cheapest' })?.shardCount).toBe(1);
@@ -67,7 +67,7 @@ describe('chooseObjective — every objective kind', () => {
   });
 });
 
-describe('buildScenarios — unavailable branches', () => {
+describe('buildScenarios: unavailable branches', () => {
   // A current already faster and cheaper than the whole frontier: nothing beats it.
   const unbeatable: MeasuredCurrent = {
     shardCount: 3,
@@ -97,7 +97,7 @@ describe('buildScenarios — unavailable branches', () => {
   });
 });
 
-describe('advisor exporters — unavailable and sameAs rendering', () => {
+describe('advisor exporters: unavailable and sameAs rendering', () => {
   const unbeatable: MeasuredCurrent = { shardCount: 3, shardTimesMs: [1, 1, 1], feedbackTimeMs: 1, costMs: 1, imbalanceMs: 0, measured: true };
   const result: AdvisorResult = {
     current: unbeatable,
@@ -111,7 +111,7 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
   it('text merges the chosen move into the rebalance when they coincide', () => {
     // fastest lands on 3 shards = the rebalance point → one single entry.
     const text = toAdvisorText(result, cost);
-    expect(text).toMatch(/Fastest\) Rebalance your 3 shards — your best move is free/);
+    expect(text).toMatch(/Fastest\) Rebalance your 3 shards: your best move is free/);
     expect(text).not.toMatch(/Free\)/);
   });
 
@@ -125,7 +125,7 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
 
   it('markdown renders the merged move row when they coincide', () => {
     const md = toAdvisorMarkdown(result, cost);
-    expect(md).toMatch(/Fastest — rebalance your 3 shards \(free\)/);
+    expect(md).toMatch(/Fastest: rebalance your 3 shards \(free\)/);
   });
 
   it('labels every objective kind on the chosen move', () => {
@@ -156,11 +156,11 @@ describe('advisor exporters — unavailable and sameAs rendering', () => {
     };
     const custom = { ...result, scenarios: [rebalance, unavailable] };
     expect(toAdvisorText(custom, cost)).toMatch(/Within your budget\) not available: Nothing fits/);
-    expect(toAdvisorMarkdown(custom, cost)).toMatch(/\| Within your budget \| — \| not available \|/);
+    expect(toAdvisorMarkdown(custom, cost)).toMatch(/\| Within your budget \| n\/a \| not available \|/);
   });
 });
 
-describe('computeFindings — worded findings across branches', () => {
+describe('computeFindings: worded findings across branches', () => {
   const cur = (
     shardCount: number,
     feedbackTimeMs: number,
@@ -222,7 +222,7 @@ describe('computeFindings — worded findings across branches', () => {
       [flakyTask],
       cost,
     );
-    // Imbalance is part of the current situation (spec §5.1/§7.1) — every
+    // Imbalance is part of the current situation (spec §5.1/§7.1): every
     // adapter renders it inline there, so findings must not duplicate it.
     expect(warnings.some((w) => /idle machines/.test(w))).toBe(false);
     expect(warnings.some((w) => /1 flaky test wasted/.test(w))).toBe(true);
@@ -242,7 +242,7 @@ describe('computeFindings — worded findings across branches', () => {
   });
 });
 
-describe('advise — edge inputs', () => {
+describe('advise: edge inputs', () => {
   it('rejects an empty per-shard input', () => {
     expect(() => advise({ kind: 'per-shard', reports: [] }, cost)).toThrow(/at least one report/);
   });

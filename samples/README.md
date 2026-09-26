@@ -1,17 +1,17 @@
 # Sample reports
 
 Ready-made Cypress reports to try CI Shard Advisor. The format (Module API or
-mochawesome) is auto-detected — drop any of these into the web, the CLI or the API.
+mochawesome) is auto-detected: drop any of these into the web, the CLI or the API.
 
 | File | Format | What it shows |
 | --- | --- | --- |
-| [`cypress-containers/`](cypress-containers) | Module API × 3 | **One report per container** (the preferred input): imbalance, a flaky retry and a slow checkout spec — the web demo data |
+| [`cypress-containers/`](cypress-containers) | Module API × 3 | **One report per container** (the preferred input): a 109-test e-commerce suite split by folder, with a heavy first container, four flaky retries and a slow guest-checkout spec. The web demo data |
 | `cypress-run.json` | Module API (merged) | Specs with retries (flaky) and a pending test |
 | `mochawesome.json` | mochawesome (merged) | Nested suites, a failure and a pending test |
 
 The single files are one merged report each (the advisor *models* the split
 from your declared container count). The `cypress-containers/` folder has one
-report **per container**, so the advisor *measures* your setup — imbalance
+report **per container**, so the advisor *measures* your setup, imbalance
 included.
 
 > The `playwright-*` files and `playwright-dev-shards/` remain from the parked

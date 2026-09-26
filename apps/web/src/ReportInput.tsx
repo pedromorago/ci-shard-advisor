@@ -43,7 +43,7 @@ export function ReportInput({ onSelect, onLoadDemo }: ReportInputProps) {
         Load demo
       </button>
       <p className="report-input__note">
-        Processed entirely in your browser — your reports are never uploaded.
+        Processed entirely in your browser: your reports are never uploaded.
       </p>
     </div>
   );

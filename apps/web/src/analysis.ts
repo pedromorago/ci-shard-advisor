@@ -1,13 +1,12 @@
 import { advise, objectiveFor, maxFeedbackObjective, budgetObjective } from '@ci-shard-advisor/core';
 import type { AdvisorResult, CostModel, MeasuredCurrent, Objective, ReportFile } from '@ci-shard-advisor/core';
-import { DEMO_REPORTS } from './demo';
 
 /**
  * The objective the user picks in "Optimize for" (spec §5.4):
  * - recommended: the knee of the frontier (the core's 'balanced').
  * - fastest: minimum wait, whatever it costs.
- * - max-wait: cheapest within a wait limit — prefilled with the current wait.
- * - budget: fastest within a cost budget — prefilled with the current cost.
+ * - max-wait: cheapest within a wait limit, prefilled with the current wait.
+ * - budget: fastest within a cost budget, prefilled with the current cost.
  */
 export type ObjectiveSetting =
   | { kind: 'recommended' }
@@ -17,7 +16,7 @@ export type ObjectiveSetting =
 
 export type ObjectiveKind = ObjectiveSetting['kind'];
 
-/** The knobs the user controls — none of these come from the reports. */
+/** The knobs the user controls. None of these come from the reports. */
 export interface AnalysisSettings {
   /** Per-shard CI startup overhead, in seconds. */
   startupOverheadSec: number;
@@ -37,8 +36,6 @@ export const DEFAULT_SETTINGS: AnalysisSettings = {
   currentShardCount: 3,
   objective: { kind: 'recommended' },
 };
-
-export { DEMO_REPORTS };
 
 /** Map the UI objective onto the core Objective (the conversions live in core). */
 function toObjective(setting: ObjectiveSetting, pricePerMinute: number): Objective {
@@ -74,7 +71,7 @@ export function adviseFrom(reports: ReportFile[], settings: AnalysisSettings): A
 /**
  * Prefills for the parameterized objectives (spec §5.4): anchored to the
  * measured current situation, rounded UP so the prefilled limit always
- * contains the current value — "same wait, cheaper" / "same cost, faster"
+ * contains the current value: "same wait, cheaper" / "same cost, faster"
  * must be feasible at the moment they are offered.
  */
 export function prefillWaitSec(current: MeasuredCurrent): number {

@@ -57,7 +57,7 @@ export function MoveCard({ tag, title, scenario, pricePerMinute, runner }: MoveC
       <p className="move__reason">{scenario.reason}</p>
       {scenario.plan ? (
         <details className="move__plan">
-          <summary>Apply this split — each machine runs its own list</summary>
+          <summary>Apply this split: each machine runs its own list</summary>
           <ol className="move__plan-list">
             {scenario.plan.specs.map((specs, i) => (
               <li key={i}>

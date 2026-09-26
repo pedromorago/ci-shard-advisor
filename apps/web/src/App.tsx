@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { formatDuration, objectiveLabel, presentedMoves, unitsOf } from '@ci-shard-advisor/core';
 import type { ReportFile } from '@ci-shard-advisor/core';
-import { adviseFrom, DEFAULT_SETTINGS, DEMO_REPORTS, prefillBudget, prefillWaitSec } from './analysis';
+import { adviseFrom, DEFAULT_SETTINGS, prefillBudget, prefillWaitSec } from './analysis';
 import type { AnalysisSettings } from './analysis';
+import { DEMO_REPORTS } from './demo';
+import { useAnalysis } from './useAnalysis';
 import { ReportInput } from './ReportInput';
 import { ReportHelp } from './ReportHelp';
 import { Controls } from './Controls';
@@ -18,7 +20,9 @@ export function App() {
   const [settings, setSettings] = useState<AnalysisSettings>(DEFAULT_SETTINGS);
   const [error, setError] = useState<string | null>(null);
 
-  const result = useMemo(() => adviseFrom(reports, settings), [reports, settings]);
+  // The fields follow `settings` at once; the results follow the analysis,
+  // which runs off the main thread and dims them while it catches up.
+  const { result, settings: analyzed, updating } = useAnalysis(reports, settings);
 
   // Keep the parameterized prefills anchored to the CURRENT measured situation
   // (spec §5.4): when new reports or a new price move the anchor, re-seed the
@@ -71,8 +75,8 @@ export function App() {
       <header className="app__header">
         <h1>CI Shard Advisor</h1>
         <p className="app__tagline">
-          Parallelize Cypress with your head: you are here — these are your moves
-          and what each one costs or saves. No Cypress Cloud needed.
+          Parallelize Cypress with your head. See where you are, your moves and
+          what each one costs or saves. No Cypress Cloud needed.
         </p>
       </header>
 
@@ -92,61 +96,63 @@ export function App() {
 
       <Controls settings={settings} merged={reports.length < 2} onChange={setSettings} />
 
-      <CurrentCard current={result.current} pricePerMinute={settings.pricePerMinute} runner={result.runner} />
+      <div className={updating ? 'results results--updating' : 'results'} aria-busy={updating}>
+        <CurrentCard current={result.current} pricePerMinute={analyzed.pricePerMinute} runner={result.runner} />
 
-      <section className="card" aria-labelledby="moves-heading">
-        <h2 id="moves-heading">Your moves</h2>
-        <ObjectivePicker
-          objective={settings.objective}
-          current={result.current}
-          pricePerMinute={settings.pricePerMinute}
-          onChange={(objective) => setSettings({ ...settings, objective })}
-        />
-        <ol className="moves-list">
-          {merged ? (
-            <MoveCard
-              tag={chosenLabel}
-              title={`Rebalance your ${unitsOf(result.current.shardCount, result.runner)} — your best move is free`}
-              scenario={chosen}
-              pricePerMinute={settings.pricePerMinute}
-              runner={result.runner}
-            />
-          ) : (
-            <>
-              <MoveCard
-                tag="Free"
-                title={`Rebalance your ${unitsOf(result.current.shardCount, result.runner)}`}
-                scenario={rebalance}
-                pricePerMinute={settings.pricePerMinute}
-                runner={result.runner}
-              />
+        <section className="card" aria-labelledby="moves-heading">
+          <h2 id="moves-heading">Your moves</h2>
+          <ObjectivePicker
+            objective={settings.objective}
+            current={result.current}
+            pricePerMinute={settings.pricePerMinute}
+            onChange={(objective) => setSettings({ ...settings, objective })}
+          />
+          <ol className="moves-list">
+            {merged ? (
               <MoveCard
                 tag={chosenLabel}
-                title={unitsOf(chosen.config.shardCount, result.runner)}
+                title={`Rebalance your ${unitsOf(result.current.shardCount, result.runner)}: your best move is free`}
                 scenario={chosen}
-                pricePerMinute={settings.pricePerMinute}
+                pricePerMinute={analyzed.pricePerMinute}
                 runner={result.runner}
               />
-            </>
-          )}
-        </ol>
-      </section>
+            ) : (
+              <>
+                <MoveCard
+                  tag="Free"
+                  title={`Rebalance your ${unitsOf(result.current.shardCount, result.runner)}`}
+                  scenario={rebalance}
+                  pricePerMinute={analyzed.pricePerMinute}
+                  runner={result.runner}
+                />
+                <MoveCard
+                  tag={chosenLabel}
+                  title={unitsOf(chosen.config.shardCount, result.runner)}
+                  scenario={chosen}
+                  pricePerMinute={analyzed.pricePerMinute}
+                  runner={result.runner}
+                />
+              </>
+            )}
+          </ol>
+        </section>
 
-      <FindingsCard findings={result.findings} />
+        <FindingsCard findings={result.findings} />
 
-      <details className="card details">
-        <summary>
-          <h2>Show the full cost / time frontier</h2>
-        </summary>
-        <div className="details__body">
-          <FrontierChart
-            frontier={result.frontier}
-            recommended={chosen.config}
-            current={result.current}
-            ratePerMin={settings.pricePerMinute}
-          />
-        </div>
-      </details>
+        <details className="card details">
+          <summary>
+            <h2>Show the full cost / time frontier</h2>
+          </summary>
+          <div className="details__body">
+            <FrontierChart
+              frontier={result.frontier}
+              recommended={chosen.config}
+              current={result.current}
+              ratePerMin={analyzed.pricePerMinute}
+            />
+          </div>
+        </details>
+      </div>
     </main>
   );
 }

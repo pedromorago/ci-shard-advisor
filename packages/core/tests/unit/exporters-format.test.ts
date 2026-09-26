@@ -32,7 +32,7 @@ describe('formatDuration', () => {
   });
 });
 
-describe('money formatting — the single ms→currency home (spec §4)', () => {
+describe('money formatting: the single ms→currency home (spec §4)', () => {
   it('converts billed ms at the per-minute rate', () => {
     expect(formatMoney(60_000, 0.1)).toBe('€0.10');
     expect(formatMoney(90_000, 0.1, '$')).toBe('$0.15');

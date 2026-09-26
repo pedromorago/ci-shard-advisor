@@ -18,7 +18,7 @@ const overSharded = {
 };
 const cost = { startupOverheadMs: 30000 };
 
-describe('advise — findings (spec §5.5)', () => {
+describe('advise: findings (spec §5.5)', () => {
   it('FR-9 warns about over-fragmentation', () => {
     const { findings } = advise(overSharded, cost);
     expect(findings.warnings.some((w) => /you run 6 shards/i.test(w))).toBe(true);

@@ -87,7 +87,7 @@ describe('simulateShard', () => {
 
     it('equals the scheduler makespan when each shard has a single worker', () => {
       // With one worker a shard runs sequentially, so its wall time is its
-      // total load — exactly what the scheduler assumed.
+      // total load, exactly what the scheduler assumed.
       const random = mulberry32(88);
       for (let i = 0; i < 100; i++) {
         const taskCount = randomInt(random, 0, 15);

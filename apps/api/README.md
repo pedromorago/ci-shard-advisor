@@ -2,7 +2,7 @@
 
 Local (not publicly deployed) HTTP API that wraps the core, so backend/API
 testing can be demonstrated against a real service (ADR-003). It validates HTTP
-and delegates to the v2 advisor gate `advise()` — no filesystem, no database.
+and delegates to the v2 advisor gate `advise()`: no filesystem, no database.
 
 ## Run
 
@@ -18,7 +18,7 @@ pnpm --filter @ci-shard-advisor/api start   # http://127.0.0.1:3001 (PORT to ove
 | `POST` | `/advise` | Body: a test report (or `{ "reports": [...] }`, one per shard). Returns the current situation, four moves, findings and the frontier. |
 
 The body is either a single report object (**merged** → the current setup is
-*modeled* by test count) or `{ "reports": [r1, r2, ...] }` — two or more reports
+*modeled* by test count) or `{ "reports": [r1, r2, ...] }`: two or more reports
 make a **per-shard** setup, so the current situation is *measured* from real
 per-container times. The expected input is a Cypress report (Module API or
 mochawesome), auto-detected.
@@ -51,7 +51,7 @@ pnpm --filter @ci-shard-advisor/api test
 
 ### Java REST Assured suite (`rest-assured/`)
 
-A JUnit 5 + REST Assured suite exercises the running service over real HTTP —
+A JUnit 5 + REST Assured suite exercises the running service over real HTTP:
 health, a merged advice call, the measured per-shard setup, the JSON Schema
 contract, and the `400` error paths. Requires JDK 17+ and Maven:
 

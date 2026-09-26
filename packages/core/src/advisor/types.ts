@@ -39,7 +39,7 @@ export type Objective =
   | { kind: 'budget'; costMs: number }
   | { kind: 'weight'; costPerFeedbackMinute: number };
 
-/** The team's current setup — measured from per-shard reports, or modeled. */
+/** The team's current setup: measured from per-shard reports, or modeled. */
 export interface MeasuredCurrent {
   shardCount: number;
   /** Real (or modeled) wall time per shard. */
@@ -56,7 +56,7 @@ export interface MeasuredCurrent {
 export interface ShardPlan {
   /** Task ids per shard (the optimal split). */
   shards: string[][];
-  /** Spec files per shard — the applicable part: each CI job runs its list. */
+  /** Spec files per shard, the applicable part: each CI job runs its list. */
   specs: string[][];
 }
 

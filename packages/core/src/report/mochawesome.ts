@@ -2,9 +2,9 @@ import type { AtomicTask, TaskStatus } from '../types/domain';
 import { ReportParseError } from './parser';
 
 /**
- * Minimal typing of a mochawesome JSON report — the de-facto standard reporter
+ * Minimal typing of a mochawesome JSON report, the de-facto standard reporter
  * for Cypress (and any Mocha runner). Its shape is `results[]` (one per spec),
- * each with nested `suites[]` and `tests[]` — different from the Cypress Module
+ * each with nested `suites[]` and `tests[]`, different from the Cypress Module
  * API's `runs[]`, which is why it gets its own reader.
  */
 export interface MochaTest {

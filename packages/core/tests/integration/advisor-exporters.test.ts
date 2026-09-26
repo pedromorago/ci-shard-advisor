@@ -48,7 +48,7 @@ describe('advisor exporters', () => {
   });
 
   // Snapshot testing (docs/testing.md §6): the rendered text output is frozen
-  // verbatim — any formatting change surfaces as a diff. Possible only because
+  // verbatim: any formatting change surfaces as a diff. Possible only because
   // the output is deterministic (no locale, no clock, node-budget solver).
   it('text output is frozen as an inline snapshot', () => {
     expect(toAdvisorText(advise(input, cost), cost)).toMatchInlineSnapshot(`
@@ -65,19 +65,19 @@ describe('advisor exporters', () => {
 
       Your moves
         Free) Rebalance your 2 shards   feedback 1m 30s (−40.0s)   cost $0.30 (±0)
-           Same machines, specs redistributed by duration — rebalancing is free.
+           Same machines, specs redistributed by duration. Rebalancing is free.
            Apply (each machine runs its own list):
              shard 1: npx playwright test t0.spec.ts
              shard 2: npx playwright test t1.spec.ts
            (--format github or bitbucket emits the full CI config)
         Recommended) 1 shard   feedback 2m 30s (+20.0s)   cost $0.25 (−$0.05)
-           The knee of the cost/time frontier — past it, shards stop paying off.
+           The knee of the cost/time frontier: past it, shards stop paying off.
            Apply (each machine runs its own list):
              shard 1: npx playwright test t0.spec.ts t1.spec.ts
            (--format github or bitbucket emits the full CI config)
 
       Warnings
-        • With 2 workers per shard your wait would drop to 1m 20s at no extra cost — same bill, same machines. Validate with one run: scaling is not perfect on small runners.
+        • With 2 workers per shard your wait would drop to 1m 20s at no extra cost: same bill, same machines. Validate with one run: scaling is not perfect on small runners.
 
       Frontier (shards · feedback · billed · price)
          1  2m 30s   2m 30s    $0.25
@@ -93,7 +93,7 @@ describe('advisor exporters', () => {
 
       ### Your setup today (measured)
 
-      **2 shards** — 2m 10s feedback, $0.30 cost.
+      **2 shards**: 2m 10s feedback, $0.30 cost.
 
       Imbalance: 1m 20s of idle machine time.
 
@@ -106,7 +106,7 @@ describe('advisor exporters', () => {
 
       ### Warnings
 
-      - With 2 workers per shard your wait would drop to 1m 20s at no extra cost — same bill, same machines. Validate with one run: scaling is not perfect on small runners."
+      - With 2 workers per shard your wait would drop to 1m 20s at no extra cost: same bill, same machines. Validate with one run: scaling is not perfect on small runners."
     `);
   });
 });

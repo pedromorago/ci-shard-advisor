@@ -43,7 +43,7 @@ export function objectiveLabel(scenario: Scenario): string {
 
 /**
  * The presentation decision of spec §5.2, shared by every adapter: show the
- * free rebalance plus the chosen move — and when the chosen move lands on the
+ * free rebalance plus the chosen move; when the chosen move lands on the
  * rebalance's config (`merged`), show a single card that says so.
  */
 export function presentedMoves(scenarios: Scenario[]): {
@@ -66,7 +66,7 @@ function renderSuiteLine(result: AdvisorResult): string {
   return `Suite: ${result.tasks.length} tests, ${formatDuration(testTimeMs(result))} of test time (${runnerName}, ${origin})`;
 }
 
-/** The current-situation block (spec §5.1), imbalance included — its only home. */
+/** The current-situation block (spec §5.1), imbalance included (its only home). */
 function renderCurrent(current: MeasuredCurrent, runner: Runner, workers: number, cost: CostModel): string[] {
   const unit = unitOf(runner);
   const lines = [`Your current setup (${current.measured ? 'measured' : 'modeled'})`];
@@ -115,7 +115,7 @@ function renderMoves(result: AdvisorResult, cost: CostModel): string[] {
 
   if (merged) {
     // One entry: the chosen move IS the rebalance of your current machines.
-    pushMove(objectiveLabel(chosen), chosen, `Rebalance your ${unitsOf(current.shardCount, runner)} — your best move is free`);
+    pushMove(objectiveLabel(chosen), chosen, `Rebalance your ${unitsOf(current.shardCount, runner)}: your best move is free`);
   } else {
     pushMove('Free', rebalance, `Rebalance your ${unitsOf(current.shardCount, runner)}`);
     if (chosen.unavailable) {
@@ -202,7 +202,7 @@ export function toAdvisorMarkdown(result: AdvisorResult, cost: CostModel): strin
   const curMoney = money(current.costMs, cost);
   md.push(`### Your setup today (${current.measured ? 'measured' : 'modeled'})`, '');
   md.push(
-    `**${unitsOf(current.shardCount, result.runner)}** — ${formatDuration(current.feedbackTimeMs)} feedback, ${curMoney ?? formatDuration(current.costMs)} cost.`,
+    `**${unitsOf(current.shardCount, result.runner)}**: ${formatDuration(current.feedbackTimeMs)} feedback, ${curMoney ?? formatDuration(current.costMs)} cost.`,
   );
   if (current.measured && current.imbalanceMs > 0) {
     md.push('', `Imbalance: ${formatDuration(current.imbalanceMs)} of idle machine time.`);
@@ -215,11 +215,11 @@ export function toAdvisorMarkdown(result: AdvisorResult, cost: CostModel): strin
     md.push(`| ${label} | ${s.config.shardCount} | ${formatDuration(s.config.feedbackTimeMs)} | ${c} |`);
   };
   if (merged) {
-    row(`${objectiveLabel(chosen)} — rebalance your ${unitsOf(current.shardCount, result.runner)} (free)`, chosen);
+    row(`${objectiveLabel(chosen)}: rebalance your ${unitsOf(current.shardCount, result.runner)} (free)`, chosen);
   } else {
     row(`Rebalance your ${unitsOf(current.shardCount, result.runner)} (free)`, rebalance);
     if (chosen.unavailable) {
-      md.push(`| ${objectiveLabel(chosen)} | — | not available | |`);
+      md.push(`| ${objectiveLabel(chosen)} | n/a | not available | |`);
     } else {
       row(objectiveLabel(chosen), chosen);
     }

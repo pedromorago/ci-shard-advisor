@@ -7,7 +7,7 @@ export function formatDuration(ms: number): string {
   const totalSeconds = ms / 1000;
   if (totalSeconds < 60) {
     const seconds = totalSeconds.toFixed(1);
-    // 59.96s would render as "60.0s" — carry it into the minute form instead.
+    // 59.96s would render as "60.0s", so carry it into the minute form instead.
     if (seconds !== '60.0') return `${seconds}s`;
   }
   // Round to whole seconds BEFORE splitting so 119.6s is "2m 0s", never "1m 60s".
@@ -23,7 +23,7 @@ export function formatSignedDuration(ms: number): string {
 
 /**
  * Billed machine time as money at the given rate, or null when there is no
- * (positive) price — callers fall back to machine time. The single home of
+ * (positive) price; callers fall back to machine time. The single home of
  * the ms→currency conversion (spec §4): every adapter shows the same number.
  */
 export function formatMoney(costMs: number, pricePerMinute?: number, currency = '€'): string | null {

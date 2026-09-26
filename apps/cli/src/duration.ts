@@ -2,7 +2,7 @@ const UNIT_MS: Record<string, number> = { ms: 1, s: 1_000, m: 60_000 };
 
 /**
  * Parse a human duration into milliseconds. Accepts a bare number (ms), a
- * value suffixed with ms, s or m, or a compound of unit-suffixed parts — the
+ * value suffixed with ms, s or m, or a compound of unit-suffixed parts: the
  * exact form the advisor's own output prints, so values can be fed back in.
  * Examples: "500", "500ms", "90s", "2m", "9m 30s".
  */

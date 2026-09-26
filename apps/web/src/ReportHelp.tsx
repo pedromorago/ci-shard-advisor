@@ -11,7 +11,7 @@ export function ReportHelp() {
       </summary>
       <div className="details__body">
         <p>
-          Upload the <strong>JSON report</strong> of your last Cypress run — ideally{' '}
+          Upload the <strong>JSON report</strong> of your last Cypress run, ideally{' '}
           <strong>one file per container</strong> (that lets the advisor <em>measure</em> your
           real split, imbalance included). In CI each container saves it as a build{' '}
           <strong>artifact</strong> you download.
@@ -33,7 +33,7 @@ npx cypress run --reporter mochawesome \\
         <h3>Also accepted: the Module API result</h3>
         <p>
           If you drive Cypress from a script, the object <code>cypress.run()</code> resolves
-          with (saved as JSON) works too — retries included, which powers the flaky findings.
+          with (saved as JSON) works too. It includes retries, which power the flaky findings.
         </p>
       </div>
     </details>

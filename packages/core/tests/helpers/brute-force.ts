@@ -3,7 +3,7 @@
  *
  * It computes the true optimal makespan by trying EVERY possible assignment
  * of tasks to shards (shardCount^n combinations). This is deliberately the
- * dumbest possible solver: no bounds, no pruning, no cleverness — so it is
+ * dumbest possible solver: no bounds, no pruning, no cleverness, so it is
  * obviously correct by inspection. That is exactly what an oracle must be.
  *
  * Because it is exponential it is only usable for tiny instances (keep n small
