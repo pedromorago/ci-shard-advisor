@@ -28,9 +28,13 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Reports where Pages serves the site: the root of the custom domain
+      # (shard.pedromorago.com), or /ci-shard-advisor/ on github.io without one.
+      - id: pages
+        uses: actions/configure-pages@v5
       - run: pnpm --filter @ci-shard-advisor/web build
         env:
-          PAGES_BASE: /ci-shard-advisor/
+          PAGES_BASE: ${{ steps.pages.outputs.base_path }}/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/web/dist
