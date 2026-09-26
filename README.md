@@ -39,43 +39,50 @@ $ ci-shard-advisor container-*.json --setup 45s --price 0.008
 CI Shard Advisor
 ================
 
-Suite: 9 tests, 4m 6s of test time (Cypress, 3 container reports)
+Suite: 109 tests, 37m 41s of test time (Cypress, 3 container reports)
 
 Your current setup (measured)
   3 containers
-  Feedback time: 3m 0s   (slowest container: #1)
-  Billed cost:   6m 21s  →  €0.05 per run
-  ⚠ Imbalance: container #3 finishes 1m 30s before container #1. You are paying for idle machines.
+  Feedback time: 22m 37s   (slowest container: #1)
+  Billed cost:   39m 56s  →  €0.32 per run
+  ⚠ Imbalance: container #3 finishes 14m 14s before container #1. You are paying for idle machines.
 
 Your moves
-  Free) Rebalance your 3 containers   feedback 3m 0s (±0)   cost €0.05 (±0)
+  Free) Rebalance your 3 containers   feedback 13m 19s (−9m 18s)   cost €0.32 (±0)
      Same machines, specs redistributed by duration. Rebalancing is free.
      Apply (each machine runs its own list):
-       container 1: npx cypress run --spec "cypress/e2e/checkout.cy.ts"
-       container 2: npx cypress run --spec "cypress/e2e/cart.cy.ts,cypress/e2e/search.cy.ts"
-       container 3: npx cypress run --spec "cypress/e2e/login.cy.ts,cypress/e2e/profile.cy.ts"
-  Recommended) 2 containers   feedback 3m 0s (±0)   cost €0.04 (−€0.01)
+       container 1: npx cypress run --spec "cypress/e2e/admin/inventory.cy.ts,cypress/e2e/checkout/guest-checkout.cy.ts,cypress/e2e/checkout/logged-in-checkout.cy.ts,cypress/e2e/checkout/payment-methods.cy.ts"
+       container 2: npx cypress run --spec "cypress/e2e/a11y/smoke.cy.ts,cypress/e2e/account/wishlist.cy.ts,cypress/e2e/admin/orders.cy.ts,cypress/e2e/admin/products.cy.ts,cypress/e2e/admin/refunds.cy.ts,cypress/e2e/auth/login.cy.ts,cypress/e2e/checkout/promo-codes.cy.ts,cypress/e2e/checkout/shipping-options.cy.ts"
+       container 3: npx cypress run --spec "cypress/e2e/account/addresses.cy.ts,cypress/e2e/account/order-history.cy.ts,cypress/e2e/account/profile.cy.ts,cypress/e2e/auth/password-reset.cy.ts,cypress/e2e/auth/signup.cy.ts,cypress/e2e/cart/cart.cy.ts,cypress/e2e/catalog/filters.cy.ts,cypress/e2e/catalog/product-page.cy.ts,cypress/e2e/catalog/search.cy.ts,cypress/e2e/i18n/locales.cy.ts,cypress/e2e/notifications/emails.cy.ts,cypress/e2e/returns/returns.cy.ts"
+     (--format github or bitbucket emits the full CI config)
+  Recommended) 5 containers   feedback 8m 34s (−14m 3s)   cost €0.33 (+€0.01)
      The knee of the cost/time frontier: past it, containers stop paying off.
-     (--format github or bitbucket emits the full, paste-ready CI config)
+     (--format github or bitbucket emits the full CI config)
 
 Warnings
-  • You run 3 containers, but past 2 you only pay more: +13% cost for no faster.
-  • Past 2 containers the wait stops dropping: 'cypress/e2e/checkout.cy.ts' (2m 15s) sets the floor. Consider splitting it.
-  • 1 flaky test wasted 21.0s of machine time in retries this run.
+  • With 7 containers you would cut the wait by 73% for +€0.02 per run.
+  • Past 7 containers the wait stops dropping: 'cypress/e2e/checkout/guest-checkout.cy.ts' (5m 25s) sets the floor. Consider splitting it.
+  • 4 flaky tests wasted 2m 10s of machine time in retries this run.
 
 Frontier (containers · feedback · billed · price)
-   1  4m 51s   4m 51s    €0.04
-   2  3m 0s    5m 36s    €0.04
-   3  3m 0s    6m 21s    €0.05
+   1  38m 26s  38m 26s   €0.31
+   2  19m 36s  39m 11s   €0.31
+   3  13m 19s  39m 56s   €0.32
+   4  10m 11s  40m 41s   €0.33
+   5  8m 34s   41m 26s   €0.33
+   6  7m 11s   42m 11s   €0.34
+   7  6m 10s   42m 56s   €0.34
    ...
 ```
 
 This is the tool's real output for [`samples/cypress-containers/`](samples/cypress-containers),
 with the second move's apply block and the frontier tail elided for brevity.
 
-Your third container buys nothing, one slow spec sets the floor, and a flaky
-test is quietly billing you retries. The web demo shows the same analysis as an
-interactive cost/time frontier, processed entirely in your browser.
+The first container finishes 14 minutes after the last one. Rebalancing the
+same three machines cuts the wait by 9 minutes for free, two more containers
+cut it by 14 for a cent a run, one slow spec sets the floor, and four flaky
+tests are quietly billing you retries. The web demo shows the same analysis as
+an interactive cost/time frontier, processed entirely in your browser.
 
 ## Architecture
 

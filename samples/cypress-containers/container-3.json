@@ -2,14 +2,42 @@
   "runs": [
     {
       "spec": {
-        "name": "profile.cy.ts",
-        "relative": "cypress/e2e/profile.cy.ts"
+        "name": "search.cy.ts",
+        "relative": "cypress/e2e/catalog/search.cy.ts"
       },
       "tests": [
         {
           "title": [
-            "Profile",
-            "updates the avatar"
+            "Search",
+            "returns relevant results"
+          ],
+          "state": "passed",
+          "duration": 21000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 21000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Search",
+            "autocompletes a query"
+          ],
+          "state": "passed",
+          "duration": 18000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 18000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Search",
+            "corrects a typo"
           ],
           "state": "passed",
           "duration": 16000,
@@ -22,8 +50,36 @@
         },
         {
           "title": [
-            "Profile",
-            "saves notification settings"
+            "Search",
+            "paginates results"
+          ],
+          "state": "passed",
+          "duration": 14000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 14000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Search",
+            "shows an empty state"
+          ],
+          "state": "passed",
+          "duration": 12000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 12000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Search",
+            "searches by SKU"
           ],
           "state": "passed",
           "duration": 9000,
@@ -38,8 +94,164 @@
     },
     {
       "spec": {
+        "name": "filters.cy.ts",
+        "relative": "cypress/e2e/catalog/filters.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Filters",
+            "filters by category"
+          ],
+          "state": "passed",
+          "duration": 19000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 19000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Filters",
+            "filters by price range"
+          ],
+          "state": "passed",
+          "duration": 16000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 16000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Filters",
+            "combines colour and size"
+          ],
+          "state": "passed",
+          "duration": 14000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 14000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Filters",
+            "clears all filters"
+          ],
+          "state": "passed",
+          "duration": 11000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 11000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Filters",
+            "sorts by rating"
+          ],
+          "state": "passed",
+          "duration": 8000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 8000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "product-page.cy.ts",
+        "relative": "cypress/e2e/catalog/product-page.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Product page",
+            "picks a size and colour"
+          ],
+          "state": "passed",
+          "duration": 23000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 23000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Product page",
+            "zooms the gallery"
+          ],
+          "state": "passed",
+          "duration": 17000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 17000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Product page",
+            "shows stock per store"
+          ],
+          "state": "passed",
+          "duration": 15000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 15000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Product page",
+            "reads the reviews"
+          ],
+          "state": "passed",
+          "duration": 12000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 12000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Product page",
+            "shows related products"
+          ],
+          "state": "passed",
+          "duration": 10000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 10000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
         "name": "cart.cy.ts",
-        "relative": "cypress/e2e/cart.cy.ts"
+        "relative": "cypress/e2e/cart/cart.cy.ts"
       },
       "tests": [
         {
@@ -48,11 +260,235 @@
             "adds and removes items"
           ],
           "state": "passed",
-          "duration": 20000,
+          "duration": 18000,
           "attempts": [
             {
               "state": "passed",
-              "duration": 20000
+              "duration": 18000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Cart",
+            "keeps the cart after logging in again"
+          ],
+          "state": "passed",
+          "duration": 30000,
+          "attempts": [
+            {
+              "state": "failed",
+              "duration": 15000
+            },
+            {
+              "state": "passed",
+              "duration": 15000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Cart",
+            "updates quantities"
+          ],
+          "state": "passed",
+          "duration": 13000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 13000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Cart",
+            "shows the free-shipping threshold"
+          ],
+          "state": "passed",
+          "duration": 11000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 11000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Cart",
+            "saves an item for later"
+          ],
+          "state": "passed",
+          "duration": 9000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 9000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "locales.cy.ts",
+        "relative": "cypress/e2e/i18n/locales.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Locales",
+            "switches to Spanish"
+          ],
+          "state": "passed",
+          "duration": 16000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 16000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Locales",
+            "formats prices per currency"
+          ],
+          "state": "passed",
+          "duration": 13000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 13000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Locales",
+            "keeps the locale across pages"
+          ],
+          "state": "passed",
+          "duration": 12000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 12000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Locales",
+            "falls back to English"
+          ],
+          "state": "passed",
+          "duration": 10000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 10000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "smoke.cy.ts",
+        "relative": "cypress/e2e/a11y/smoke.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Accessibility smoke",
+            "home page has no axe violations"
+          ],
+          "state": "passed",
+          "duration": 21000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 21000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Accessibility smoke",
+            "checkout has no axe violations"
+          ],
+          "state": "passed",
+          "duration": 15000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 15000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Accessibility smoke",
+            "navigates the menu by keyboard"
+          ],
+          "state": "passed",
+          "duration": 12000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 12000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "emails.cy.ts",
+        "relative": "cypress/e2e/notifications/emails.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Emails",
+            "sends the welcome email"
+          ],
+          "state": "passed",
+          "duration": 18000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 18000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Emails",
+            "sends the shipping update"
+          ],
+          "state": "passed",
+          "duration": 14000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 14000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Emails",
+            "unsubscribes from marketing"
+          ],
+          "state": "passed",
+          "duration": 11000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 11000
             }
           ]
         }
