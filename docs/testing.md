@@ -76,7 +76,7 @@ demostrar las dos): la demo carga, la subida funciona, y dos pruebas destacadas:
 - **Privacidad:** se interceptan las peticiones de red y se verifica que el report
   (con un *canary* único) nunca sale de la página ni a un origen externo.
 - **Accesibilidad:** un escaneo con axe (`@axe-core/playwright` / `cypress-axe`)
-  sin violaciones serias/críticas.
+  sin ninguna violación (de cualquier gravedad), con las secciones plegables abiertas.
 → [`apps/web/e2e/`](../apps/web/e2e/) (Playwright),
 [`apps/web/cypress/e2e/`](../apps/web/cypress/e2e/) (Cypress)
 

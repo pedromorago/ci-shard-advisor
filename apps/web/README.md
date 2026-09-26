@@ -12,6 +12,14 @@ pnpm preview     # serve the production build
 pnpm typecheck   # strict TypeScript
 ```
 
+The link-preview image (`public/og.png`, 1200×630) is generated from the app's
+own header, so it cannot drift from the page. After changing the title or the
+tagline, regenerate it and commit the PNG:
+
+```bash
+pnpm og          # builds, serves and screenshots the header
+```
+
 ## Tests
 
 Component tests (Vitest + Testing Library), run everywhere:

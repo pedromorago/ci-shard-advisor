@@ -1,6 +1,6 @@
 # CI Shard Advisor
 
-[![CI](https://github.com/pedro-morago/ci-shard-advisor/actions/workflows/ci.yml/badge.svg)](https://github.com/pedro-morago/ci-shard-advisor/actions/workflows/ci.yml)
+[![CI](https://github.com/pedromorago/ci-shard-advisor/actions/workflows/ci.yml/badge.svg)](https://github.com/pedromorago/ci-shard-advisor/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Node](https://img.shields.io/badge/node-%3E%3D22-3c873a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
@@ -10,7 +10,7 @@ Feed it one report per container and it measures where you are, then shows your
 moves and what each one costs or saves: an exact scheduler, per-container spec
 lists you can paste into your pipeline, and an honest cost/time frontier.
 
-**▶ Live demo: [pedro-morago.github.io/ci-shard-advisor](https://pedro-morago.github.io/ci-shard-advisor/)** — runs entirely in your browser; drop in your own Cypress reports.
+**▶ Live demo: [shard.pedromorago.com](https://shard.pedromorago.com/)** — runs entirely in your browser; drop in your own Cypress reports.
 
 ## Why
 

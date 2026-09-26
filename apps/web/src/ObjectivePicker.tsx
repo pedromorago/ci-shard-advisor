@@ -52,6 +52,7 @@ export function ObjectivePicker({ objective, current, pricePerMinute, onChange }
           <span>Wait limit (s)</span>
           <input
             type="number"
+            inputMode="numeric"
             min={1}
             step={5}
             value={objective.seconds}
@@ -64,6 +65,7 @@ export function ObjectivePicker({ objective, current, pricePerMinute, onChange }
           <span>{pricePerMinute > 0 ? 'Budget per run (€)' : 'Budget (machine min)'}</span>
           <input
             type="number"
+            inputMode="decimal"
             min={0}
             step={pricePerMinute > 0 ? 0.01 : 1}
             value={objective.euros}

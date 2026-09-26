@@ -14,6 +14,7 @@
     "e2e:cypress": "start-server-and-test 'vite build && vite preview --port 4173 --strictPort' http://localhost:4173 'cypress run'",
     "report:cypress": "start-server-and-test 'vite build && vite preview --port 4173 --strictPort' http://localhost:4173 'cypress run --reporter mochawesome'",
     "cypress:open": "cypress open",
+    "og": "start-server-and-test 'vite build && vite preview --port 4173 --strictPort' http://localhost:4173 'node scripts/og-image.mjs'",
     "test:junit": "vitest run --reporter=junit --outputFile=reports/junit/results.xml"
   },
   "dependencies": {
