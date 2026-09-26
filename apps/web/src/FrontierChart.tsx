@@ -15,10 +15,10 @@ interface FrontierChartProps {
 const DEFAULT_WIDTH = 640;
 const MIN_WIDTH = 280;
 const MARGIN = { top: 24, right: 24, bottom: 52, left: 80 };
-/** About half the widest marker label ("recommended (16)" at 12px). */
-const LABEL_HALF = 48;
-/** Room kept under the lowest point for the marker label that hangs below it. */
-const LABEL_ROOM = 20;
+/** Width of the widest marker label, "recommended (16)" at 12px. */
+const LABEL_WIDTH = 100;
+/** Gap between a marker and its label. */
+const LABEL_GAP = 10;
 
 /**
  * The figure's rendered width, so the chart is drawn in real pixels: on a phone
@@ -80,11 +80,22 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
   const y1 = yMax + yPad;
 
   const sx = (v: number) => MARGIN.left + ((v - x0) / (x1 - x0)) * plotW;
-  const sy = (v: number) => MARGIN.top + plotH - LABEL_ROOM - ((v - y0) / (y1 - y0)) * (plotH - LABEL_ROOM);
-  // A marker label is centred on its point, or pinned to the near edge so it
-  // never runs out of the plot.
-  const anchorOf = (x: number) =>
-    x < MARGIN.left + LABEL_HALF ? 'start' : x > width - MARGIN.right - LABEL_HALF ? 'end' : 'middle';
+  const sy = (v: number) => MARGIN.top + plotH - ((v - y0) / (y1 - y0)) * plotH;
+  // Marker labels sit above their point, in the empty space over the curve:
+  // "recommended" to the right and "current" to the left, so they never cover
+  // each other even when the two points coincide. A label that would run out
+  // of the plot swaps to the other side.
+  const labelAt = (point: ChartPoint, side: 'left' | 'right') => {
+    const x = sx(xOf(point));
+    const fitsRight = x + LABEL_GAP + LABEL_WIDTH <= width - MARGIN.right;
+    const fitsLeft = x - LABEL_GAP - LABEL_WIDTH >= MARGIN.left;
+    const right = side === 'right' ? fitsRight || !fitsLeft : !fitsLeft;
+    return {
+      x: right ? x + LABEL_GAP : x - LABEL_GAP,
+      y: sy(yOf(point)) - LABEL_GAP,
+      textAnchor: right ? ('start' as const) : ('end' as const),
+    };
+  };
 
   const line = [...frontier]
     .sort((a, b) => xOf(a) - xOf(b))
@@ -141,12 +152,7 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
         {current ? (
           <g>
             <circle className="chart__point chart__point--current" cx={sx(xOf(current))} cy={sy(yOf(current))} r={7} />
-            <text
-              className="chart__marker-label"
-              x={sx(xOf(current))}
-              y={sy(yOf(current)) - 12}
-              textAnchor={anchorOf(sx(xOf(current)))}
-            >
+            <text className="chart__marker-label" {...labelAt(current, 'left')}>
               current ({current.shardCount})
             </text>
           </g>
@@ -154,12 +160,7 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
 
         <g>
           <circle className="chart__point chart__point--recommended" cx={sx(xOf(recommended))} cy={sy(yOf(recommended))} r={7} />
-          <text
-            className="chart__marker-label"
-            x={sx(xOf(recommended))}
-            y={sy(yOf(recommended)) + 22}
-            textAnchor={anchorOf(sx(xOf(recommended)))}
-          >
+          <text className="chart__marker-label" {...labelAt(recommended, 'right')}>
             recommended ({recommended.shardCount})
           </text>
         </g>
