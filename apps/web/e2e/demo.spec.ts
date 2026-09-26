@@ -42,6 +42,20 @@ test.describe('demo analysis', () => {
     expect(applySplit?.height).toBeGreaterThanOrEqual(44);
   });
 
+  test('copies a container command to the clipboard exactly as shown', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.goto('/');
+
+    await page.getByText(/apply this split/i).first().click();
+    const copy = page.getByRole('button', { name: 'Copy the command for container 1' }).first();
+    await copy.click();
+
+    await expect(copy).toHaveText('Copied');
+    // The command shown in the button's own row.
+    const command = await copy.locator('..').getByText(/^npx cypress run --spec /).textContent();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(command);
+  });
+
   test('shares with a link preview: description, large card and a served image', async ({ page }) => {
     await page.goto('/');
 

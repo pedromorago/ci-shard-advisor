@@ -29,6 +29,22 @@ describe('demo analysis', () => {
     });
   });
 
+  it('copies a container command to the clipboard exactly as shown', () => {
+    cy.window().then((win) => {
+      cy.stub(win.navigator.clipboard, 'writeText').as('writeText').resolves();
+    });
+    cy.contains('summary', /apply this split/i).click();
+    cy.get('button[aria-label="Copy the command for container 1"]').first().as('copy').click();
+
+    cy.get('@copy').should('have.text', 'Copied');
+    cy.get('@copy')
+      .siblings('code')
+      .invoke('text')
+      .then((command) => {
+        cy.get('@writeText').should('have.been.calledOnceWithExactly', command);
+      });
+  });
+
   it('shares with a link preview: description, large card and a served image', () => {
     cy.get('meta[name="description"]').should('have.attr', 'content').and('match', /cypress/i);
     cy.get('meta[name="twitter:card"]').should('have.attr', 'content', 'summary_large_image');
