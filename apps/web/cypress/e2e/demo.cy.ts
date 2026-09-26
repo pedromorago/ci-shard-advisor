@@ -23,6 +23,10 @@ describe('demo analysis', () => {
       .should(($label) => {
         expect($label[0].getBoundingClientRect().height).to.be.at.least(12);
       });
+    // The split disclosures are tap targets: at least 44px tall, the iOS minimum.
+    cy.contains('summary', /apply this split/i).should(($summary) => {
+      expect($summary[0].getBoundingClientRect().height).to.be.at.least(44);
+    });
   });
 
   it('has no accessibility violations, disclosures open', () => {

@@ -450,14 +450,16 @@ h3 {
 }
 
 .move__plan {
-  margin-top: 12px;
+  margin-top: 2px;
 }
 
+/* A 44px-tall hit area, the iOS minimum for a comfortable tap. */
 .move__plan > summary {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 0;
+  min-height: 44px;
+  padding: 0;
   border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 600;
