@@ -36,7 +36,7 @@ export function CurrentCard({ current, pricePerMinute, runner }: CurrentCardProp
       </dl>
       {current.measured && current.imbalanceMs > 0 ? (
         <p className="current__imbalance">
-          ⚠ Imbalance: {formatDuration(current.imbalanceMs)} of idle machine time (slowest is {unitOf(runner)} #{slowestShard}).
+          Imbalance: {formatDuration(current.imbalanceMs)} of idle machine time (slowest is {unitOf(runner)} #{slowestShard}).
         </p>
       ) : null}
     </section>
