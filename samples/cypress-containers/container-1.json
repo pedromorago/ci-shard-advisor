@@ -2,39 +2,737 @@
   "runs": [
     {
       "spec": {
-        "name": "checkout.cy.ts",
-        "relative": "cypress/e2e/checkout.cy.ts"
+        "name": "guest-checkout.cy.ts",
+        "relative": "cypress/e2e/checkout/guest-checkout.cy.ts"
       },
       "tests": [
         {
           "title": [
-            "Checkout",
-            "completes the full checkout journey"
+            "Guest checkout",
+            "completes a purchase as a guest with a saved card"
           ],
           "state": "passed",
-          "duration": 95000,
+          "duration": 58000,
           "attempts": [
             {
               "state": "passed",
-              "duration": 95000
+              "duration": 58000
             }
           ]
         },
         {
           "title": [
-            "Checkout",
-            "applies a discount code"
+            "Guest checkout",
+            "recalculates tax when the address changes"
           ],
           "state": "passed",
-          "duration": 40000,
+          "duration": 44000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 44000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Guest checkout",
+            "keeps the basket when payment is declined"
+          ],
+          "state": "passed",
+          "duration": 39000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 39000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Guest checkout",
+            "sends the order confirmation email"
+          ],
+          "state": "passed",
+          "duration": 31000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 31000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Guest checkout",
+            "shows the order in the tracking page"
+          ],
+          "state": "passed",
+          "duration": 26000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 26000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Guest checkout",
+            "pays with a gift card and a card"
+          ],
+          "state": "passed",
+          "duration": 48000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 48000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Guest checkout",
+            "checks out with a business VAT number"
+          ],
+          "state": "passed",
+          "duration": 42000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 42000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Guest checkout",
+            "handles a stock-out mid-checkout"
+          ],
+          "state": "passed",
+          "duration": 37000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 37000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "logged-in-checkout.cy.ts",
+        "relative": "cypress/e2e/checkout/logged-in-checkout.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Logged-in checkout",
+            "one-click reorder from the account page"
+          ],
+          "state": "passed",
+          "duration": 52000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 52000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Logged-in checkout",
+            "splits an order across two addresses"
+          ],
+          "state": "passed",
+          "duration": 41000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 41000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Logged-in checkout",
+            "applies loyalty points at checkout"
+          ],
+          "state": "passed",
+          "duration": 33000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 33000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Logged-in checkout",
+            "resumes an abandoned checkout"
+          ],
+          "state": "passed",
+          "duration": 28000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 28000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "payment-methods.cy.ts",
+        "relative": "cypress/e2e/checkout/payment-methods.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Payment methods",
+            "pays with a 3-D Secure card"
+          ],
+          "state": "passed",
+          "duration": 73000,
           "attempts": [
             {
               "state": "failed",
+              "duration": 38000
+            },
+            {
+              "state": "passed",
+              "duration": 35000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Payment methods",
+            "pays with PayPal"
+          ],
+          "state": "passed",
+          "duration": 31000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 31000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Payment methods",
+            "pays with Apple Pay"
+          ],
+          "state": "passed",
+          "duration": 29000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 29000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Payment methods",
+            "pays by bank transfer"
+          ],
+          "state": "passed",
+          "duration": 24000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 24000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Payment methods",
+            "rejects an expired card"
+          ],
+          "state": "passed",
+          "duration": 22000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 22000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Payment methods",
+            "refunds a failed capture"
+          ],
+          "state": "passed",
+          "duration": 20000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 20000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "shipping-options.cy.ts",
+        "relative": "cypress/e2e/checkout/shipping-options.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Shipping options",
+            "offers next-day delivery before the cutoff"
+          ],
+          "state": "passed",
+          "duration": 27000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 27000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Shipping options",
+            "hides express shipping for oversized items"
+          ],
+          "state": "passed",
+          "duration": 24000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 24000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Shipping options",
+            "picks up in store"
+          ],
+          "state": "passed",
+          "duration": 21000,
+          "attempts": [
+            {
+              "state": "passed",
               "duration": 21000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Shipping options",
+            "ships to a locker"
+          ],
+          "state": "passed",
+          "duration": 19000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 19000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Shipping options",
+            "estimates delivery dates"
+          ],
+          "state": "passed",
+          "duration": 16000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 16000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "promo-codes.cy.ts",
+        "relative": "cypress/e2e/checkout/promo-codes.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Promo codes",
+            "stacks a percentage and a free-shipping code"
+          ],
+          "state": "passed",
+          "duration": 38000,
+          "attempts": [
+            {
+              "state": "failed",
+              "duration": 19000
             },
             {
               "state": "passed",
               "duration": 19000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Promo codes",
+            "rejects an expired code"
+          ],
+          "state": "passed",
+          "duration": 17000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 17000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Promo codes",
+            "limits a code to one use per customer"
+          ],
+          "state": "passed",
+          "duration": 14000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 14000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Promo codes",
+            "applies a code to a sale item"
+          ],
+          "state": "passed",
+          "duration": 12000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 12000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Promo codes",
+            "removes a code"
+          ],
+          "state": "passed",
+          "duration": 10000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 10000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "products.cy.ts",
+        "relative": "cypress/e2e/admin/products.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Admin products",
+            "creates a product with variants"
+          ],
+          "state": "passed",
+          "duration": 34000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 34000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin products",
+            "bulk-edits prices"
+          ],
+          "state": "passed",
+          "duration": 29000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 29000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin products",
+            "uploads product images"
+          ],
+          "state": "passed",
+          "duration": 26000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 26000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin products",
+            "schedules a product launch"
+          ],
+          "state": "passed",
+          "duration": 22000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 22000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin products",
+            "archives a product"
+          ],
+          "state": "passed",
+          "duration": 18000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 18000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin products",
+            "searches the catalogue"
+          ],
+          "state": "passed",
+          "duration": 15000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 15000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "orders.cy.ts",
+        "relative": "cypress/e2e/admin/orders.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Admin orders",
+            "fulfils an order"
+          ],
+          "state": "passed",
+          "duration": 31000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 31000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin orders",
+            "cancels an order and restocks"
+          ],
+          "state": "passed",
+          "duration": 27000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 27000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin orders",
+            "prints a packing slip"
+          ],
+          "state": "passed",
+          "duration": 23000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 23000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin orders",
+            "edits a shipping address"
+          ],
+          "state": "passed",
+          "duration": 19000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 19000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin orders",
+            "exports orders to CSV"
+          ],
+          "state": "passed",
+          "duration": 14000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 14000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "refunds.cy.ts",
+        "relative": "cypress/e2e/admin/refunds.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Admin refunds",
+            "issues a partial refund"
+          ],
+          "state": "passed",
+          "duration": 36000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 36000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin refunds",
+            "refunds to store credit"
+          ],
+          "state": "passed",
+          "duration": 28000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 28000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin refunds",
+            "refunds a gift card purchase"
+          ],
+          "state": "passed",
+          "duration": 21000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 21000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Admin refunds",
+            "blocks a double refund"
+          ],
+          "state": "passed",
+          "duration": 17000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 17000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "inventory.cy.ts",
+        "relative": "cypress/e2e/admin/inventory.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Inventory",
+            "transfers stock between warehouses"
+          ],
+          "state": "passed",
+          "duration": 25000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 25000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Inventory",
+            "warns on low stock"
+          ],
+          "state": "passed",
+          "duration": 21000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 21000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Inventory",
+            "imports a stock count"
+          ],
+          "state": "passed",
+          "duration": 18000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 18000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Inventory",
+            "reserves stock for a pre-order"
+          ],
+          "state": "passed",
+          "duration": 12000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 12000
             }
           ]
         }

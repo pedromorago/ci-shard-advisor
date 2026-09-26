@@ -5,7 +5,7 @@ mochawesome) is auto-detected: drop any of these into the web, the CLI or the AP
 
 | File | Format | What it shows |
 | --- | --- | --- |
-| [`cypress-containers/`](cypress-containers) | Module API × 3 | **One report per container** (the preferred input): imbalance, a flaky retry and a slow checkout spec. The web demo data |
+| [`cypress-containers/`](cypress-containers) | Module API × 3 | **One report per container** (the preferred input): a 109-test e-commerce suite split by folder, with a heavy first container, four flaky retries and a slow guest-checkout spec. The web demo data |
 | `cypress-run.json` | Module API (merged) | Specs with retries (flaky) and a pending test |
 | `mochawesome.json` | mochawesome (merged) | Nested suites, a failure and a pending test |
 

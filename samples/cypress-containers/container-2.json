@@ -2,50 +2,14 @@
   "runs": [
     {
       "spec": {
-        "name": "login.cy.ts",
-        "relative": "cypress/e2e/login.cy.ts"
+        "name": "order-history.cy.ts",
+        "relative": "cypress/e2e/account/order-history.cy.ts"
       },
       "tests": [
         {
           "title": [
-            "Login",
-            "logs in with valid credentials @sanity"
-          ],
-          "state": "passed",
-          "duration": 18000,
-          "attempts": [
-            {
-              "state": "passed",
-              "duration": 18000
-            }
-          ]
-        },
-        {
-          "title": [
-            "Login",
-            "shows an error for a wrong password"
-          ],
-          "state": "passed",
-          "duration": 12000,
-          "attempts": [
-            {
-              "state": "passed",
-              "duration": 12000
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "spec": {
-        "name": "search.cy.ts",
-        "relative": "cypress/e2e/search.cy.ts"
-      },
-      "tests": [
-        {
-          "title": [
-            "Search",
-            "returns relevant results"
+            "Order history",
+            "lists past orders"
           ],
           "state": "passed",
           "duration": 22000,
@@ -58,8 +22,478 @@
         },
         {
           "title": [
-            "Search",
-            "filters by category"
+            "Order history",
+            "downloads an invoice"
+          ],
+          "state": "passed",
+          "duration": 18000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 18000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Order history",
+            "starts a return from an order"
+          ],
+          "state": "passed",
+          "duration": 15000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 15000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Order history",
+            "reorders a past order"
+          ],
+          "state": "passed",
+          "duration": 11000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 11000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "addresses.cy.ts",
+        "relative": "cypress/e2e/account/addresses.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Addresses",
+            "adds an address"
+          ],
+          "state": "passed",
+          "duration": 17000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 17000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Addresses",
+            "sets a default address"
+          ],
+          "state": "passed",
+          "duration": 14000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 14000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Addresses",
+            "validates a postcode"
+          ],
+          "state": "passed",
+          "duration": 12000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 12000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Addresses",
+            "deletes an address"
+          ],
+          "state": "passed",
+          "duration": 9000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 9000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "profile.cy.ts",
+        "relative": "cypress/e2e/account/profile.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Profile",
+            "updates the avatar"
+          ],
+          "state": "passed",
+          "duration": 15000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 15000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Profile",
+            "changes the email with confirmation"
+          ],
+          "state": "passed",
+          "duration": 12000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 12000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Profile",
+            "saves notification settings"
+          ],
+          "state": "passed",
+          "duration": 10000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 10000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Profile",
+            "deletes the account"
+          ],
+          "state": "passed",
+          "duration": 8000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 8000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "wishlist.cy.ts",
+        "relative": "cypress/e2e/account/wishlist.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Wishlist",
+            "adds an item to the wishlist"
+          ],
+          "state": "passed",
+          "duration": 16000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 16000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Wishlist",
+            "shares a wishlist"
+          ],
+          "state": "passed",
+          "duration": 13000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 13000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Wishlist",
+            "moves an item to the cart"
+          ],
+          "state": "passed",
+          "duration": 9000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 9000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "login.cy.ts",
+        "relative": "cypress/e2e/auth/login.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Login",
+            "logs in with valid credentials @sanity"
+          ],
+          "state": "passed",
+          "duration": 14000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 14000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Login",
+            "logs in with Google SSO"
+          ],
+          "state": "passed",
+          "duration": 70000,
+          "attempts": [
+            {
+              "state": "failed",
+              "duration": 30000
+            },
+            {
+              "state": "failed",
+              "duration": 28000
+            },
+            {
+              "state": "passed",
+              "duration": 12000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Login",
+            "locks the account after five failures"
+          ],
+          "state": "passed",
+          "duration": 10000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 10000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Login",
+            "remembers the device"
+          ],
+          "state": "passed",
+          "duration": 9000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 9000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Login",
+            "shows an error for a wrong password"
+          ],
+          "state": "passed",
+          "duration": 7000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 7000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "signup.cy.ts",
+        "relative": "cypress/e2e/auth/signup.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Sign-up",
+            "signs up with email"
+          ],
+          "state": "passed",
+          "duration": 19000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 19000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Sign-up",
+            "verifies the email address"
+          ],
+          "state": "passed",
+          "duration": 16000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 16000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Sign-up",
+            "rejects a weak password"
+          ],
+          "state": "passed",
+          "duration": 13000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 13000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Sign-up",
+            "signs up from the checkout"
+          ],
+          "state": "passed",
+          "duration": 10000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 10000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "password-reset.cy.ts",
+        "relative": "cypress/e2e/auth/password-reset.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Password reset",
+            "resets the password by email"
+          ],
+          "state": "passed",
+          "duration": 17000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 17000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Password reset",
+            "expires an old reset link"
+          ],
+          "state": "passed",
+          "duration": 14000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 14000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Password reset",
+            "rate-limits reset requests"
+          ],
+          "state": "passed",
+          "duration": 11000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 11000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spec": {
+        "name": "returns.cy.ts",
+        "relative": "cypress/e2e/returns/returns.cy.ts"
+      },
+      "tests": [
+        {
+          "title": [
+            "Returns",
+            "returns an item for a refund"
+          ],
+          "state": "passed",
+          "duration": 26000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 26000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Returns",
+            "exchanges a size"
+          ],
+          "state": "passed",
+          "duration": 22000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 22000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Returns",
+            "prints a return label"
+          ],
+          "state": "passed",
+          "duration": 18000,
+          "attempts": [
+            {
+              "state": "passed",
+              "duration": 18000
+            }
+          ]
+        },
+        {
+          "title": [
+            "Returns",
+            "rejects a return after 30 days"
           ],
           "state": "passed",
           "duration": 14000,
