@@ -299,6 +299,18 @@ h3 {
   color: var(--ink);
 }
 
+/* ===== Results =====
+   While a change is being analyzed the previous results stay on screen,
+   dimmed; the short delay keeps quick updates from flickering. */
+.results {
+  transition: opacity 0.15s ease;
+}
+
+.results--updating {
+  opacity: 0.55;
+  transition: opacity 0.2s ease 0.15s;
+}
+
 /* ===== Your setup today ===== */
 .recommendation__headline {
   margin: 0 0 18px;

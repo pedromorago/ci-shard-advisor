@@ -1,6 +1,5 @@
 import { advise, objectiveFor, maxFeedbackObjective, budgetObjective } from '@ci-shard-advisor/core';
 import type { AdvisorResult, CostModel, MeasuredCurrent, Objective, ReportFile } from '@ci-shard-advisor/core';
-import { DEMO_REPORTS } from './demo';
 
 /**
  * The objective the user picks in "Optimize for" (spec §5.4):
@@ -37,8 +36,6 @@ export const DEFAULT_SETTINGS: AnalysisSettings = {
   currentShardCount: 3,
   objective: { kind: 'recommended' },
 };
-
-export { DEMO_REPORTS };
 
 /** Map the UI objective onto the core Objective (the conversions live in core). */
 function toObjective(setting: ObjectiveSetting, pricePerMinute: number): Objective {
