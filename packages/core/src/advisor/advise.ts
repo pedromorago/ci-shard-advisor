@@ -22,7 +22,7 @@ export interface AdviseOptions {
  */
 export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOptions = {}): AdvisorResult {
   const { perShardTasks, allTasks, format } = readReports(input, options.inputFormat);
-  // mochawesome is Cypress's reporter — the apply command is Cypress's.
+  // mochawesome is Cypress's reporter, so the apply command is Cypress's.
   const runner = format === 'cypress' || format === 'mochawesome' ? 'cypress' : 'playwright';
   // Cypress runs the specs of a machine serially: workers are forced to 1 (FR-13).
   const workersPerShard = runner === 'cypress' ? 1 : options.workersPerShard ?? 1;
@@ -36,7 +36,7 @@ export function advise(input: AnalyzeInput, cost: CostModel, options: AdviseOpti
       : modelCurrent(allTasks, input.currentShardCount ?? 1, cost, workersPerShard);
 
   // "Workers before machines" (FR-13): what the SAME machines would give with
-  // one more worker each. Playwright-only — Cypress has no in-machine workers.
+  // one more worker each. Playwright-only: Cypress has no in-machine workers.
   const shardLayout =
     input.kind === 'per-shard' ? perShardTasks : splitByCount(allTasks, current.shardCount);
   const workersUpgrade =

@@ -20,7 +20,7 @@ export interface AtomicTask {
   status: TaskStatus;
   /** Number of retries observed in the report. */
   retries: number;
-  /** Machine time spent on extra (retried) attempts, in ms — for flaky findings. */
+  /** Machine time spent on extra (retried) attempts, in ms, for flaky findings. */
   wastedMs?: number;
   /** Tags declared on the spec (e.g. '@sanity'). */
   tags?: string[];

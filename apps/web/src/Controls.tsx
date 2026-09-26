@@ -19,7 +19,7 @@ export function Controls({ settings, merged, onChange }: ControlsProps) {
   return (
     <section className="controls card" aria-labelledby="controls-heading">
       <h2 id="controls-heading">Your CI setup</h2>
-      <p className="controls__hint">These describe how you run CI — they are not in the reports.</p>
+      <p className="controls__hint">These describe how you run CI. They are not in the reports.</p>
       <div className="controls__grid">
         <label className="control">
           <span>Startup overhead (s)</span>

@@ -29,7 +29,7 @@ class AnalyzeApiTest {
         ]}]}
         """;
 
-    /** Two shard reports with unequal wall time — a measurable per-shard setup. */
+    /** Two shard reports with unequal wall time: a measurable per-shard setup. */
     private static final String PER_SHARD = """
         {"reports":[
           {"suites":[{"specs":[{"title":"a","tests":[{"status":"expected","results":[{"duration":50000}]}]}]}]},

@@ -55,7 +55,7 @@ export function modelCurrent(
 }
 
 /**
- * The feedback the SAME shard layout would give with a different worker count —
+ * The feedback the SAME shard layout would give with a different worker count:
  * the material for the "workers before machines" finding (FR-13).
  */
 export function feedbackAtWorkers(

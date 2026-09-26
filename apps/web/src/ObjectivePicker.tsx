@@ -4,7 +4,7 @@ import type { ObjectiveKind, ObjectiveSetting } from './analysis';
 
 interface ObjectivePickerProps {
   objective: ObjectiveSetting;
-  /** The measured current situation — prefills the parameterized objectives. */
+  /** The measured current situation, which prefills the parameterized objectives. */
   current: MeasuredCurrent;
   pricePerMinute: number;
   onChange: (objective: ObjectiveSetting) => void;
@@ -12,7 +12,7 @@ interface ObjectivePickerProps {
 
 /**
  * The "Optimize for" selector. It lives next to the move card it drives, after
- * the current situation — first you see where you are, then you pick the move.
+ * the current situation: first you see where you are, then you pick the move.
  */
 export function ObjectivePicker({ objective, current, pricePerMinute, onChange }: ObjectivePickerProps) {
   const num = (raw: string, min: number) => {

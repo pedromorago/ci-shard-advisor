@@ -71,8 +71,8 @@ export function App() {
       <header className="app__header">
         <h1>CI Shard Advisor</h1>
         <p className="app__tagline">
-          Parallelize Cypress with your head: you are here — these are your moves
-          and what each one costs or saves. No Cypress Cloud needed.
+          Parallelize Cypress with your head. See where you are, your moves and
+          what each one costs or saves. No Cypress Cloud needed.
         </p>
       </header>
 
@@ -106,7 +106,7 @@ export function App() {
           {merged ? (
             <MoveCard
               tag={chosenLabel}
-              title={`Rebalance your ${unitsOf(result.current.shardCount, result.runner)} — your best move is free`}
+              title={`Rebalance your ${unitsOf(result.current.shardCount, result.runner)}: your best move is free`}
               scenario={chosen}
               pricePerMinute={settings.pricePerMinute}
               runner={result.runner}

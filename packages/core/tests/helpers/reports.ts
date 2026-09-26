@@ -3,12 +3,12 @@ import type { ReportFile } from '../../src/advisor/types';
 
 /**
  * Shared report/task builders for the advisor tests. One home instead of a
- * copy per suite — the copies had already drifted on whether specs carry a
+ * copy per suite: the copies had already drifted on whether specs carry a
  * `file`, which silently changes `groupByFile` (file granularity) behavior.
  * Pick the variant that states what your test needs:
- * - `pwReport`      — specs WITH files (one file per spec): the realistic shape.
- * - `pwReportBare`  — specs WITHOUT files: grouping falls back to task ids.
- * - `pwReportSpecs` — full control: [title, file, durationMs] per spec.
+ * - `pwReport`: specs WITH files (one file per spec): the realistic shape.
+ * - `pwReportBare`: specs WITHOUT files: grouping falls back to task ids.
+ * - `pwReportSpecs`: full control: [title, file, durationMs] per spec.
  */
 
 export const reportFile = (name: string, content: unknown): ReportFile => ({ name, content });
@@ -28,7 +28,7 @@ export function pwReport(durations: number[], prefix = 't'): unknown {
   return pwReportSpecs(durations.map((d, i) => [`${prefix}${i}`, `${prefix}${i}.spec.ts`, d]));
 }
 
-/** Like pwReport but the specs carry NO file — grouping falls back to ids. */
+/** Like pwReport but the specs carry NO file, so grouping falls back to ids. */
 export function pwReportBare(durations: number[], prefix = 't'): unknown {
   return {
     suites: [

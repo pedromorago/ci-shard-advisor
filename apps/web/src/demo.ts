@@ -15,7 +15,7 @@ function cyPass(suite: string, title: string, duration: number): CyTest {
   return { title: [suite, title], state: 'passed', duration, attempts: [{ state: 'passed', duration }] };
 }
 
-/** A retried pass: failed attempts burn machine time — the flaky finding. */
+/** A retried pass: failed attempts burn machine time (the flaky finding). */
 function cyFlaky(suite: string, title: string, wasted: number, final: number): CyTest {
   return {
     title: [suite, title],
@@ -29,7 +29,7 @@ function cyFlaky(suite: string, title: string, wasted: number, final: number): C
 }
 
 /**
- * The preloaded demo — a realistic (sample) 3-container e-commerce run in the
+ * The preloaded demo: a realistic (sample) 3-container e-commerce run in the
  * Module API format: container 1 holds the slow checkout journey plus a flaky
  * test, so the advisor shows the imbalance, the flaky machine-time waste and
  * the `cypress run --spec` apply commands.

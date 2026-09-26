@@ -82,13 +82,13 @@ export function computeFindings(
     const gain = (current.feedbackTimeMs - workersUpgrade.feedbackMs) / current.feedbackTimeMs;
     if (gain >= 0.05) {
       warnings.push(
-        `With ${workersUpgrade.workers} workers per shard your wait would drop to ${formatDuration(workersUpgrade.feedbackMs)} at no extra cost — same bill, same machines. Validate with one run: scaling is not perfect on small runners.`,
+        `With ${workersUpgrade.workers} workers per shard your wait would drop to ${formatDuration(workersUpgrade.feedbackMs)} at no extra cost: same bill, same machines. Validate with one run: scaling is not perfect on small runners.`,
       );
     }
   }
 
   // Imbalance is part of the current situation (spec §5.1) and is rendered
-  // inline in the current-setup block by every adapter — not repeated here.
+  // inline in the current-setup block by every adapter, not repeated here.
 
   // Flaky: tests that only passed after a retry, and the machine time the
   // failed attempts burned. A test that failed every attempt is broken, not

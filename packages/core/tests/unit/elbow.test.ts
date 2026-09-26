@@ -32,7 +32,7 @@ describe('findElbow', () => {
   describe('degenerate axes (no trade-off)', () => {
     it('minimizes feedback time when every config costs the same', () => {
       // Zero startup overhead: cost is flat, so pick the fewest shards that
-      // reach the fastest (floored) feedback time — here 3.
+      // reach the fastest (floored) feedback time, here 3.
       const flatCost = [
         point(1, 100, 200),
         point(2, 60, 200),
@@ -49,7 +49,7 @@ describe('findElbow', () => {
     });
 
     it('minimizes cost when the feedback gain is negligible (overhead dominates)', () => {
-      // A 0.3s suite behind a 30s startup: feedback barely moves, cost grows —
+      // A 0.3s suite behind a 30s startup: feedback barely moves, cost grows:
       // don't add shards for a fraction of a second.
       const overheadDominated = [
         point(1, 30300, 30000),

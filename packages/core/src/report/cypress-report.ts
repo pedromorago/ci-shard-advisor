@@ -1,8 +1,8 @@
 /**
  * Minimal typing of a Cypress run result (what `cypress run` produces, e.g. via
  * `--reporter json` or the Module API). Only the fields the pipeline consumes.
- * Cypress structures results very differently from Playwright — a flat list of
- * runs (one per spec), each with its own tests — which is exactly why the
+ * Cypress structures results very differently from Playwright: a flat list of
+ * runs (one per spec), each with its own tests, which is exactly why the
  * scheduler works on plain durations and lets a per-format reader translate.
  */
 

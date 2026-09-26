@@ -30,7 +30,7 @@ function invoke(args: string[], files: Record<string, string> = {}) {
 
 // A shard that finishes early, and a shard with the slow work.
 const twoShards = { 's1.json': pw([50000, 50000], 'a'), 's2.json': pw([10000, 10000], 'b') };
-// 6 shards, one holding a 60s bottleneck — heavily over-provisioned.
+// 6 shards, one holding a 60s bottleneck: heavily over-provisioned.
 const overSharded: Record<string, string> = {
   's1.json': pw([60000], 'a'),
   's2.json': pw([5000], 'b'),

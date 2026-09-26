@@ -15,7 +15,7 @@ export interface SolveResult extends ScheduleResult {
   lowerBound: number;
   /** Relative gap (makespan - lowerBound) / lowerBound; 0 when optimal. */
   gap: number;
-  /** Nodes explored during the search — 0 when the answer was trivial. */
+  /** Nodes explored during the search; 0 when the answer was trivial. */
   nodesExplored: number;
 }
 
@@ -44,7 +44,7 @@ function relativeGap(makespan: number, bound: number): number {
  * LPT provides the initial incumbent (upper bound); a branch is pruned as soon
  * as a placement would reach a load that cannot strictly beat that incumbent.
  * Shards are identical, so placing a task on two shards that currently hold the
- * same load yields equivalent subtrees — we expand only the first of each
+ * same load yields equivalent subtrees, so we expand only the first of each
  * distinct load and skip the symmetric duplicates.
  *
  * A budget (wall-clock `timeBudgetMs` and/or deterministic `maxNodes`) can stop

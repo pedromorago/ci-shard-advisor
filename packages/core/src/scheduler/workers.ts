@@ -28,7 +28,7 @@ function assertValidWorkerCount(workerCount: number): void {
  * the worker that becomes free earliest (equivalently, the least-loaded worker,
  * since all workers start idle and never sit idle mid-run). It deliberately
  * does NOT reorder tasks, so the estimate reflects what Playwright would
- * actually do — which can be slower than the theoretical optimum.
+ * actually do, which can be slower than the theoretical optimum.
  *
  * The queue order is the caller's task order; the normalizer decides it.
  */

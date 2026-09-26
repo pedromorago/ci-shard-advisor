@@ -5,7 +5,7 @@ export interface ScheduleResult {
   assignment: number[][];
   /** Total load per shard, in the same unit as the input durations. */
   loads: number[];
-  /** Load of the busiest shard — the time the whole run takes. */
+  /** Load of the busiest shard: the time the whole run takes. */
   makespan: number;
 }
 
@@ -15,7 +15,7 @@ export interface ScheduleResult {
  * Sorts tasks by descending duration and greedily assigns each one to the
  * currently least-loaded shard. Classic guarantee: makespan <= (4/3 - 1/(3N)) * OPT.
  *
- * In this project LPT is not the star — it provides the initial incumbent
+ * In this project LPT is not the star: it provides the initial incumbent
  * (upper bound) that lets the branch-and-bound solver prune aggressively,
  * and acts as a safe fallback when the time budget runs out.
  */

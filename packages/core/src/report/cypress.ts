@@ -85,7 +85,7 @@ function titleParts(test: CypressTest): string[] {
 
 /**
  * Duration = the sum of ALL attempts when the report carries them (that is the
- * machine time the test really occupied, retries included — the same base
+ * machine time the test really occupied, retries included: the same base
  * `wastedMs` is computed from), falling back to the test's own duration.
  */
 function testDuration(test: CypressTest): number {
@@ -118,7 +118,7 @@ function extractTags(fullTitle: string): string[] {
 }
 
 /**
- * Flatten a Cypress run result into scheduling units — one AtomicTask per test,
+ * Flatten a Cypress run result into scheduling units: one AtomicTask per test,
  * with retries folded into the duration, so the same scheduler/recommender that
  * serves Playwright reports serves Cypress ones unchanged.
  */

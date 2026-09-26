@@ -8,7 +8,7 @@ function tasksFrom(raw: unknown) {
   return normalizeMochawesome(parseMochawesomeReport(raw));
 }
 
-describe('normalizeMochawesome — nested suites', () => {
+describe('normalizeMochawesome: nested suites', () => {
   it('walks result.suites and their nested children, inheriting the file', () => {
     const report = {
       results: [

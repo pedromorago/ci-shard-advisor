@@ -8,7 +8,7 @@ interface CurrentCardProps {
   runner: Runner;
 }
 
-/** The team's situation today — measured from per-container reports, or modeled. */
+/** The team's situation today: measured from per-container reports, or modeled. */
 export function CurrentCard({ current, pricePerMinute, runner }: CurrentCardProps) {
   const money = formatMoney(current.costMs, pricePerMinute);
   const slowestShard = current.shardTimesMs.indexOf(Math.max(...current.shardTimesMs)) + 1;

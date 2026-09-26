@@ -5,7 +5,7 @@
  * consume: `advise()` in, `toAdvisor*` / CI exporters out (spec §6). The
  * ENGINE PRIMITIVES section exposes the underlying building blocks for
  * library consumers who want the solver or a single reader without the
- * advisor on top — the adapters never import them.
+ * advisor on top. The adapters never import them.
  */
 
 // ─── Public gate ────────────────────────────────────────────────────────────

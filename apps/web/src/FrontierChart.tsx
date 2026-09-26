@@ -50,7 +50,7 @@ function ticks(min: number, max: number, count = 4): number[] {
 
 /**
  * The cost/time frontier as a single Pareto curve: each shard count is plotted
- * at (billed cost on X, feedback time on Y). One plot, one series, no dual axis —
+ * at (billed cost on X, feedback time on Y). One plot, one series, no dual axis:
  * the recommended knee and the current config are marked directly. Lower-left
  * (cheap and fast) is best.
  */

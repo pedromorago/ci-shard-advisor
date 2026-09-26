@@ -62,8 +62,8 @@ function normalizeSuite(suite: ReportSuite): AtomicTask[] {
 /**
  * Flatten a parsed report into scheduling units. Each Playwright test (a spec
  * under one project) becomes one AtomicTask, walking nested suites recursively.
- * Its duration is the sum of all attempt durations, so retries — which the CI
- * machine actually re-runs — count toward the load.
+ * Its duration is the sum of all attempt durations, so retries (which the CI
+ * machine actually re-runs) count toward the load.
  */
 export function normalize(report: PlaywrightReport): AtomicTask[] {
   const tasks: AtomicTask[] = [];
@@ -88,7 +88,7 @@ export interface FileGroup {
 }
 
 /**
- * Group tasks by spec file — the advisor's scheduling unit (spec §5.6,
+ * Group tasks by spec file, the advisor's scheduling unit (spec §5.6,
  * invariant 11.7): a file is indivisible, so every promised number must be
  * reachable by moving whole files. Insertion order is the report order.
  */

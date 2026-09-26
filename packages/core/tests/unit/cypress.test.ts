@@ -24,7 +24,7 @@ describe('parseCypressReport', () => {
   });
 });
 
-describe('normalizeCypress — unknown state', () => {
+describe('normalizeCypress: unknown state', () => {
   it('treats a state outside the known set as passed', () => {
     const raw = { runs: [{ spec: { relative: 'a.cy.ts' }, tests: [{ title: ['A', 't'], state: 'weird', duration: 1000 }] }] };
     expect(tasksFrom(raw)[0].status).toBe('passed');
@@ -100,7 +100,7 @@ describe('format auto-detection', () => {
   });
 
   it('readReport auto-detects the format when none is given', () => {
-    // No format argument — the Cypress report is recognized from its shape.
+    // No format argument: the Cypress report is recognized from its shape.
     expect(readReport(cypressReport)).toHaveLength(5);
     expect(readReport(playwrightReport)).toHaveLength(12);
   });

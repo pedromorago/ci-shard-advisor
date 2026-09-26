@@ -49,8 +49,8 @@ function deltas(config: ConfigPoint, current: MeasuredCurrent) {
 }
 
 /**
- * Build the applicable split plan. Scheduling happens at FILE granularity —
- * you cannot route half a spec file to a shard — so tasks are grouped by file
+ * Build the applicable split plan. Scheduling happens at FILE granularity
+ * (you cannot route half a spec file to a shard), so tasks are grouped by file
  * (falling back to the task id when the report carries no file) and the solver
  * splits the files. `specs` is what each CI job actually runs.
  *
@@ -74,7 +74,7 @@ export function planFor(tasks: AtomicTask[], shardCount: number): ShardPlan {
 
 /**
  * Pick the frontier point for the "objective" scenario, or `undefined` when a
- * parameterized objective (max-feedback/budget) has no feasible point — the
+ * parameterized objective (max-feedback/budget) has no feasible point: the
  * engine never invents an answer that violates the constraint (spec §5.2).
  */
 export function chooseObjective(frontier: ConfigPoint[], objective: Objective): ConfigPoint | undefined {
@@ -104,7 +104,7 @@ export function chooseObjective(frontier: ConfigPoint[], objective: Objective): 
 /**
  * A constrained argmin over the frontier (the shape scenarios 2 and 3 share):
  * the best feasible point becomes a full scenario with plan and deltas; an
- * empty feasible set becomes an explicit `unavailable` — never an invention.
+ * empty feasible set becomes an explicit `unavailable`, never an invention.
  */
 function constrainedScenario(
   id: Scenario['id'],
@@ -148,7 +148,7 @@ export function buildScenarios(
     id: 'rebalance',
     config: rebalanceConfig,
     vsCurrent: deltas(rebalanceConfig, current),
-    reason: 'Same machines, specs redistributed by duration — rebalancing is free.',
+    reason: 'Same machines, specs redistributed by duration. Rebalancing is free.',
     plan: planFor(tasks, current.shardCount),
   };
 
@@ -186,7 +186,7 @@ export function buildScenarios(
   );
 
   // 4) By objective. When a parameterized objective has no feasible point the
-  // scenario says so explicitly — it never invents an answer (spec §5.2).
+  // scenario says so explicitly. It never invents an answer (spec §5.2).
   const objectiveConfig = chooseObjective(frontier, objective);
   const objectiveScenario: Scenario = objectiveConfig
     ? {
@@ -202,8 +202,8 @@ export function buildScenarios(
         config: rebalanceConfig,
         reason:
           objective.kind === 'max-feedback'
-            ? 'No configuration keeps the wait within your limit — not even the fastest split.'
-            : 'No configuration fits your cost budget — not even the cheapest split.',
+            ? 'No configuration keeps the wait within your limit, not even the fastest split.'
+            : 'No configuration fits your cost budget, not even the cheapest split.',
         unavailable: true,
         objective,
       };
@@ -215,7 +215,7 @@ export function buildScenarios(
 function objectiveReason(objective: Objective, runner: Runner): string {
   switch (objective.kind) {
     case 'balanced':
-      return `The knee of the cost/time frontier — past it, ${unitOf(runner)}s stop paying off.`;
+      return `The knee of the cost/time frontier: past it, ${unitOf(runner)}s stop paying off.`;
     case 'fastest':
       return 'The fastest feedback available.';
     case 'cheapest':

@@ -144,7 +144,7 @@ describe('App', () => {
     render(<App />);
     fireEvent.change(screen.getByLabelText(/optimize for/i), { target: { value: 'budget' } });
     // With the default budget (= current cost, rounded up) the chosen move must
-    // exist: at worst it coincides with the free rebalance — never "not available".
+    // exist: at worst it coincides with the free rebalance, never "not available".
     const moves = screen.getByRole('region', { name: /your moves/i });
     expect(within(moves).queryByText(/not available/i)).not.toBeInTheDocument();
   });
