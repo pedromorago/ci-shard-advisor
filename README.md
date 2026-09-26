@@ -10,7 +10,7 @@ Feed it one report per container and it measures where you are, then shows your
 moves and what each one costs or saves: an exact scheduler, per-container spec
 lists you can paste into your pipeline, and an honest cost/time frontier.
 
-**▶ Live demo: [pedromorago.github.io/ci-shard-advisor](https://pedromorago.github.io/ci-shard-advisor/)** — runs entirely in your browser; drop in your own Cypress reports.
+**▶ Live demo: [shard.pedromorago.com](https://shard.pedromorago.com/)** — runs entirely in your browser; drop in your own Cypress reports.
 
 ## Why
 
