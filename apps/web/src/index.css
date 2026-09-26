@@ -499,14 +499,41 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+.move__command {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .move__apply {
-  display: inline-block;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 4px 10px;
   background: var(--pill);
   border-radius: 8px;
   font-size: 0.8rem;
   line-height: 1.55;
   overflow-wrap: anywhere;
+}
+
+/* The small outlined pill of pedromorago.com's copy button. */
+.copy-btn {
+  flex: none;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.copy-btn:hover {
+  border-color: var(--ink);
 }
 
 /* ===== Disclosures =====
@@ -807,6 +834,10 @@ summary::-webkit-details-marker {
 
   .move {
     padding: 16px;
+  }
+
+  .copy-btn {
+    min-height: 44px;
   }
 
   .controls__grid {

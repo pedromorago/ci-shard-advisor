@@ -16,6 +16,10 @@ const cy = (durations: number[], prefix = 't'): string =>
   });
 
 describe('App', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('loads the preloaded demo', () => {
     render(<App />);
     expect(screen.getByRole('heading', { level: 1, name: /CI Shard Advisor/i })).toBeInTheDocument();
@@ -37,6 +41,35 @@ describe('App', () => {
     expect(within(moves).getByText(/rebalance your 3 containers/i)).toBeInTheDocument();
     expect(within(moves).getAllByText(/npx cypress run --spec/).length).toBeGreaterThanOrEqual(1);
     expect(within(moves).queryByText(/npx playwright test/)).not.toBeInTheDocument();
+  });
+
+  it('copies a container command to the clipboard exactly as shown, and says so', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const moves = screen.getByRole('region', { name: /your moves/i });
+    const [copy] = within(moves).getAllByRole('button', { name: 'Copy the command for container 1' });
+    const row = copy.closest('li') as HTMLElement;
+
+    await user.click(copy);
+
+    const command = within(row).getByText(/^npx cypress run --spec /).textContent;
+    expect(await navigator.clipboard.readText()).toBe(command);
+    expect(within(row).getByRole('status')).toHaveTextContent(/copied to the clipboard/i);
+  });
+
+  it('selects the command to copy by hand when the clipboard is refused', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new DOMException('Denied', 'NotAllowedError'));
+    render(<App />);
+    const moves = screen.getByRole('region', { name: /your moves/i });
+    const [copy] = within(moves).getAllByRole('button', { name: 'Copy the command for container 1' });
+    const row = copy.closest('li') as HTMLElement;
+
+    await user.click(copy);
+
+    const command = within(row).getByText(/^npx cypress run --spec /).textContent;
+    expect(window.getSelection()?.toString()).toBe(command);
+    expect(within(row).getByRole('status')).toHaveTextContent(/press ctrl\+c/i);
   });
 
   it('surfaces the flaky finding for the demo', () => {
