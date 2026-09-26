@@ -25,7 +25,7 @@ Pass **one report per shard** (measured), or a **single merged report** with
 | `--input-format <auto\|playwright\|cypress\|mochawesome>` | Force the report format instead of auto-detecting (default: `auto`) |
 
 Durations accept `ms`, `s`, `m` and compounds exactly as the advisor prints
-them (`45s`, `2m`, `9m 30s` — quote compound values in the shell).
+them (`45s`, `2m`, `9m 30s`; quote compound values in the shell).
 
 Quality gates (non-zero exit):
 

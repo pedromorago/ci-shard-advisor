@@ -1,8 +1,8 @@
-# CLAUDE.md — Instrucciones para trabajar en este repo
+# CLAUDE.md: instrucciones para trabajar en este repo
 
 ## Qué es este proyecto
 
-CI Shard Advisor: herramienta **para equipos Cypress**. Lee los reports de la última ejecución (uno por contenedor) y devuelve la situación actual medida más el movimiento elegido con su coste (reequilibrar gratis, misma espera más barato, el codo…), con las listas de specs por contenedor y el YAML de CI listos para aplicar — sin Cypress Cloud.
+CI Shard Advisor: herramienta **para equipos Cypress**. Lee los reports de la última ejecución (uno por contenedor) y devuelve la situación actual medida más el movimiento elegido con su coste (reequilibrar gratis, misma espera más barato, el codo…), con las listas de specs por contenedor y el YAML de CI listos para aplicar, sin Cypress Cloud.
 
 ## Fuente de verdad
 

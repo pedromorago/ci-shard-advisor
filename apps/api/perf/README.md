@@ -1,4 +1,4 @@
-# Performance tests — CI Shard Advisor API
+# Performance tests: CI Shard Advisor API
 
 Load tests for the local API, in two tools. Start the API first:
 
@@ -9,7 +9,7 @@ pnpm --filter @ci-shard-advisor/api start   # http://127.0.0.1:3001
 ## k6
 
 A JS load test that ramps to 20 virtual users and **fails** if the SLOs are
-breached (p95 latency, error rate, check success) — a pass/fail gate, not just a
+breached (p95 latency, error rate, check success): a pass/fail gate, not just a
 report.
 
 ```bash

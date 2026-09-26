@@ -1,5 +1,5 @@
 # Example: shard a Playwright suite across 4 parallel steps on Bitbucket
-# Pipelines and merge the blob reports into report.json — the file CI Shard
+# Pipelines and merge the blob reports into report.json, the file CI Shard
 # Advisor reads. Copy into bitbucket-pipelines.yml and adjust the shard count.
 image: node:20
 pipelines:

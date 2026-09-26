@@ -5,24 +5,24 @@
 ![Node](https://img.shields.io/badge/node-%3E%3D22-3c873a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 
-Parallelize **Cypress** in CI with your head — and without Cypress Cloud.
+Parallelize **Cypress** in CI with your head, and without Cypress Cloud.
 Feed it one report per container and it measures where you are, then shows your
 moves and what each one costs or saves: an exact scheduler, per-container spec
 lists you can paste into your pipeline, and an honest cost/time frontier.
 
-**▶ Live demo: [shard.pedromorago.com](https://shard.pedromorago.com/)** — runs entirely in your browser; drop in your own Cypress reports.
+**▶ Live demo: [shard.pedromorago.com](https://shard.pedromorago.com/)**: runs entirely in your browser; drop in your own Cypress reports.
 
 ## Why
 
 Most teams pick their number of Cypress containers by gut feeling: "let's use 8
 because the pipeline feels slow". More containers do reduce feedback time, but
-every one adds startup overhead and billed minutes — at some point the extra
+every one adds startup overhead and billed minutes. At some point the extra
 cost stops paying for the seconds saved. And Cypress's official answer, Cypress
 Cloud load balancing, is a paid online service.
 
 CI Shard Advisor answers with data, locally and for free: it reads the
-mochawesome (or Module API) reports of your last run — ideally one per
-container, so your situation is *measured*, imbalance included — builds a
+mochawesome (or Module API) reports of your last run (ideally one per
+container, so your situation is *measured*, imbalance included), builds a
 cost/time frontier over optimal splits, and shows your moves anchored to where
 you are today: rebalance for free, same wait for less money, or the knee where
 containers stop paying off. Every move ships the exact `--spec` list per
@@ -30,7 +30,7 @@ container and the CI config to apply it.
 
 ## A quick look
 
-You give it one report per container, so it *measures* where you are today —
+You give it one report per container, so it *measures* where you are today,
 then shows your moves and what each one costs or saves:
 
 ```text
@@ -49,13 +49,13 @@ Your current setup (measured)
 
 Your moves
   Free) Rebalance your 3 containers   feedback 3m 0s (±0)   cost €0.05 (±0)
-     Same machines, specs redistributed by duration — rebalancing is free.
+     Same machines, specs redistributed by duration. Rebalancing is free.
      Apply (each machine runs its own list):
        container 1: npx cypress run --spec "cypress/e2e/checkout.cy.ts"
        container 2: npx cypress run --spec "cypress/e2e/cart.cy.ts,cypress/e2e/search.cy.ts"
        container 3: npx cypress run --spec "cypress/e2e/login.cy.ts,cypress/e2e/profile.cy.ts"
   Recommended) 2 containers   feedback 3m 0s (±0)   cost €0.04 (−€0.01)
-     The knee of the cost/time frontier — past it, containers stop paying off.
+     The knee of the cost/time frontier: past it, containers stop paying off.
      (--format github or bitbucket emits the full, paste-ready CI config)
 
 Warnings
@@ -94,7 +94,7 @@ the command line.
 | Package | What it is |
 | --- | --- |
 | [`packages/core`](packages/core) | Pure engine: parser, scheduler (branch & bound), recommender, exporters |
-| [`apps/web`](apps/web) | Static React + Vite demo — analysis runs 100% in the browser |
+| [`apps/web`](apps/web) | Static React + Vite demo; analysis runs 100% in the browser |
 | [`apps/cli`](apps/cli) | Node CLI with a CI quality-gate mode |
 | [`apps/api`](apps/api) | Local Fastify API + a Java REST Assured suite |
 
@@ -107,18 +107,18 @@ See [docs/architecture.md](docs/architecture.md) and the
   across containers to minimize makespan, with symmetry breaking, bound-based
   pruning and a deterministic search budget. It never lies: if it can't certify
   the optimum within the budget, it says so and reports the gap.
-- **Runnable numbers.** Everything is planned at spec-file granularity — a spec
-  never straddles containers — so every promised time is achievable by the
+- **Runnable numbers.** Everything is planned at spec-file granularity (a spec
+  never straddles containers), so every promised time is achievable by the
   exact `--spec` lists the tool emits.
 - **Framework-agnostic engine, Cypress-first product.** Only the input reader is
   tool-specific: it reads Cypress run results (Module API or **mochawesome**),
-  auto-detected. The engine itself never changes — other readers stay parked in
+  auto-detected. The engine itself never changes; other readers stay parked in
   the code, one file away from a new runner.
 - **Privacy by construction.** The web processes reports in the browser and
-  never uploads them — proven by a dedicated E2E test.
+  never uploads them, proven by a dedicated E2E test.
 - **Closes the loop to CI.** Every move ships the exact spec list per container,
   and `--format github|bitbucket` emits the full workflow where each parallel job
-  runs its list and keeps its own report — ready to feed back in. See
+  runs its list and keeps its own report, ready to feed back in. See
   [examples/ci/](examples/ci).
 
 ## Testing strategy
@@ -126,19 +126,19 @@ See [docs/architecture.md](docs/architecture.md) and the
 Testing is the point of this project, not an afterthought. Every layer is
 covered with the technique that fits it:
 
-- **Property-based testing** against a brute-force **oracle** — the clever
+- **Property-based testing** against a brute-force **oracle**: the clever
   branch & bound is checked against a trivially-correct exhaustive solver over
   hundreds of random (seeded, reproducible) instances.
-- **Metamorphic & differential tests** — the simulator can never beat the
+- **Metamorphic & differential tests**: the simulator can never beat the
   scheduler's optimum; rescaling a chart axis never moves the recommended knee.
-- **Invariants** — "the engine never lies", work conservation, monotonicity.
+- **Invariants**: "the engine never lies", work conservation, monotonicity.
 - **Snapshot testing** for the deterministic text/Markdown exporters.
 - **Component tests** (Testing Library) querying by role and accessible name.
 - **End-to-end** in **Playwright and Cypress**: the upload flow, an
   **accessibility** scan (axe) and a **privacy** test asserting the report never
   leaves the page.
-- **API testing** in two languages — Fastify `inject` in TS and a **JUnit 5 +
-  REST Assured** suite over real HTTP — plus **JSON Schema contract** checks.
+- **API testing** in two languages: Fastify `inject` in TS and a **JUnit 5 +
+  REST Assured** suite over real HTTP, plus **JSON Schema contract** checks.
 - **Performance testing** of the API with **k6** and **JMeter** (pass/fail SLOs).
 - **Mutation testing** (Stryker) and enforced **coverage** thresholds on the core.
 - **Jira/Xray**-ready: every suite emits **JUnit XML** for test-management import.
@@ -163,12 +163,12 @@ pnpm --filter @ci-shard-advisor/api start    # http://127.0.0.1:3001
 ## Roadmap
 
 - [x] Monorepo setup
-- [x] Phase 1 — Scheduling core (LPT, bounds, branch & bound, worker simulator, frontier)
-- [x] Phase 2 — Web demo with preloaded analysis (upload, frontier chart, client-side), deployed to GitHub Pages
-- [x] Phase 3 — Testing strategy (unit, integration, privacy, a11y)
-- [x] Phase 4 — CLI with quality-gate mode
-- [x] Phase 5 — Local API + Java REST Assured test suite
-- [x] Phase 6 — Portfolio polish (CI, docs, badges)
+- [x] Phase 1: Scheduling core (LPT, bounds, branch & bound, worker simulator, frontier)
+- [x] Phase 2: Web demo with preloaded analysis (upload, frontier chart, client-side), deployed to GitHub Pages
+- [x] Phase 3: Testing strategy (unit, integration, privacy, a11y)
+- [x] Phase 4: CLI with quality-gate mode
+- [x] Phase 5: Local API + Java REST Assured test suite
+- [x] Phase 6: Portfolio polish (CI, docs, badges)
 
 ## License
 

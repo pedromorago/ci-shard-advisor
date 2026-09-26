@@ -1,4 +1,4 @@
-# CI Shard Advisor — Especificación v2.3
+# CI Shard Advisor: especificación v2.3
 
 > **Historial:** v2 (advisor: situación medida + escenarios anclados) · v2.1
 > (pivot a Cypress-only; workers y lectores PW/JUnit aparcados) · v2.2 (bordes
@@ -12,9 +12,9 @@
 
 ## 1. Caso de uso
 
-Una empresa ejecuta pipelines E2E con **Cypress** en un CI en la nube (Jenkins, GitHub Actions, Bitbucket Pipelines, GitLab CI — la plataforma es indiferente: el report lo genera el runner, no el CI). Para paralelizar, la pipeline levanta **varios contenedores** que se reparten las specs. Cada contenedor tiene un **tiempo de setup** (arranque, instalación, navegador) que se suma a la factura por cada contenedor adicional.
+Una empresa ejecuta pipelines E2E con **Cypress** en un CI en la nube (Jenkins, GitHub Actions, Bitbucket Pipelines, GitLab CI; la plataforma es indiferente: el report lo genera el runner, no el CI). Para paralelizar, la pipeline levanta **varios contenedores** que se reparten las specs. Cada contenedor tiene un **tiempo de setup** (arranque, instalación, navegador) que se suma a la factura por cada contenedor adicional.
 
-El balanceo "oficial" de Cypress (Cypress Cloud) es un servicio **de pago y online**. El hueco de esta herramienta: decidir cuántos contenedores y qué spec va en cada uno **sin Cypress Cloud** — gratis, local y con el coste como ciudadano de primera.
+El balanceo "oficial" de Cypress (Cypress Cloud) es un servicio **de pago y online**. El hueco de esta herramienta: decidir cuántos contenedores y qué spec va en cada uno **sin Cypress Cloud**: gratis, local y con el coste como ciudadano de primera.
 
 La empresa recoge los datos de su **última ejecución** y la herramienta le devuelve:
 
@@ -27,7 +27,7 @@ La voz del producto no es "el óptimo matemático es 5", sino: **"estás aquí; 
 
 **Dentro:** reports de **Cypress** (resultado de `cypress run` / Module API y **mochawesome**). Salida para GitHub Actions y Bitbucket Pipelines. Web estática, CLI y API local.
 
-**Fuera:** otros runners en el pitch — los lectores de **Playwright** y **JUnit** permanecen en el código como extras no documentados, igual que el modelo de workers (concepto Playwright: en Cypress no existe). Lectura automática de APIs de CI y exportadores GitLab/Jenkins quedan para v3.
+**Fuera:** otros runners en el pitch; los lectores de **Playwright** y **JUnit** permanecen en el código como extras no documentados, igual que el modelo de workers (concepto Playwright: en Cypress no existe). Lectura automática de APIs de CI y exportadores GitLab/Jenkins quedan para v3.
 
 **Terminología:** de cara al usuario se habla de **contenedores** (como habla el ecosistema Cypress); el contrato TypeScript conserva los nombres internos (`shardCount`, `ShardPlan`) por estabilidad de API.
 
@@ -35,7 +35,7 @@ La voz del producto no es "el óptimo matemático es 5", sino: **"estás aquí; 
 
 ### 3.1 Modo preferente: un report por shard
 
-Cada contenedor de la pipeline ya produce su propio report (un mochawesome JSON — o el resultado del Module API — por contenedor, subido como artifact). La herramienta acepta **N ficheros a la vez** y de ahí deduce:
+Cada contenedor de la pipeline ya produce su propio report (un mochawesome JSON, o el resultado del Module API, por contenedor, subido como artifact). La herramienta acepta **N ficheros a la vez** y de ahí deduce:
 
 - `N` actual = número de ficheros.
 - Tiempo real de cada shard = contenido de cada fichero.
@@ -47,7 +47,7 @@ Un único report + `N` declarado por el usuario. La configuración actual se **m
 
 ### 3.3 Parámetros manuales
 
-- **Setup por shard** (obligatorio para hablar de coste; default sugerido en UI: 30–60 s). En v2 podrá medirse desde la API del CI (duración del job − tiempo de tests).
+- **Setup por shard** (obligatorio para hablar de coste; default sugerido en UI: de 30 a 60 s). En v2 podrá medirse desde la API del CI (duración del job − tiempo de tests).
 - **Precio por minuto de máquina** (opcional; activa € en todas las salidas).
 - `maxShards`, objetivo (sección 5.4). (Workers no: en Cypress cada contenedor ejecuta sus specs en serie.)
 
@@ -73,9 +73,9 @@ Consecuencias útiles (deben aparecer como mensajes cuando apliquen):
 - **Reequilibrar con el mismo N y los mismos workers no cambia el coste** (mismo trabajo, mismos setups); solo reduce la espera. Es gratis.
 - **Los workers son gratis en la factura**: misma máquina, menos tiempo de pared, menos minutos facturados. Los shards, en cambio, añaden setup. "Más workers antes que más máquinas" es un consejo válido, con la letra pequeña de 4.1.
 
-### 4.1 Modelo de workers (aparcado — concepto Playwright)
+### 4.1 Modelo de workers (aparcado, concepto Playwright)
 
-**Cypress no tiene workers**: un navegador por contenedor, specs en serie — `workers` se fuerza siempre a 1 y nada del producto visible lo expone. El simulador de workers permanece en el código (extra no documentado, junto al lector Playwright) por si se reactiva. Lo que sigue documenta ese modelo aparcado.
+**Cypress no tiene workers**: un navegador por contenedor, specs en serie; `workers` se fuerza siempre a 1 y nada del producto visible lo expone. El simulador de workers permanece en el código (extra no documentado, junto al lector Playwright) por si se reactiva. Lo que sigue documenta ese modelo aparcado.
 
 Dos niveles de paralelismo distintos: los **shards** deciden qué tests van a cada máquina; los **workers** deciden cómo se consumen dentro de ella.
 
@@ -113,21 +113,21 @@ Si el movimiento elegido no existe (p. ej. nada cumple el presupuesto), se dice 
 
 ### 5.3 Plan aplicable (cerrar el hueco modelo-realidad)
 
-El tiempo prometido por un reparto óptimo **no** se consigue con `--shard=i/N` (que reparte por cantidad). El plan se materializa como algo **ejecutable hoy**: la lista de ficheros de spec de cada shard, con el comando del runner detectado —
+El tiempo prometido por un reparto óptimo **no** se consigue con `--shard=i/N` (que reparte por cantidad). El plan se materializa como algo **ejecutable hoy**: la lista de ficheros de spec de cada shard, con el comando del runner detectado:
 
 - **Playwright:** `npx playwright test <specs del shard i>` por job.
 - **Cypress:** `npx cypress run --spec "<specs del shard i>"` por contenedor.
 
-El reparto se calcula a **granularidad de fichero** (no se puede rutar medio fichero a un shard). Corolario: un plan nunca contiene shards vacíos — si se piden más shards que ficheros de spec, el plan emite como máximo un shard por fichero (`--spec ""` no es un comando real). Y el cierre real del círculo: los exporters `github`/`bitbucket` generan el **YAML completo** donde cada job paralelo corre exactamente su lista — la salida del advisor se pega directamente en la config del CI. Nunca se emite un flag que el runner no soporte.
+El reparto se calcula a **granularidad de fichero** (no se puede rutar medio fichero a un shard). Corolario: un plan nunca contiene shards vacíos; si se piden más shards que ficheros de spec, el plan emite como máximo un shard por fichero (`--spec ""` no es un comando real). Y el cierre real del círculo: los exporters `github`/`bitbucket` generan el **YAML completo** donde cada job paralelo corre exactamente su lista, y la salida del advisor se pega directamente en la config del CI. Nunca se emite un flag que el runner no soporte.
 
 ### 5.4 Objetivos
 
 Los que se exponen en la UI/CLI:
 
-- **`recommended`** (default) — el codo de la frontera: el punto de máxima curvatura, donde el siguiente shard deja de pagar lo que cuesta. Es el criterio de recomendación y se presenta con ese nombre (internamente es el kind `balanced` del core).
-- **`fastest`** — mínima espera, cueste lo que cueste.
-- **`max-feedback <T>`** — el más barato con feedback ≤ T. En la web, el campo viene **prellenado con la espera actual medida** (≡ "misma espera, más barato").
-- **`budget <X>`** — el más rápido con coste ≤ X. En la web, prellenado con el **coste actual medido** (≡ "mismo coste, más rápido").
+- **`recommended`** (default): el codo de la frontera: el punto de máxima curvatura, donde el siguiente shard deja de pagar lo que cuesta. Es el criterio de recomendación y se presenta con ese nombre (internamente es el kind `balanced` del core).
+- **`fastest`**: mínima espera, cueste lo que cueste.
+- **`max-feedback <T>`**: el más barato con feedback ≤ T. En la web, el campo viene **prellenado con la espera actual medida** (≡ "misma espera, más barato").
+- **`budget <X>`**: el más rápido con coste ≤ X. En la web, prellenado con el **coste actual medido** (≡ "mismo coste, más rápido").
 
 Solo en el core (sin UI): `cheapest` (degenerado: con setup > 0 siempre es 1 shard; equivale a `max-feedback ∞`) y el peso numérico coste/tiempo (avanzado, para consumidores de la librería).
 
@@ -137,14 +137,14 @@ Frases, no solo números. Obligatorias cuando aplican:
 
 - **Sobrefragmentación:** "Usas 10 shards, pero a partir de 6 solo pagas más: +31 % de coste por −35 s."
 - **Infrafragmentación:** "Con 5 shards reducirías la espera un 42 % por +€0.12 por ejecución."
-- **Workers antes que máquinas** *(aparcado con el modelo de workers, 4.1 — no aplica a Cypress)*.
+- **Workers antes que máquinas** *(aparcado con el modelo de workers, 4.1; no aplica a Cypress)*.
 - **Suelo / cuello de botella (FR-10 clásico):** "A partir de N=3 la espera no baja: 'checkout.spec.ts' (8m 51s) marca el suelo. Considera trocearlo (granularidad / fullyParallel)."
 - **Desequilibrio actual** (solo modo por-shard): ver 5.1. Su casa es el bloque de situación actual (como muestra el mock de 7.1); no se repite en la lista de warnings.
 - **Flaky:** tests con retries **que acabaron pasando** y su coste ("3 tests flaky quemaron 1m 54s de máquina en esta ejecución"). Un test que falló todos sus intentos está roto, no es flaky. *Letra pequeña:* los retries solo viajan en el resultado del Module API; el JSON de mochawesome no los registra, así que con reports mochawesome este finding no puede dispararse.
 
 ### 5.6 Frontera
 
-Se mantiene para la gráfica (todas las N evaluadas), añadiendo € por punto cuando hay precio. **Toda la planificación opera a granularidad de fichero** — frontera, escenarios, modelo del actual en modo fusionado y el suelo de 5.5 — porque una spec es indivisible: no se puede rutar medio fichero a un shard. Así, cada número mostrado es **alcanzable por el plan emitido** (5.3); el motor nunca promete un tiempo que solo existiría troceando specs. (Corolario: el orden interno de una spec — p. ej. sanity antes que regression — se preserva siempre, porque la spec viaja entera a su shard.)
+Se mantiene para la gráfica (todas las N evaluadas), añadiendo € por punto cuando hay precio. **Toda la planificación opera a granularidad de fichero** (frontera, escenarios, modelo del actual en modo fusionado y el suelo de 5.5) porque una spec es indivisible: no se puede rutar medio fichero a un shard. Así, cada número mostrado es **alcanzable por el plan emitido** (5.3); el motor nunca promete un tiempo que solo existiría troceando specs. (Corolario: el orden interno de una spec (p. ej. sanity antes que regression) se preserva siempre, porque la spec viaja entera a su shard.)
 
 ## 6. Contrato TypeScript (core)
 
@@ -266,7 +266,7 @@ Your moves
      (--format github emits the full workflow)
 
   Recommended) 5 containers           feedback 9m 02s (−5m 13s)   cost €3.28 (−€0.02)
-     The knee of the cost/time frontier — past it, containers stop paying off.
+     The knee of the cost/time frontier: past it, containers stop paying off.
      Apply (each container runs its own list): ...
 
 (el segundo bloque cambia con --objective/--max-feedback/--budget; si el
@@ -328,4 +328,4 @@ Frontier (shards · feedback · billed · price)
 4. Salidas deterministas (sin locale, sin reloj) para que los snapshots sean estables.
 5. Los tests con aleatoriedad usan el PRNG con semilla (`mulberry32`), nunca `Math.random()`.
 6. La simulación de workers no reordena la cola (modelo fiel de Playwright, no optimizador). El feedback reportado sale siempre de la simulación, nunca de la partición teórica.
-7. **Granularidad de fichero end-to-end (5.6):** frontera, escenarios, modelo del actual y suelo se calculan sobre ficheros de spec, nunca sobre tests sueltos — todo número prometido es alcanzable por el plan emitido.
+7. **Granularidad de fichero end-to-end (5.6):** frontera, escenarios, modelo del actual y suelo se calculan sobre ficheros de spec, nunca sobre tests sueltos: todo número prometido es alcanzable por el plan emitido.

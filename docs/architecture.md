@@ -43,24 +43,24 @@ Cypress reports (Module API / mochawesome)   [aparcados: Playwright, JUnit]
 ```
 
 (El simulador de workers sigue en el código bajo el scheduler, pero para
-Cypress se fuerza `workers = 1` — FR-13; es un concepto Playwright aparcado.)
+Cypress se fuerza `workers = 1` (FR-13); es un concepto Playwright aparcado.)
 
 ## La capa advisor: la voz del producto
 
 Es la capa que convierte el motor en consejero (spec §5), y donde vive la
-tesis del producto — «estás aquí; estos son tus movimientos»:
+tesis del producto, «estás aquí; estos son tus movimientos»:
 
-- **`current.ts`** — la situación actual: *medida* de un report por contenedor
+- **`current.ts`**: la situación actual, *medida* de un report por contenedor
   (`measureCurrent`) o *modelada* por reparto round-robin de ficheros cuando
   solo hay un report fusionado (`modelCurrent`, marcada `measured: false`).
-- **`scenarios.ts`** — los cuatro escenarios de la tabla 5.2 como consultas
+- **`scenarios.ts`**: los cuatro escenarios de la tabla 5.2 como consultas
   sobre la frontera óptima, cada uno con su `ShardPlan` aplicable (listas de
   specs por contenedor). Si un objetivo parametrizado no tiene punto factible,
   el escenario se marca `unavailable`: **el motor nunca inventa** (§5.2).
-- **`findings.ts`** — las frases del consejero (§5.5): sobrefragmentación,
+- **`findings.ts`**: las frases del consejero (§5.5): sobrefragmentación,
   infrafragmentación, el suelo que marca la spec más pesada, y los flaky con su
   coste. Se redactan en el core para que todos los adaptadores digan lo mismo.
-- **`reports.ts`** — la lectura de N ficheros (formato compartido o forzado;
+- **`reports.ts`**: la lectura de N ficheros (formato compartido o forzado;
   mezcla → error claro).
 
 ## Decisiones de diseño del scheduler
@@ -105,7 +105,7 @@ recommender y exporters no saben ni les importa el origen. Añadir otro runner e
 **un lector más**; nada del núcleo cambia. El formato puede forzarse desde el core
 y la CLI (`--input-format`).
 
-> Quedan **aparcados en el código** (testeados, fuera del pitch — `docs/CLAUDE.md`
+> Quedan **aparcados en el código** (testeados, fuera del pitch; `docs/CLAUDE.md`
 > regla 4): los lectores de **Playwright** ([`parser.ts`](../packages/core/src/report/parser.ts))
 > y **JUnit XML** ([`junit.ts`](../packages/core/src/report/junit.ts)), y el
 > **modelo de workers** (concepto Playwright: en Cypress cada contenedor ejecuta
@@ -115,12 +115,12 @@ y la CLI (`--input-format`).
 
 - **Parser** (`parseReport`): acepta el JSON como string o ya parseado (el core no toca `fs`; leer es cosa del adaptador), valida solo el subconjunto del report de Playwright que consumimos y tolera campos extra u opcionales ausentes, para no romperse entre versiones. Falla con `ReportParseError` indicando la **ruta del campo** culpable.
 - **Normalizer** (`normalize`): recorre las `suites` **recursivamente** (los `describe` anidan suites) y emite un `AtomicTask` por test (spec × proyecto). La duración es la **suma de todos los intentos**, porque los reintentos los re-ejecuta la máquina de CI y cuentan como carga. Mapea el estado de Playwright (`expected→passed`, `unexpected→failed`, `flaky`, `skipped`).
-- **`readReport` / `detectFormat`**: la entrada de cada fichero — autodetección por forma del report (o formato forzado) y despacho al lector correcto. Sobre ellos, `readReports` (advisor) resuelve el modo per-shard/fusionado y el error de formatos mezclados. El punto de entrada del producto es `advise()`.
+- **`readReport` / `detectFormat`**: la entrada de cada fichero: autodetección por forma del report (o formato forzado) y despacho al lector correcto. Sobre ellos, `readReports` (advisor) resuelve el modo per-shard/fusionado y el error de formatos mezclados. El punto de entrada del producto es `advise()`.
 - QA destacable: el parser se prueba con una batería de reports **malformados** (JSON inválido, tipos incorrectos, campos ausentes) verificando la ruta del error; el resto del pipeline con un **fixture realista** (suites anidadas, multi-proyecto, un flaky con reintentos, un skipped, tags) y tests **end-to-end** que van del JSON al `AdvisorResult`.
 
 ## Decisiones de diseño de los exporters
 
-- Los tres formatos legibles renderizan el mismo `AdvisorResult` (`toAdvisorText`, `toAdvisorMarkdown`) o su forma máquina (`toAdvisorObject`/`toAdvisorJson`: tiempos en ms crudos + precio derivado), así se mantienen **consistentes** entre sí — mismo summary, mismos escenarios, mismas frases de findings.
-- `toGitHubActions` y `toBitbucketPipelines` cierran el bucle con la nube: a partir del `ShardPlan` del escenario elegido generan el YAML donde **cada job paralelo corre exactamente su lista de specs** y conserva su propio report — el input preferido del advisor para el siguiente análisis. Se exponen en la CLI (`--format github|bitbucket`). Ver [examples/ci](../examples/ci).
+- Los tres formatos legibles renderizan el mismo `AdvisorResult` (`toAdvisorText`, `toAdvisorMarkdown`) o su forma máquina (`toAdvisorObject`/`toAdvisorJson`: tiempos en ms crudos + precio derivado), así se mantienen **consistentes** entre sí: mismo summary, mismos escenarios, mismas frases de findings.
+- `toGitHubActions` y `toBitbucketPipelines` cierran el bucle con la nube: a partir del `ShardPlan` del escenario elegido generan el YAML donde **cada job paralelo corre exactamente su lista de specs** y conserva su propio report, el input preferido del advisor para el siguiente análisis. Se exponen en la CLI (`--format github|bitbucket`). Ver [examples/ci](../examples/ci).
 - Formato **determinista** a propósito: `formatDuration` no usa reloj ni locale (`toLocaleString` haría los snapshots *flaky*), y el solver usa presupuesto de nodos, no de reloj. Esto habilita **snapshot testing**: la salida formateada se congela y cualquier cambio salta como diff.
 - QA destacable: texto y Markdown se fijan con **inline snapshots**; el JSON con aserciones estructurales + comprobación de que la salida es **byte-idéntica** entre llamadas (determinismo).

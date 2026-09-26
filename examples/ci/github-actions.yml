@@ -1,5 +1,5 @@
 # Example: shard a Playwright suite across 4 jobs on GitHub Actions and merge
-# the blob reports into report.json — the file CI Shard Advisor reads.
+# the blob reports into report.json, the file CI Shard Advisor reads.
 #
 # Copy this into .github/workflows/tests.yml in your Playwright project and
 # adjust the shard count to the one the advisor recommends. (This lives under
