@@ -1,9 +1,10 @@
-# CI Shard Advisor — Especificación v2.2
+# CI Shard Advisor — Especificación v2.3
 
 > **Historial:** v2 (advisor: situación medida + escenarios anclados) · v2.1
 > (pivot a Cypress-only; workers y lectores PW/JUnit aparcados) · v2.2 (bordes
 > endurecidos: planes sin shards vacíos, objetivo infactible = `unavailable`,
-> `inputFormat` en el contrato, flaky = reintentado y aprobado).
+> `inputFormat` en el contrato, flaky = reintentado y aprobado) · v2.3 (web:
+> copiar cada comando por contenedor con un botón).
 
 > **Este documento es la fuente de verdad del producto.** Si el README, el código o cualquier conversación contradicen lo que dice aquí, gana este documento. Una feature está "terminada" cuando cumple sus criterios de aceptación (sección 9), tiene tests y no rompe los invariantes del motor (sección 12).
 
@@ -289,6 +290,7 @@ Frontier (shards · feedback · billed · price)
 - **Demo Cypress** (per-contenedor, con retries para mostrar el finding de flaky y el comando `--spec`).
 - Selector de objetivo (5.4): `Recommended` (default) · `Fastest` · `Espera máxima` (campo prellenado con la espera actual) · `Presupuesto` (campo prellenado con el coste actual). Cambiar el selector cambia la card del movimiento y el marcador *recommended* de la gráfica.
 - Si el movimiento elegido coincide con el rebalance, se muestra una sola card que lo indica.
+- Cada comando por contenedor del plan (`npx cypress run --spec …`) lleva un botón **Copiar** que lo pone tal cual en el portapapeles y lo confirma con un anuncio accesible. Si el navegador no deja escribir en el portapapeles, el comando queda seleccionado para copiarlo a mano. Copiar no hace ninguna petición de red.
 - Upload **múltiple** (N ficheros a la vez) además de único.
 - Inputs: setup, precio/min, contenedores (solo en modo fusionado), objetivo.
 - Todo en cliente (privacidad intacta).
