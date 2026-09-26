@@ -42,6 +42,20 @@ test.describe('demo analysis', () => {
     expect(applySplit?.height).toBeGreaterThanOrEqual(44);
   });
 
+  test('shares with a link preview: description, large card and a served image', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /cypress/i);
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /\/og\.png$/);
+
+    // The image the tags point at ships with the site, at the size they declare.
+    const image = await page.request.get('og.png');
+    expect(image.headers()['content-type']).toBe('image/png');
+    const png = await image.body();
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
+  });
+
   test('has no accessibility violations, disclosures open', async ({ page }) => {
     await page.goto('/');
     // Scan what the collapsible sections hide too (help, chart and split lists).
