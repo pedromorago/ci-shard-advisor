@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react';
 import { formatDuration, formatMoney } from '@ci-shard-advisor/core';
 import type { ConfigPoint } from '@ci-shard-advisor/core';
 
@@ -11,11 +12,35 @@ interface FrontierChartProps {
   ratePerMin: number;
 }
 
-const WIDTH = 640;
-const HEIGHT = 360;
-const MARGIN = { top: 24, right: 24, bottom: 52, left: 72 };
-const PLOT_W = WIDTH - MARGIN.left - MARGIN.right;
-const PLOT_H = HEIGHT - MARGIN.top - MARGIN.bottom;
+const DEFAULT_WIDTH = 640;
+const MIN_WIDTH = 280;
+const MARGIN = { top: 24, right: 24, bottom: 52, left: 80 };
+/** About half the widest marker label ("recommended (16)" at 12px). */
+const LABEL_HALF = 48;
+/** Room kept under the lowest point for the marker label that hangs below it. */
+const LABEL_ROOM = 20;
+
+/**
+ * The figure's rendered width, so the chart is drawn in real pixels: on a phone
+ * the plot narrows while its 12px labels stay 12px, instead of the whole drawing
+ * shrinking to half size. Where nothing is laid out (jsdom, a closed <details>)
+ * it keeps the desktop width.
+ */
+function useRenderedWidth() {
+  const ref = useRef<HTMLElement>(null);
+  const [width, setWidth] = useState(DEFAULT_WIDTH);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      const measured = Math.round(entry.contentRect.width);
+      if (measured > 0) setWidth(Math.max(MIN_WIDTH, measured));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, width };
+}
 
 /** Evenly spaced tick values across [min, max]. */
 function ticks(min: number, max: number, count = 4): number[] {
@@ -30,6 +55,12 @@ function ticks(min: number, max: number, count = 4): number[] {
  * (cheap and fast) is best.
  */
 export function FrontierChart({ frontier, recommended, current, ratePerMin }: FrontierChartProps) {
+  const { ref, width } = useRenderedWidth();
+  // Narrow screens get a taller aspect, so the curve keeps room to read.
+  const height = Math.round(Math.min(360, Math.max(240, width * 0.85)));
+  const plotW = width - MARGIN.left - MARGIN.right;
+  const plotH = height - MARGIN.top - MARGIN.bottom;
+
   // X axis = billed cost (money if priced, else machine time), Y = feedback time.
   const xOf = (p: ChartPoint) => p.costMs;
   const yOf = (p: ChartPoint) => p.feedbackTimeMs;
@@ -48,8 +79,12 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
   const y0 = Math.max(0, yMin - yPad);
   const y1 = yMax + yPad;
 
-  const sx = (v: number) => MARGIN.left + ((v - x0) / (x1 - x0)) * PLOT_W;
-  const sy = (v: number) => MARGIN.top + PLOT_H - ((v - y0) / (y1 - y0)) * PLOT_H;
+  const sx = (v: number) => MARGIN.left + ((v - x0) / (x1 - x0)) * plotW;
+  const sy = (v: number) => MARGIN.top + plotH - LABEL_ROOM - ((v - y0) / (y1 - y0)) * (plotH - LABEL_ROOM);
+  // A marker label is centred on its point, or pinned to the near edge so it
+  // never runs out of the plot.
+  const anchorOf = (x: number) =>
+    x < MARGIN.left + LABEL_HALF ? 'start' : x > width - MARGIN.right - LABEL_HALF ? 'end' : 'middle';
 
   const line = [...frontier]
     .sort((a, b) => xOf(a) - xOf(b))
@@ -59,38 +94,38 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
   const label = `Feedback time versus billed cost across ${frontier.length} container configurations; recommended is ${recommended.shardCount} containers.`;
 
   return (
-    <figure className="chart">
+    <figure className="chart" ref={ref}>
       <figcaption id="chart-caption">Feedback time vs cost (lower-left is better)</figcaption>
       <svg
         className="chart__svg"
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        viewBox={`0 0 ${width} ${height}`}
         role="img"
         aria-label={label}
       >
         {/* Y axis grid + ticks (feedback time) */}
         {ticks(yMin, yMax).map((v) => (
           <g key={`y${v}`}>
-            <line className="chart__grid" x1={MARGIN.left} y1={sy(v)} x2={WIDTH - MARGIN.right} y2={sy(v)} />
+            <line className="chart__grid" x1={MARGIN.left} y1={sy(v)} x2={width - MARGIN.right} y2={sy(v)} />
             <text className="chart__tick" x={MARGIN.left - 8} y={sy(v)} textAnchor="end" dominantBaseline="middle">
               {formatDuration(v)}
             </text>
           </g>
         ))}
-        {/* X axis ticks (billed cost, in money) */}
-        {ticks(xMin, xMax).map((v) => (
-          <text key={`x${v}`} className="chart__tick" x={sx(v)} y={HEIGHT - MARGIN.bottom + 20} textAnchor="middle">
+        {/* X axis ticks (billed cost, in money); three on a phone-width plot so they never touch */}
+        {ticks(xMin, xMax, plotW < 300 ? 3 : 4).map((v) => (
+          <text key={`x${v}`} className="chart__tick" x={sx(v)} y={height - MARGIN.bottom + 20} textAnchor="middle">
             {money(v)}
           </text>
         ))}
-        <text className="chart__axis-label" x={MARGIN.left + PLOT_W / 2} y={HEIGHT - 8} textAnchor="middle">
+        <text className="chart__axis-label" x={MARGIN.left + plotW / 2} y={height - 8} textAnchor="middle">
           Cost per run
         </text>
         <text
           className="chart__axis-label"
           x={16}
-          y={MARGIN.top + PLOT_H / 2}
+          y={MARGIN.top + plotH / 2}
           textAnchor="middle"
-          transform={`rotate(-90 16 ${MARGIN.top + PLOT_H / 2})`}
+          transform={`rotate(-90 16 ${MARGIN.top + plotH / 2})`}
         >
           Feedback time
         </text>
@@ -106,7 +141,12 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
         {current ? (
           <g>
             <circle className="chart__point chart__point--current" cx={sx(xOf(current))} cy={sy(yOf(current))} r={7} />
-            <text className="chart__marker-label" x={sx(xOf(current))} y={sy(yOf(current)) - 12} textAnchor="middle">
+            <text
+              className="chart__marker-label"
+              x={sx(xOf(current))}
+              y={sy(yOf(current)) - 12}
+              textAnchor={anchorOf(sx(xOf(current)))}
+            >
               current ({current.shardCount})
             </text>
           </g>
@@ -114,32 +154,41 @@ export function FrontierChart({ frontier, recommended, current, ratePerMin }: Fr
 
         <g>
           <circle className="chart__point chart__point--recommended" cx={sx(xOf(recommended))} cy={sy(yOf(recommended))} r={7} />
-          <text className="chart__marker-label" x={sx(xOf(recommended))} y={sy(yOf(recommended)) + 22} textAnchor="middle">
+          <text
+            className="chart__marker-label"
+            x={sx(xOf(recommended))}
+            y={sy(yOf(recommended)) + 22}
+            textAnchor={anchorOf(sx(xOf(recommended)))}
+          >
             recommended ({recommended.shardCount})
           </text>
         </g>
       </svg>
 
-      {/* Table view for accessibility (the same data, screen-reader friendly). */}
-      <table className="visually-hidden">
-        <caption>Cost/time frontier by container count</caption>
-        <thead>
-          <tr>
-            <th scope="col">Containers</th>
-            <th scope="col">Feedback time</th>
-            <th scope="col">Cost per run</th>
-          </tr>
-        </thead>
-        <tbody>
-          {frontier.map((p) => (
-            <tr key={p.shardCount}>
-              <td>{p.shardCount}</td>
-              <td>{formatDuration(p.feedbackTimeMs)}</td>
-              <td>{money(p.costMs)}</td>
+      {/* Table view for accessibility (the same data, screen-reader friendly).
+          Hidden through a wrapper: a table ignores the 1px width and would
+          widen the page on phones. */}
+      <div className="visually-hidden">
+        <table>
+          <caption>Cost/time frontier by container count</caption>
+          <thead>
+            <tr>
+              <th scope="col">Containers</th>
+              <th scope="col">Feedback time</th>
+              <th scope="col">Cost per run</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {frontier.map((p) => (
+              <tr key={p.shardCount}>
+                <td>{p.shardCount}</td>
+                <td>{formatDuration(p.feedbackTimeMs)}</td>
+                <td>{money(p.costMs)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

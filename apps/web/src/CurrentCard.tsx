@@ -16,7 +16,10 @@ export function CurrentCard({ current, pricePerMinute, runner }: CurrentCardProp
   return (
     <section className="card" aria-labelledby="current-heading">
       <h2 id="current-heading">
-        Your setup today <span className="tag">{current.measured ? 'measured' : 'modeled'}</span>
+        Your setup today{' '}
+        <span className={current.measured ? 'tag tag--status' : 'tag'}>
+          {current.measured ? 'measured' : 'modeled'}
+        </span>
       </h2>
       <p className="recommendation__headline">
         <strong>{unitsOf(current.shardCount, runner)}</strong>
@@ -33,7 +36,7 @@ export function CurrentCard({ current, pricePerMinute, runner }: CurrentCardProp
       </dl>
       {current.measured && current.imbalanceMs > 0 ? (
         <p className="current__imbalance">
-          ⚠ Imbalance: {formatDuration(current.imbalanceMs)} of idle machine time (slowest is {unitOf(runner)} #{slowestShard}).
+          Imbalance: {formatDuration(current.imbalanceMs)} of idle machine time (slowest is {unitOf(runner)} #{slowestShard}).
         </p>
       ) : null}
     </section>

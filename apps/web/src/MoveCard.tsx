@@ -4,8 +4,10 @@ import {
   formatMoney,
   signedDuration,
   signedMoney,
+  unitOf,
 } from '@ci-shard-advisor/core';
 import type { Runner, Scenario } from '@ci-shard-advisor/core';
+import { CopyCommand } from './CopyCommand';
 
 interface MoveCardProps {
   /** Short pill: "Free", "Recommended", "Fastest", … */
@@ -59,7 +61,10 @@ export function MoveCard({ tag, title, scenario, pricePerMinute, runner }: MoveC
           <ol className="move__plan-list">
             {scenario.plan.specs.map((specs, i) => (
               <li key={i}>
-                <code className="move__apply">{applyCommand(runner, specs)}</code>
+                <CopyCommand
+                  command={applyCommand(runner, specs)}
+                  label={`Copy the command for ${unitOf(runner)} ${i + 1}`}
+                />
               </li>
             ))}
           </ol>
